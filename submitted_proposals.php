@@ -420,31 +420,8 @@ unset($row);
 </div>
              
         </div>
-        <br>
-        <!-- Rejected Proposal Propotion -->
-        <h5>Rejected Proposal Propotion </h5>
-
-        <div class="container my-5">
         
-        <table class="table table-bordered">
-            <thead class="table-dark">
-                <tr>
-                    
-                    <th>Rejected Proposals Percentage </th>
-                    
-                </tr>
-            </thead>
-            <tbody>
-            <?php foreach ($reportData as $row): ?>
-                <tr>
-                
-                    <td><?= $row['rate']; ?></td>
-                    
-                </tr>
-                <?php endforeach; ?>
-               
-            </tbody>
-        </table>
+        
     </div>
         
     </div>

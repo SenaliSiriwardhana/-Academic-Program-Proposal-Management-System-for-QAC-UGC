@@ -97,10 +97,12 @@ foreach ($months as $month) {
         ];
     }
 
+    
+
     // Calculate rates safely
     if ($row['total_submissions'] > 0) {
         $approvalRate = ($row['approved_proposals'] / $row['total_submissions']) * 100;
-        $rejectionRate = ($row['rejected_proposals'] / $row['total_submissions']) * 100;
+        $rejectionRate = (($row['total_submissions']-($row['approved_proposals'] + $row['pending_proposals'])) / $row['total_submissions']) * 100;
     } else {
         $approvalRate = 0;
         $rejectionRate = 0;
@@ -111,6 +113,7 @@ foreach ($months as $month) {
 
     $reportData[] = $row;
 }
+
 
 
 

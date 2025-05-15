@@ -12,8 +12,8 @@ if (!isset($_SESSION['username'])) {
 $query = "SELECT u.university_id, u.university_name, 
                  IF(EXISTS(SELECT 1 FROM users WHERE users.university_id = u.university_id), 'Yes', 'No') AS registered,
                  (SELECT COUNT(*) FROM proposals WHERE proposals.university_id = u.university_id) AS total_submissions,
-                 (SELECT COUNT(*) FROM proposals WHERE proposals.university_id = u.university_id AND status LIKE 'approvedbyugc%') AS approved_proposals,
-                 (SELECT COUNT(*) FROM proposals WHERE proposals.university_id = u.university_id AND status LIKE 'rejectedbyugc%') AS rejected_proposals
+                 (SELECT COUNT(*) FROM proposals WHERE proposals.university_id = u.university_id AND status LIKE 'approvedbyugcacademic%') AS approved_proposals,
+                 (SELECT COUNT(*) FROM proposals WHERE proposals.university_id = u.university_id AND (status LIKE 'rejectedbyugc%' OR status LIKE 'rejectedbyqachead%')) AS rejected_proposals
           FROM universities u
           WHERE u.university_name NOT LIKE '%QAC-UGC%'
           ORDER BY total_submissions DESC";
