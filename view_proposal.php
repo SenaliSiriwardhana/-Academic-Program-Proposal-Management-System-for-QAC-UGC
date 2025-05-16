@@ -309,7 +309,7 @@ function displayTableSection($sectionTitle, $sectionData) {
     </form>
 </div>
 
-    <h3 class = "text-center text-primary">Proposal Details</h3>
+    <h3 class = "text-center text-primary">Application for Approval of New Undergraduate Degree Programme (Internal)</h3>
     <table class="table table-bordered">
         <?php foreach ($proposal as $key => $value) { ?>
             <tr><th><?php echo ucfirst(str_replace('_', ' ', $key)); ?></th><td><?php echo htmlspecialchars($value); ?></td></tr>
