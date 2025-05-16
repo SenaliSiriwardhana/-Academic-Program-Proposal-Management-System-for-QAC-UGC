@@ -264,6 +264,7 @@ if (isset($_SESSION['program_entity'])) {
     $mandate_types = [
         'corporate_plan' => 'Corporate / Strategic Plan of the University',
         'action_plan' => 'Action Plan of the Faculty/Institute/Center/Unit',
+        'faculty_approval' => 'Faculty Approval',
         'senate_approval' => 'Senate Approval',
         'council_approval' => 'Council Approval'
     ];

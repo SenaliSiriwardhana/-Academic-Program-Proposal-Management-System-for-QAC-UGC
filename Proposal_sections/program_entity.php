@@ -13,6 +13,9 @@ $programEntity = $_SESSION['program_entity'] ?? [
     'ref_action_plan' => '',
     'date_action_plan' => '',
     'evidence_action_plan' => '',
+    'ref_faculty_approval' => '',
+    'date_faculty_approval' => '',
+    'evidence_faculty_approval' => '',
     'ref_senate_approval' => '',
     'date_senate_approval' => '',
     'evidence_senate_approval' => '',
@@ -142,6 +145,18 @@ $programEntity = $_SESSION['program_entity'] ?? [
                             </td>
 
                             </tr>
+
+                            <tr>
+                                <td>Faculty Approval</td>
+                                <td><input type="text" class="form-control" name="ref_faculty_approval" placeholder="Reference Number" value="<?php echo htmlspecialchars($programEntity['ref_faculty_approval'] ?? ""); ?>"></td>
+                                <td><input type="date" class="form-control" name="date_faculty_approval" value="<?php echo htmlspecialchars($programEntity['date_faculty_approval'] ?? ""); ?>"></td>
+                                <td><input type="file" class="form-control" name="evidence_faculty_approval"required>
+                                <?php if (!empty($programEntity['evidence_faculty_approval'])): ?>
+                                    <p>Uploaded: <a href="<?php echo htmlspecialchars($programEntity['evidence_faculty_approval']); ?>" target="_blank">View File</a></p>
+                                <?php endif; ?>
+                            </td>
+                            </tr>
+
                             <tr>
                                 <td>Final Senate Approval</td>
                                 <td><input type="text" class="form-control" name="ref_senate_approval" placeholder="Reference Number" value="<?php echo htmlspecialchars($programEntity['ref_senate_approval'] ?? ""); ?>"></td>
@@ -152,6 +167,7 @@ $programEntity = $_SESSION['program_entity'] ?? [
                                 <?php endif; ?>
                             </td>
                             </tr>
+
                             <tr>
                                 <td>Final Council Approval</td>
                                 <td><input type="text" class="form-control" name="ref_council_approval" placeholder="Reference Number" value="<?php echo htmlspecialchars($programEntity['ref_council_approval'] ?? ""); ?>"></td>

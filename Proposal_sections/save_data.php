@@ -330,6 +330,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'ref_action_plan' => $_POST['ref_action_plan'] ?? '',
                     'date_action_plan' => $_POST['date_action_plan'] ?? '',
                     'evidence_action_plan' => handleFileUpload('evidence_action_plan','program_entity'),
+
+                    'ref_faculty_approval' => $_POST['ref_faculty_approval'] ?? '',
+                    'date_faculty_approval' => $_POST['date_faculty_approval'] ?? '',
+                    'evidence_faculty_approval' => handleFileUpload('evidence_faculty_approval','program_entity'),
             
                     'ref_senate_approval' => $_POST['ref_senate_approval'] ?? '',
                     'date_senate_approval' => $_POST['date_senate_approval'] ?? '',
