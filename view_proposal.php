@@ -80,7 +80,7 @@ $degreeDetailsQuery = "SELECT
     common_facilities, program_benefits, eligibility_req, indicate_program,
     admission_process, other_criteria, intake, degree_type, duration,
     coursework_credits, thesis_credits, total_credits, medium_of_instruction,
-    subject_benchmark, slqf_level
+    subject_benchmark, slqf_level, rec_in_review_report, degree_details_objective, degree_details_justification
 FROM proposal_degree_details WHERE proposal_id = ?";
 
 // Section: Program Grades

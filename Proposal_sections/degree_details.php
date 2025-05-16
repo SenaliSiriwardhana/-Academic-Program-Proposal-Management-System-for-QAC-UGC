@@ -11,6 +11,9 @@ $degreeDetails = $_SESSION['degree_details'] ?? [
     'educational_facilities' => '',
     'common_facilities' => '',
     'program_benefits' => '',
+    'rec_in_review_report'  => '',
+    'degree_details_justification'  => '',
+    'degree_details_objective'  => '',
     'eligibility_req' => '',
     'indicate_program' => '',
     'addmission_process' => '',
@@ -151,6 +154,35 @@ $degreeDetails = $_SESSION['degree_details'] ?? [
                         </tbody>
                     </table>
                     <button type="button" class="btn btn-primary mt-2" onclick="addRow()">Add Row</button>
+                </div>
+
+                 <!-- Recommendation in review reports -->
+                <div class="mb-3">
+                    <label for="rec_in_review_report" class="form-label">Recommendation in review reports and the action taken</label>
+                    <textarea class="form-control" id=rec_in_review_report" name="rec_in_review_report" rows="3" placeholder="Recommendations in Review Reports and the actions taken" required><?php echo htmlspecialchars($degreeDetails['rec_in_review_report']?? ''); ?></textarea>
+                </div>
+
+                
+                <!-- JUSTIFICATION  -->
+                <div class="mb-3">
+                    <label for="degree_details_justification" class="form-label">Justification. Please review the Annexure.  <a href="/qac_ugc/Proposal_sections/uploads/justification_degree_details.jpg">View</a></label>
+                    <input type="file" class="form-control" name="degree_details_justification">
+                    <?php if (!empty($degreeDetails['degree_details_justification'])): ?>
+                        <p>Uploaded: 
+                            <a href="<?php echo htmlspecialchars($degreeDetails['degree_details_justification']); ?>" target="_blank">View File</a>
+                        </p>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Objective of The Degree Program  -->
+                <div class="mb-3">
+                    <label for="degree_details_objective" class="form-label">Objective of the Degree Programme / Attributes of Qualification Holders/Programming Learning Outcomes. Please review the Annexure.  <a href="/qac_ugc/Proposal_sections/uploads/degree_details_objectives.jpg">View</a></label>
+                    <input type="file" class="form-control" name="degree_details_objective">
+                    <?php if (!empty($degreeDetails['degree_details_objective'])): ?>
+                        <p>Uploaded: 
+                            <a href="<?php echo htmlspecialchars($degreeDetails['degree_details_objective']); ?>" target="_blank">View File</a>
+                        </p>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Eligibility Requirements -->

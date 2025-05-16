@@ -167,6 +167,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'educational_facilities' => $_POST['educational_facilities'] ?? '',
                     'common_facilities' => $_POST['common_facilities'] ?? '',
                     'program_benefits' => $_POST['program_benefits'] ?? '',
+                    'rec_in_review_report' => $_POST['rec_in_review_report'] ?? '',
+                    'degree_details_justification' => handleFileUpload('degree_details_justification','degree_details'), // Handle file upload
+                    'degree_details_objective' => handleFileUpload('degree_details_objective','degree_details'), // Handle file upload
                     'eligibility_req' => $_POST['eligibility_req'] ?? '',
                     'indicate_program' => $_POST['indicate_program'] ?? '',
                     'admission_process' => isset($_POST['admission_process']) ? 'UGC Z score based selection' : '',

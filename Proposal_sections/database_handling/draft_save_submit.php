@@ -362,10 +362,25 @@ if (isset($_SESSION['degree_details'])) {
     
     $slqf_level = isset($_SESSION['degree_details']['slqf_level'])?
         implode(',', array_filter($_SESSION['degree_details']['slqf_level'])) : '';
+
     // Handle subject benchmark file path
     $subject_benchmark_path = $_SESSION['degree_details']['subject_benchmark'] ?? '';
     if (!empty($subject_benchmark_path)) {
         $subject_benchmark_path = str_replace('/qac_ugc/uploads/', 'uploads/', $subject_benchmark_path);
+    }
+
+
+
+    // Handle degree details justification file path
+    $degree_details_justification_path = $_SESSION['degree_details']['degree_details_justification'] ?? '';
+    if (!empty($degree_details_justification_path)) {
+        $degree_details_justification_path = str_replace('/qac_ugc/uploads/', 'uploads/', $degree_details_justification_path);
+    }
+
+    // Handle degree details objective file path
+    $degree_details_objective_path = $_SESSION['degree_details']['degree_details_objective'] ?? '';
+    if (!empty($degree_details_objective_path)) {
+        $degree_details_objective_path = str_replace('/qac_ugc/uploads/', 'uploads/', $degree_details_objective_path);
     }
 
     $stmt = $connection->prepare("UPDATE proposal_degree_details SET 
@@ -389,10 +404,13 @@ if (isset($_SESSION['degree_details'])) {
         total_credits = ?,
         medium_of_instruction = ?,
         subject_benchmark = CASE WHEN ? != '' THEN ? ELSE subject_benchmark END,
-        slqf_level = ?
+        slqf_level = ?,
+        rec_in_review_report = ?,
+        degree_details_justification = CASE WHEN ? != '' THEN ? ELSE degree_details_justification END,
+        degree_details_objective = CASE WHEN ? != '' THEN ? ELSE degree_details_objective END
         WHERE proposal_id = ?");
     
-    $stmt->bind_param("ssssssssssssssssssssssi", 
+    $stmt->bind_param("sssssssssssssssssssssssssssi", 
         $_SESSION['degree_details']['background_to_program'],
         $_SESSION['degree_details']['mandate_faculty'],
         $_SESSION['degree_details']['faculty_status'],
@@ -415,6 +433,11 @@ if (isset($_SESSION['degree_details'])) {
         $subject_benchmark_path,
         $subject_benchmark_path,
         $slqf_level,
+        $_SESSION['degree_details']['rec_in_review_report'],
+        $degree_details_justification_path,
+        $degree_details_justification_path,
+        $degree_details_objective_path,
+        $degree_details_objective_path,
         $proposal_id
     );
     if ($stmt->execute()) {
