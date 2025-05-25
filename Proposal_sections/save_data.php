@@ -92,6 +92,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $degreeNameEnglish = $_POST['degree_name_english'] ?? '';
             $degreeNameSinhala = $_POST['degree_name_sinhala'] ?? '';
             $degreeNameTamil = $_POST['degree_name_tamil'] ?? '';
+            $quaNameEnglish = $_POST['qua_name_english'] ?? '';
+            $quaNameSinhala = $_POST['qua_name_sinhala'] ?? '';
+            $quaNameTamil = $_POST['qua_name_tamil'] ?? '';
             $abbreviatedQualification = $_POST['abbreviated_qualification_english'] ?? '';
 
             // Save the data (temporarily using session; replace with database logic if needed)
@@ -99,11 +102,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'degree_name_english' => $degreeNameEnglish,
                 'degree_name_sinhala' => $degreeNameSinhala,
                 'degree_name_tamil' => $degreeNameTamil,
+                'qua_name_english' => $quaNameEnglish,
+                'qua_name_sinhala' => $quaNameSinhala,
+                'qua_name_tamil' => $quaNameTamil,
                 'abbreviated_qualification' => $abbreviatedQualification,
             ];
 
             // Check if all fields are empty
-            if (empty($degreeNameEnglish) && empty($degreeNameSinhala) && empty($degreeNameTamil) && empty($abbreviatedQualification)) {
+            if (empty($degreeNameEnglish) && empty($degreeNameSinhala) && empty($degreeNameTamil) && empty($quaNameEnglish) && empty($quaNameSinhala) && empty($quaNameTamil) && empty($abbreviatedQualification)) {
                 $_SESSION['status_general_info'] = 'Not Started';
                 unset($_SESSION['general_info']);
             } else {
