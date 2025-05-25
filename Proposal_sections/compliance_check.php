@@ -56,6 +56,10 @@ $complianceCheck = $_SESSION['compliance_check'] ?? [
         .form-section p {
             margin-bottom: 15px;
         }
+
+        #fallbackDetails {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -97,34 +101,40 @@ $complianceCheck = $_SESSION['compliance_check'] ?? [
                         <label class="form-check-label" for="fallbackNo">No</label>
                     </div>
 
-                    <div class="mt-3">
-                        <label>b. If yes, state the fallback qualification/s:</label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="fallback_qualification[]" id="diploma" value="Diploma (SLQF 3)" 
-                            <?php if (!empty($complianceCheck['fallback_qualification']) && in_array('Diploma (SLQF 3)', $complianceCheck['fallback_qualification'])) echo 'checked'; ?>>
-                            <label class="form-check-label" for="diploma">Diploma (SLQF 3)</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="fallback_qualification[]" id="higherDiploma" value="Higher Diploma (SLQF 4)" 
-                            <?php if (!empty($complianceCheck['fallback_qualification']) && in_array('Higher Diploma (SLQF 4)', $complianceCheck['fallback_qualification'])) echo 'checked'; ?>>
-                            <label class="form-check-label" for="higherDiploma">Higher Diploma (SLQF 4)</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="fallback_qualification[]" id="bachelorsDegree" value="Bachelors Degree (SLQF 5)" 
-                            <?php if (!empty($complianceCheck['fallback_qualification']) && in_array('Bachelors Degree (SLQF 5)', $complianceCheck['fallback_qualification'])) echo 'checked'; ?>>
-                            <label class="form-check-label" for="bachelorsDegree">Bachelors Degree (SLQF 5)</label>
-                        </div>
+                    <div id="fallbackDetails">
+                    
+                <div class="form-section">
+                    <label>b. If yes, state the fallback qualification/s:</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="fallback_qualification[]" id="diploma" value="Diploma (SLQF 3)" 
+                        <?php if (!empty($complianceCheck['fallback_qualification']) && in_array('Diploma (SLQF 3)', $complianceCheck['fallback_qualification'])) echo 'checked'; ?>>
+                        <label class="form-check-label" for="diploma">Diploma (SLQF 3)</label>
                     </div>
-                    <div class="mt-3">
-                        <label>Attach supporting document (optional):</label>
+
+                <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="fallback_qualification[]" id="higherDiploma" value="Higher Diploma (SLQF 4)" 
+                        <?php if (!empty($complianceCheck['fallback_qualification']) && in_array('Higher Diploma (SLQF 4)', $complianceCheck['fallback_qualification'])) echo 'checked'; ?>>
+                        <label class="form-check-label" for="higherDiploma">Higher Diploma (SLQF 4)</label>
+                </div>
+
+                <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="fallback_qualification[]" id="bachelorsDegree" value="Bachelors Degree (SLQF 5)" 
+                        <?php if (!empty($complianceCheck['fallback_qualification']) && in_array('Bachelors Degree (SLQF 5)', $complianceCheck['fallback_qualification'])) echo 'checked'; ?>>
+                        <label class="form-check-label" for="bachelorsDegree">Bachelors Degree (SLQF 5)</label>
+                </div>
+            </div>
+
+                <div class="form-section">
+                <label>Attach supporting document for fallback qualification. Please review the annexure. <a href="/qac_ugc/Proposal_sections/uploads/Fallback_Qualification.png">View</a></label>
                         <input type="file" class="form-control" name="fallback_attachment"> 
                         <?php if (!empty($_SESSION['compliance_check']['fallback_attachment'])): ?>
-                            <p>Uploaded: 
-                                <a href="<?php echo $_SESSION['compliance_check']['fallback_attachment']; ?>" target="_blank">View File</a>
-                            </p>
+                        <p>Uploaded: 
+                            <a href="<?php echo $_SESSION['compliance_check']['fallback_attachment']; ?>" target="_blank">View File</a>
+                        </p>
                         <?php endif; ?>
-                    </div>
                 </div>
+            </div>
+
 
                 <!-- Aspect 10 -->
                 <div class="form-section">
@@ -218,4 +228,28 @@ $complianceCheck = $_SESSION['compliance_check'] ?? [
         </div>
     </div>
 </body>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const fallbackYes = document.getElementById('fallbackYes');
+    const fallbackNo = document.getElementById('fallbackNo');
+    const fallbackDetails = document.getElementById('fallbackDetails');
+
+    function toggleFallbackDetails() {
+        if (fallbackYes.checked) {
+            fallbackDetails.style.display = 'block';
+        } else {
+            fallbackDetails.style.display = 'none';
+        }
+    }
+
+    // Trigger on load (for edit pages)
+    toggleFallbackDetails();
+
+    // Trigger on change
+    fallbackYes.addEventListener('change', toggleFallbackDetails);
+    fallbackNo.addEventListener('change', toggleFallbackDetails);
+});
+</script>
+
 </html>
