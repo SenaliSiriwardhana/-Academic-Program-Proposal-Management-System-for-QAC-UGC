@@ -72,35 +72,35 @@ $generalInfo = $_SESSION['general_info'] ?? [
 
                 <!-- Degree Name in Multiple Languages -->
                 <div class="mb-3">
-                    <label for="degreeNameEnglish" class="form-label">Name of Degree Programme (English)</label>
+                    <label for="degreeNameEnglish" class="form-label">1.1 Name of Degree Programme (English)</label>
                     <input type="text" class="form-control" id="degreeNameEnglish" name="degree_name_english" value="<?php echo htmlspecialchars($generalInfo['degree_name_english']); ?>" placeholder="Enter the degree name in English" required>
                 </div>
                 <div class="mb-3">
-                    <label for="degreeNameSinhala" class="form-label">Name of Degree Programme (Sinhala)</label>
+                    <label for="degreeNameSinhala" class="form-label">1.2 Name of Degree Programme (Sinhala)</label>
                     <input type="text" class="form-control" id="degreeNameSinhala" name="degree_name_sinhala" value="<?php echo htmlspecialchars($generalInfo['degree_name_sinhala']); ?>" placeholder="Enter the degree name in Sinhala" required>
                 </div>
                 <div class="mb-3">
-                    <label for="degreeNameTamil" class="form-label">Name of Degree Programme (Tamil)</label>
+                    <label for="degreeNameTamil" class="form-label">1.3 Name of Degree Programme (Tamil)</label>
                     <input type="text" class="form-control" id="degreeNameTamil" name="degree_name_tamil" value="<?php echo htmlspecialchars($generalInfo['degree_name_tamil']); ?>" placeholder="Enter the degree name in Tamil" required>
                 </div>
 
                 <!-- Name of the qualification in Multiple Languages -->
                 <div class="mb-3">
-                    <label for="quaNameEnglish" class="form-label">Enter the name of qualification in accordance with SLQF 2015 in English</label>
+                    <label for="quaNameEnglish" class="form-label">1.4 Enter the name of qualification in accordance with SLQF 2015 in English</label>
                     <input type="text" class="form-control" id="quaNameEnglish" name="qua_name_english" value="<?php echo htmlspecialchars($generalInfo['qua_name_english']); ?>" placeholder="Enter the name of qualification in accordance with SLQF 2015 in English" required>
                 </div>
                 <div class="mb-3">
-                    <label for="quaNameSinhala" class="form-label">Enter the name of qualification in accordance with SLQF 2015 in Sinhala]</label>
+                    <label for="quaNameSinhala" class="form-label">1.5 Enter the name of qualification in accordance with SLQF 2015 in Sinhala]</label>
                     <input type="text" class="form-control" id="quaNameSinhala" name="qua_name_sinhala" value="<?php echo htmlspecialchars($generalInfo['qua_name_sinhala']); ?>" placeholder="Enter the name of qualification in accordance with SLQF 2015 in Sinhala" required>
                 </div>
                 <div class="mb-3">
-                    <label for="quaNameTamil" class="form-label">Enter the name of qualification in accordance with SLQF 2015 in Tamil</label>
+                    <label for="quaNameTamil" class="form-label">1.6 Enter the name of qualification in accordance with SLQF 2015 in Tamil</label>
                     <input type="text" class="form-control" id="quaNameTamil" name="qua_name_tamil" value="<?php echo htmlspecialchars($generalInfo['qua_name_tamil']); ?>" placeholder="Enter the name of qualification in accordance with SLQF 2015 in Tamil" required>
                 </div>
 
                 <!-- Abbreviated Qualification -->
                 <div class="mb-3">
-                    <label for="abbreviatedQualificationEnglish" class="form-label">Abbreviated Qualification (English)</label>
+                    <label for="abbreviatedQualificationEnglish" class="form-label">1.7 Abbreviated Qualification (English)</label>
                     <input type="text" class="form-control" id="abbreviatedQualificationEnglish" name="abbreviated_qualification_english" value="<?php echo htmlspecialchars($generalInfo['abbreviated_qualification']); ?>" placeholder="E.g., BSc, BA" required>
                 </div>
 

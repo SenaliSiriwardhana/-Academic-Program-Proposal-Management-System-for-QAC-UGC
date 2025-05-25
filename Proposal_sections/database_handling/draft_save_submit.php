@@ -369,12 +369,14 @@ if (isset($_SESSION['degree_details'])) {
     $slqf_level = isset($_SESSION['degree_details']['slqf_level'])?
         implode(',', array_filter($_SESSION['degree_details']['slqf_level'])) : '';
 
+    $slqf_filled = isset($_SESSION['degree_details']['slqf_filled'])?
+        implode(',', array_filter($_SESSION['degree_details']['slqf_filled'])) : '';
+
     // Handle subject benchmark file path
     $subject_benchmark_path = $_SESSION['degree_details']['subject_benchmark'] ?? '';
     if (!empty($subject_benchmark_path)) {
         $subject_benchmark_path = str_replace('/qac_ugc/uploads/', 'uploads/', $subject_benchmark_path);
     }
-
 
 
     // Handle degree details justification file path
@@ -411,12 +413,13 @@ if (isset($_SESSION['degree_details'])) {
         medium_of_instruction = ?,
         subject_benchmark = CASE WHEN ? != '' THEN ? ELSE subject_benchmark END,
         slqf_level = ?,
+        slqf_filled = ?,
         rec_in_review_report = ?,
         degree_details_justification = CASE WHEN ? != '' THEN ? ELSE degree_details_justification END,
         degree_details_objective = CASE WHEN ? != '' THEN ? ELSE degree_details_objective END
         WHERE proposal_id = ?");
     
-    $stmt->bind_param("sssssssssssssssssssssssssssi", 
+    $stmt->bind_param("ssssssssssssssssssssssssssssi", 
         $_SESSION['degree_details']['background_to_program'],
         $_SESSION['degree_details']['mandate_faculty'],
         $_SESSION['degree_details']['faculty_status'],
@@ -439,6 +442,7 @@ if (isset($_SESSION['degree_details'])) {
         $subject_benchmark_path,
         $subject_benchmark_path,
         $slqf_level,
+        $slqf_filled,
         $_SESSION['degree_details']['rec_in_review_report'],
         $degree_details_justification_path,
         $degree_details_justification_path,

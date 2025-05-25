@@ -120,7 +120,7 @@ if (isset($_GET['proposal_id']) && $isEditing && $initialFetch) {
                 // Convert comma-separated strings to arrays for specific fields
                 foreach ($row as $key => $value) {
                     // Fields that should be treated as arrays
-                    $array_fields = ['medium_of_instruction', 'slqf_level', 'fallback_qualification'];
+                    $array_fields = ['medium_of_instruction', 'slqf_level', 'slqf_filled', 'fallback_qualification'];
                     
                     // If the field name is in our list of array fields
                     if (in_array($key, $array_fields)) {

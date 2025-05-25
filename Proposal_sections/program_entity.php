@@ -99,21 +99,21 @@ $programEntity = $_SESSION['program_entity'] ?? [
 
                 <!-- University Information -->
                 <div class="mb-3">
-                    <label for="university" class="form-label">University</label>
+                    <label for="university" class="form-label">2.1 University</label>
                     <input type="text" class="form-control" id="university" name="university" placeholder="Enter the university name" value="<?php echo htmlspecialchars($university); ?>" readonly> 
                 </div>
                 <div class="mb-3">
-                    <label for="faculty" class="form-label">Faculty/Institute</label>
+                    <label for="faculty" class="form-label">2.2 Faculty/Institute</label>
                     <input type="text" class="form-control" id="faculty" name="faculty" placeholder="Enter the faculty or institute" value="<?php echo htmlspecialchars($programEntity['faculty']); ?>" required>
                 </div>
                 <div class="mb-3">
-                    <label for="department" class="form-label">Department</label>
+                    <label for="department" class="form-label">2.3 Department (s) (if allpicable)</label>
                     <input type="text" class="form-control" id="department" name="department" placeholder="Enter the department (if applicable)"value="<?php echo htmlspecialchars($programEntity['department']); ?>">
                 </div>
 
                 <!-- Mandate Availability -->
                 <div class="mb-3">
-                    <label for="mandateAvailability" class="form-label">Mandate Availability</label>
+                    <label for="mandateAvailability" class="form-label">2.4 Mandate Availability</label>
                     <table>
                         <thead>
                             <tr>

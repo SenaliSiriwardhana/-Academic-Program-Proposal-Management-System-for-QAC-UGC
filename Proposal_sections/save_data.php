@@ -196,6 +196,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         '0' => isset($_POST['targetedSlqfLevel5']) ? 'Level 5 (Bachelors)' : '',
                         '1' => isset($_POST['targetedSlqfLevel6']) ? 'Level 6 (Bachelors Honours - 4 year programme)' : '',
                     ],
+
+                    'slqf_filled' => [
+                        '0' => isset($_POST['slqf_fullfilled_yes']) ? 'Yes' : '',
+                        '1' => isset($_POST['slqf_fullfilled_no']) ? 'No' : '',
+                    ],
+
                     'program_reviews' => []
                 ];
             

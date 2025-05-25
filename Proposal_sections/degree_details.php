@@ -27,6 +27,7 @@ $degreeDetails = $_SESSION['degree_details'] ?? [
     'medium_of_instruction' => '',
     'subject_benchmark' => '',
     'slqf_level' => [],
+    'slqf_filled'=> [],
     'program_reviews' => []
 ];
 
@@ -94,7 +95,7 @@ $degreeDetails = $_SESSION['degree_details'] ?? [
     <div class="container">
         <div class="form-container mx-auto" style="max-width: 800px;">
             <div class="form-header">
-                <h3>Step 3: Details of the Degree Program</h3>
+                <h3>Section 3: Details of the Degree Program</h3>
             </div>
 
             <p class="mt-3">Please provide detailed information about the degree program below.</p>
@@ -104,7 +105,7 @@ $degreeDetails = $_SESSION['degree_details'] ?? [
 
                 <!-- Background to the Program -->
                 <div class="mb-3">
-                    <label for="background_to_program" class="form-label">Background to the Program</label>
+                    <label for="background_to_program" class="form-label">3.1.a. Background to the Program</label>
                     <textarea class="form-control" id="background_to_program" name="background_to_program" rows="5" placeholder="Provide a detailed background" required><?php echo htmlspecialchars($degreeDetails['background_to_program'] ?? ''); ?></textarea>
                 </div>
 
@@ -123,7 +124,7 @@ $degreeDetails = $_SESSION['degree_details'] ?? [
 
                 <!-- Grades Table -->
                 <div class="mb-3">
-                    <label class="form-label">Grades Received at Program Reviews</label>
+                    <label class="form-label">3.1.b. Grades Received at Program Reviews</label>
                     <table>
                         <thead>
                             <tr>
@@ -158,14 +159,14 @@ $degreeDetails = $_SESSION['degree_details'] ?? [
 
                  <!-- Recommendation in review reports -->
                 <div class="mb-3">
-                    <label for="rec_in_review_report" class="form-label">Recommendation in review reports and the action taken</label>
+                    <label for="rec_in_review_report" class="form-label">3.1.c. Recommendation in review reports and the action taken</label>
                     <textarea class="form-control" id=rec_in_review_report" name="rec_in_review_report" rows="3" placeholder="Recommendations in Review Reports and the actions taken" required><?php echo htmlspecialchars($degreeDetails['rec_in_review_report']?? ''); ?></textarea>
                 </div>
 
                 
                 <!-- JUSTIFICATION  -->
                 <div class="mb-3">
-                    <label for="degree_details_justification" class="form-label">Justification. Please review the Annexure.  <a href="/qac_ugc/Proposal_sections/uploads/justification_degree_details.jpg">View</a></label>
+                    <label for="degree_details_justification" class="form-label">3.2 Justification. Please review the Annexure.  <a href="/qac_ugc/Proposal_sections/uploads/justification_degree_details.jpg">View</a></label>
                     <input type="file" class="form-control" name="degree_details_justification">
                     <?php if (!empty($degreeDetails['degree_details_justification'])): ?>
                         <p>Uploaded: 
@@ -176,7 +177,7 @@ $degreeDetails = $_SESSION['degree_details'] ?? [
 
                 <!-- Objective of The Degree Program  -->
                 <div class="mb-3">
-                    <label for="degree_details_objective" class="form-label">Objective of the Degree Programme / Attributes of Qualification Holders/Programming Learning Outcomes. Please review the Annexure.  <a href="/qac_ugc/Proposal_sections/uploads/degree_details_objectives.jpg">View</a></label>
+                    <label for="degree_details_objective" class="form-label">3.3 Objective of the Degree Programme / Attributes of Qualification Holders/Programming Learning Outcomes. Please review the Annexure.  <a href="/qac_ugc/Proposal_sections/uploads/degree_details_objectives.jpg">View</a></label>
                     <input type="file" class="form-control" name="degree_details_objective">
                     <?php if (!empty($degreeDetails['degree_details_objective'])): ?>
                         <p>Uploaded: 
@@ -187,19 +188,19 @@ $degreeDetails = $_SESSION['degree_details'] ?? [
 
                 <!-- Eligibility Requirements -->
                 <div class="mb-3">
-                    <label for="eligibility_req" class="form-label">Eligibility requirements (Qualifications for university admission)</label>
+                    <label for="eligibility_req" class="form-label">3.4.a. Eligibility requirements (Qualifications for university admission)</label>
                     <textarea class="form-control" id="eligibility_req" name="eligibility_req" rows="3" placeholder="List the GCE A/L subject basket" required><?php echo htmlspecialchars($degreeDetails['eligibility_req']?? ''); ?></textarea>
                 </div>
 
                 <!-- Indicate Program -->
                 <div class="mb-3">
-                    <label for="indicate_program" class="form-label">Indicate under which course (programme) of study this programme should be included in the UGC student admission handbook</label>
+                    <label for="indicate_program" class="form-label">3.4.b. Indicate under which course (programme) of study this programme should be included in the UGC student admission handbook</label>
                     <textarea class="form-control" id="indicate_program" name="indicate_program" rows="3" placeholder="Provide details" required><?php echo htmlspecialchars($degreeDetails['indicate_program']?? ''); ?> </textarea>
                 </div>
 
                 <!-- Admission Process -->
                 <div class="mb-3">
-                    <label for="admission_process" class="form-label">Admission Process</label>
+                    <label for="admission_process" class="form-label">3.5 Admission Process</label>
                     <div class="form-check">
                         <input type="checkbox" class="form-check-input" id="admission_process" name="admission_process" value="UGC Z score based selection"
                             <?php if (!empty($degreeDetails['admission_process']) && $degreeDetails['admission_process'] === 'UGC Z score based selection') echo 'checked'; ?>>
@@ -211,7 +212,7 @@ $degreeDetails = $_SESSION['degree_details'] ?? [
 
                 <!-- Proposed Student Intake -->
                 <div class="mb-3">
-                    <label for="intake" class="form-label">Proposed Student Intake</label>
+                    <label for="intake" class="form-label">3.6 Proposed Student Intake</label>
                     <input type="text" class="form-control" id="intake" name="intake" placeholder="Enter number of students per year"
                      value="<?php echo htmlspecialchars($degreeDetails['intake'] ?? ''); ?>">
                     <small class="text-muted">(Please note, the minimum number for a new degree programme is 50 students per year)</small>
@@ -219,7 +220,7 @@ $degreeDetails = $_SESSION['degree_details'] ?? [
 
                 <!-- Programme Duration and Credit Load -->
                 <div class="mb-3">
-                    <h6>Programme Duration and Credit Load</h6>
+                    <h6>3.7 Programme Duration and Credit Load</h6>
                     <div class="mb-2">
                         <label for="degree_type" class="form-label">Bachelor/Bachelor Honours Degree/Professional Degree:</label>
                         <input type="text" class="form-control" id="degree_type" name="degree_type" placeholder="Specify the degree type"
@@ -298,7 +299,7 @@ $degreeDetails = $_SESSION['degree_details'] ?? [
 
                 <!-- Subject Benchmarks -->
                 <div class="mb-3">
-                    <label for="subject_benchmark" class="form-label">Name/s of the Subject Benchmark/s Used. Please review the Annexure.  <a href="/qac_ugc/Proposal_sections/uploads/Annex_Subject_Benchmark_Statement_Mapping.pdf">View</a></label>
+                    <label for="subject_benchmark" class="form-label">3.8 Name/s of the Subject Benchmark/s Used. Please review the Annexure.  <a href="/qac_ugc/Proposal_sections/uploads/Annex_Subject_Benchmark_Statement_Mapping.pdf">View</a></label>
                     <input type="file" class="form-control" name="subject_benchmark">
                     <?php if (!empty($degreeDetails['subject_benchmark'])): ?>
                         <p>Uploaded: 
@@ -309,7 +310,7 @@ $degreeDetails = $_SESSION['degree_details'] ?? [
 
                 <!-- Medium of Instruction -->
                 <div class="mb-3">
-                    <h6>Medium of Instruction</h6>
+                    <h6>3.9 Medium of Instruction</h6>
                     <div class="form-check">
                         <input type="checkbox" class="form-check-input" id="mediumEnglish" name="mediumOfInstructionEnglish" value="English"
                         <?php if (!empty($degreeDetails['medium_of_instruction']) && in_array('English', $degreeDetails['medium_of_instruction'])) echo 'checked'; ?>>
@@ -329,7 +330,7 @@ $degreeDetails = $_SESSION['degree_details'] ?? [
 
                 <!-- Targeted SLQF Level -->
                 <div class="mb-4">
-                    <h6>Targeted Sri Lanka Qualification Framework (SLQF) Level</h6>
+                    <h6>3.10.a. Targeted Sri Lanka Qualification Framework (SLQF) Level</h6>
                     <div class="mb-3">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input" id="targetedSlqf5" name="targetedSlqfLevel5" value="Level 5 (Bachelors)"
@@ -340,6 +341,23 @@ $degreeDetails = $_SESSION['degree_details'] ?? [
                             <input type="checkbox" class="form-check-input" id="targetedSlqf6" name="targetedSlqfLevel6" value="Level 6 (Bachelors Honours - 4 year programme)"
                             <?php if (!empty($degreeDetails['slqf_level']) && in_array('Level 6 (Bachelors Honours - 4 year programme)', $degreeDetails['slqf_level'])) echo 'checked'; ?>>
                             <label for="targetedSlqf6" class="form-check-label">Level 6 (Bachelors Honours - 4 year programme)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Minimum Requirements of SLQF -->
+                <div class="mb-4">
+                    <h6>3.10.b.  Minimum requirements of SLQF fulfilled</h6>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="slqfyes" name="slqf_fullfilled_yes" value="Yes"
+                            <?php if (!empty($degreeDetails['slqf_filled']) && in_array('Yes', $degreeDetails['slqf_filled'])) echo 'checked'; ?>>
+                            <label for="slqf_fullfilled_yes" class="form-check-label">Yes</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="slqfno" name="slqf_fullfilled_no" value="No"
+                            <?php if (!empty($degreeDetails['slqf_filled']) && in_array('No', $degreeDetails['slqf_filled'])) echo 'checked'; ?>>
+                            <label for="slqf_fullfilled_no" class="form-check-label">No</label>
                         </div>
                     </div>
                 </div>
