@@ -276,7 +276,7 @@ while ($row = $result->fetch_assoc()) {
                 <i class="fas fa-file-alt"></i> New Proposals
             </div>
             <ul id="proposalDropdown" class="dropdown-menu">
-                <li><a class="nav-link sub-link" href="new_proposal_undergraduate.php">Undergraduate</a></li>
+                <li><a class="nav-link sub-link" href="new_proposal.php">Undergraduate</a></li>
                 <li><a class="nav-link sub-link" href="new_proposal_postgraduate.php">Postgraduate Programs</a></li>
                 <li><a class="nav-link sub-link" href="new_proposal_external.php">External Programs</a></li>
             </ul>
