@@ -68,7 +68,7 @@ while ($row = $result->fetch_assoc()) {
 
 // Retrieve submitted proposals
 $submittedProposals = [];
-$stmt = $connection->prepare("SELECT proposal_id, status FROM proposals WHERE university_id = ? AND status NOT IN ('draft', 'fresh') ORDER BY proposal_id ASC");
+$stmt = $connection->prepare("SELECT p.proposal_id, p.status, gi.degree_name_english FROM proposals p join proposal_general_info gi ON p.proposal_id = gi.proposal_id  WHERE university_id = ? AND status NOT IN ('draft', 'fresh') ORDER BY proposal_id ASC");
 $stmt->bind_param("i", $university_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -77,11 +77,14 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
+
+
 // Retrieve revised/rejected proposals
 $revisedProposals = [];
 $stmt = $connection->prepare("
     SELECT p.proposal_id, 
            p.status, 
+           gi.degree_name_english,
            c.comment, 
            c.comment_id, 
            c.seal_and_sign, 
@@ -95,6 +98,8 @@ $stmt = $connection->prepare("
             FROM proposal_comments 
             WHERE proposal_id = p.proposal_id
         ) --  Select only the latest comment
+    LEFT JOIN proposal_general_info gi 
+    ON p.proposal_id = gi.proposal_id
     WHERE p.university_id = ? 
       AND p.status LIKE 'rejectedby%' 
     ORDER BY p.proposal_id ASC
@@ -115,7 +120,7 @@ $stmt->close();
 $finalapprovedProposals = [];
 //$stmt = $connection->prepare("SELECT proposal_id, status FROM proposals WHERE university_id = ? AND status IN ('approvedbyugcacademic') ORDER BY proposal_id ASC");
 $stmt = $connection->prepare("
-    SELECT p.proposal_id, p.status, 
+    SELECT p.proposal_id, p.status, gi.degree_name_english,
         COALESCE(pc.comment, 'No Comment') AS latest_comment,
         COALESCE(pc.proposal_status, 'No Status') AS latest_status
     FROM proposals p
@@ -125,6 +130,8 @@ $stmt = $connection->prepare("
             SELECT MAX(comment_id) FROM proposal_comments 
             WHERE proposal_id = p.proposal_id
         )
+    LEFT JOIN proposal_general_info gi 
+    ON p.proposal_id = gi.proposal_id
     WHERE p.university_id = ? 
     AND p.status = 'approvedbyugcacademic'
     ORDER BY p.proposal_id ASC
@@ -316,6 +323,7 @@ unset($row);
                     <thead>
                         <tr>
                             <th>Proposal ID</th>
+                            <th>Degree Name </th>
                             <th>Status</th>
                             
                         </tr>
@@ -327,6 +335,7 @@ unset($row);
                             foreach ($submittedProposals as $proposal) { ?>
                                 <tr>
                                     <td><?php echo htmlspecialchars($proposal['proposal_id']); ?></td>
+                                    <td><?php echo htmlspecialchars($proposal['degree_name_english']); ?></td>
                                     <td><?php echo htmlspecialchars($proposal['status']); ?></td>
                                     
                                 </tr>
@@ -347,6 +356,7 @@ unset($row);
                     <thead>
                         <tr>
                             <th>Proposal ID</th>
+                            <th>Degree Name </th>
                             <th>Status</th>
                             <th>Comment</th>
                             <th>Action</th>
@@ -359,6 +369,7 @@ unset($row);
                             foreach ($revisedProposals as $proposal) { ?>
                                 <tr>
                                     <td><?php echo htmlspecialchars($proposal['proposal_id']); ?></td>
+                                    <td><?php echo htmlspecialchars($proposal['degree_name_english']); ?></td>
                                     <td><?php echo htmlspecialchars($proposal['status']); ?></td>
                                     <td><?php echo htmlspecialchars($proposal['comment'] ?? "No Comment"); ?></td>
                                     <td>
@@ -381,6 +392,7 @@ unset($row);
             <thead>
                 <tr>
                     <th>Proposal ID</th>
+                    <th>Degree Name </th>
                     <th>Status</th>
                     <th>Comment</th>
                     <th>Action</th>
@@ -394,6 +406,7 @@ unset($row);
                 ?>
                     <tr>
                         <td><?php echo htmlspecialchars($proposal['proposal_id']); ?></td>
+                        <td><?php echo htmlspecialchars($proposal['degree_name_english']); ?></td>
                         <td><?php echo htmlspecialchars($proposal['latest_status']); ?></td>
                         <td><?php echo htmlspecialchars($proposal['latest_comment']); ?></td>
                         <td>

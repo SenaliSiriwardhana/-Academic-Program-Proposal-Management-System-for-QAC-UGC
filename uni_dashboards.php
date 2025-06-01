@@ -95,9 +95,11 @@ $_SESSION['university_id'] = $university_id;
 // Fetch pending proposals that match the required status
 $pendingProposals = [];
 $stmt = $connection->prepare("
-    SELECT p.proposal_id, p.submitted_at, u.first_name, u.last_name, u.email
+    SELECT p.proposal_id, p.submitted_at, u.first_name, u.last_name, u.email, gi.degree_name_english
     FROM proposals p
     JOIN users u ON p.created_by = u.id
+    LEFT JOIN proposal_general_info gi 
+    ON p.proposal_id = gi.proposal_id
     WHERE p.status = ? 
     AND u.university_id = ? 
     ORDER BY p.submitted_at ASC
@@ -293,6 +295,7 @@ $stmt->close();
             <table class="table">
                 <tr>
                     <th>Proposal ID</th>
+                    <th>Degree Name</th>
                     <th>Submitted Date</th>
                     <th>Submitted By</th>
                     <th>Action</th>
@@ -300,6 +303,7 @@ $stmt->close();
                 <?php foreach ($pendingProposals as $proposal) { ?>
                     <tr>
                         <td><?php echo $proposal['proposal_id']; ?></td>
+                        <td><?php echo $proposal['degree_name_english']; ?></td>
                         <td><?php echo $proposal['submitted_at']; ?></td>
                         <td><?php echo $proposal['first_name'] . " " . $proposal['last_name']; ?></td>
                         <td><a href="review_proposal.php?id=<?php echo $proposal['proposal_id']; ?>" class="btn btn-primary">Review</a></td>
@@ -318,7 +322,7 @@ $stmt->close();
             <table class="table">
                 <tr>
                     <th>Proposal ID</th>
-                    <th>Degree Program Title </th>
+                    <th>Degree Name </th>
                     <th>Status</th>
                     
                 </tr>
