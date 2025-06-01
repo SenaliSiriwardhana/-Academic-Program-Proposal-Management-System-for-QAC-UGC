@@ -136,13 +136,13 @@ function deleteUploadedFiles($section) {
         }
 
         .image-container {
-    text-align: center;
-}
+            text-align: center;
+        }
 
-.image-container img {
-    max-width: 80%;
-    height: auto;
-}
+        .image-container img {
+            max-width: 80%;
+            height: auto;
+        }
         
         .card {
             border: none;
