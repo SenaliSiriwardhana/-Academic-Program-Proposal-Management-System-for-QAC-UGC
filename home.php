@@ -217,8 +217,7 @@ if ($result->num_rows > 0) {
 
 
     <footer>
-        Copyright © 2024 University Grants Commission. All rights reserved.
-        <br>Developed by UGC
+        Copyright © 2024 University Grants Commission. Developed by UGC.
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

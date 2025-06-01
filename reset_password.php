@@ -26,15 +26,18 @@
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
         }
 
+        
+
         .btn-success {
-            background-color: #28a745;
+            background: linear-gradient(45deg, #007bff, #0056b3);
             border: none;
             border-radius: 5px;
             font-size: 16px;
         }
-
+        
         .btn-success:hover {
-            background-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
         }
 
         .form-control {
@@ -49,6 +52,18 @@
             cursor: pointer;
             color: #6c757d;
         }
+
+       footer {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
+
+      
     </style>
 </head>
 <body>
@@ -163,5 +178,9 @@
             }
         }
     </script>
+
+    <footer>
+        Copyright © 2024 University Grants Commission. Developed by UGC.
+    </footer>
 </body>
 </html>

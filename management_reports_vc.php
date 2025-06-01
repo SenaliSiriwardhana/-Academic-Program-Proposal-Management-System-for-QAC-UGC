@@ -124,6 +124,15 @@ foreach ($months as $month) {
 <head>
     <title>Management Reports - Proposal Approval Rate</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+    <style>
+         footer {
+            margin-top: 20px;
+            font-size: 14px;
+            text-align: center;
+            color: #7f8c8d;
+        }
+    </style>
 </head>
 <body>
     <div class="container my-5">
@@ -154,6 +163,6 @@ foreach ($months as $month) {
             </table>
     </div>
 </div>
-
+<footer>Copyright © 2024 University Grants Commission. Developed by UGC.</footer>
 </body>
 </html>

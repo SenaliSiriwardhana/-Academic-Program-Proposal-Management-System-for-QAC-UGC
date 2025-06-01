@@ -270,16 +270,17 @@ while ($row = $result->fetch_assoc()) {
             <li class="nav-item">
                 <a class="nav-link" href="submitted_proposals.php"><i class="fas fa-home"></i> Dashboard</a>
             </li>
+
            <li class="nav-item">
-    <div class="nav-link dropdown-toggle" style="cursor: pointer;" onclick="toggleDropdown(event)">
-        <i class="fas fa-file-alt"></i> New Proposals
-    </div>
-    <ul id="proposalDropdown" class="dropdown-menu">
-        <li><a class="nav-link sub-link" href="new_proposal.php">Undergraduate Programs</a></li>
-        <li><a class="nav-link sub-link" href="new_proposal_postgraduate.php">Postgraduate Programs</a></li>
-        <li><a class="nav-link sub-link" href="new_proposal_external.php">External Programs</a></li>
-    </ul>
-</li>
+             <div class="nav-link dropdown-toggle" style="cursor: pointer;" onclick="toggleDropdown(event)">
+                <i class="fas fa-file-alt"></i> New Proposals
+            </div>
+            <ul id="proposalDropdown" class="dropdown-menu">
+                <li><a class="nav-link sub-link" href="new_proposal_undergraduate.php">Undergraduate</a></li>
+                <li><a class="nav-link sub-link" href="new_proposal_postgraduate.php">Postgraduate Programs</a></li>
+                <li><a class="nav-link sub-link" href="new_proposal_external.php">External Programs</a></li>
+            </ul>
+            </li>
 
 
           
@@ -367,5 +368,11 @@ while ($row = $result->fetch_assoc()) {
     
 
     </script>
+
+    
+
+    <footer>
+        Copyright © 2024 University Grants Commission. Developed by UGC.
+    </footer>
 </body>
 </html>

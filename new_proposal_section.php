@@ -446,6 +446,15 @@ $badgeClass11 = $statusComplianceCheck === 'Completed' ? 'bg-success' : 'bg-seco
         .badge {
             display: <?php echo $isEditing ? 'none' : 'inline-block' ?>;
         }
+
+         footer {
+            margin-top: 20px;
+            font-size: 14px;
+            text-align: center;
+            color: #7f8c8d;
+        }
+
+        
     </style>
 </head>
 <body>
@@ -565,7 +574,9 @@ $badgeClass11 = $statusComplianceCheck === 'Completed' ? 'bg-success' : 'bg-seco
    
     </script>
 
-
+ <footer>
+        Copyright © 2024 University Grants Commission. Developed by UGC.
+    </footer>
 
 </body>
 </html>

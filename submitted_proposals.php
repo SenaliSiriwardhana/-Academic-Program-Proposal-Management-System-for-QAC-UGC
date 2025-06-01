@@ -321,6 +321,13 @@ unset($row);
             border-radius: 4px;
         }
 
+         footer {
+            margin-top: 20px;
+            font-size: 14px;
+            text-align: center;
+            color: #7f8c8d;
+        }
+
     </style>
 </head>
 <body>
@@ -505,5 +512,11 @@ unset($row);
     
 
     </script>
+
+    
+
+    <footer>
+        Copyright © 2024 University Grants Commission. Developed by UGC.
+    </footer>
 </body>
 </html>

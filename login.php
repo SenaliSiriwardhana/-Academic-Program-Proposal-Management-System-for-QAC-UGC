@@ -182,6 +182,14 @@ $connection->close();
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        footer {
+            margin-top: 20px;
+            font-size: 14px;
+            text-align: center;
+            color: #7f8c8d;
+        }
+
+       
     </style>
 </head>
 <body>
@@ -217,6 +225,11 @@ $connection->close();
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+     <footer>
+        Copyright © 2024 University Grants Commission. Developed by UGC.
+    </footer>
+
 </body>
 </html>
 
