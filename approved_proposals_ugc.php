@@ -44,9 +44,11 @@ $dashboardTitle = $ugc_settings[$_SESSION['role']]['title'];
 $statusFilter = $ugc_settings[$_SESSION['role']]['status'];
 
 // Fetch all rejected proposals for the user's UGC department
-$query = "SELECT p.proposal_id, p.submitted_at, p.status, u.first_name, u.last_name
+$query = "SELECT p.proposal_id, p.submitted_at, p.status, u.first_name, u.last_name, gi.degree_name_english
           FROM proposals p
           JOIN users u ON p.created_by = u.id  --  Join users table to get creator's details
+          LEFT JOIN proposal_general_info gi 
+          ON p.proposal_id = gi.proposal_id -- Join with general info to get degree name
           WHERE p.status = ?
           ORDER BY p.submitted_at DESC";
 
@@ -182,6 +184,7 @@ $stmt->close();
             <table class="table">
                 <tr>
                     <th>Proposal ID</th>
+                    <th>Degree Name </th>
                     <th>Submitted Date</th>
                     <th>Submitted By</th>
                    
@@ -189,6 +192,7 @@ $stmt->close();
                 <?php while ($row = $result->fetch_assoc()) { ?>
                     <tr>
                         <td><?php echo $row['proposal_id']; ?></td>
+                        <td><?php echo $row['degree_name_english']; ?></td>
                         <td><?php echo $row['submitted_at']; ?></td>
                         <td><?php echo $row['first_name'] . " " . $row['last_name']; ?></td>
                         
