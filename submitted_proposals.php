@@ -280,6 +280,47 @@ unset($row);
             text-align: center;
             color: #7f8c8d;
         }
+
+        /* Dropdown menu */
+        .dropdown-menu 
+        {
+            list-style: none;
+            padding-left: 20px;
+            display: none;
+            flex-direction: column;
+            background: #2c3e50;    /* Light background, change as needed */
+            border: 1px solid #ccc; /* Border to distinguish */
+            width: 150px;
+            position: absolute;      /* Position relative to dropdown container */
+            z-index: 1000;
+        }
+
+        .dropdown-menu li 
+        {
+            margin-top: 5px;
+            display:flex;
+        }
+
+        .nav-link.dropdown-toggle 
+        {
+            cursor: pointer;
+        }
+
+        .sub-link 
+        {
+            font-size: 14px;
+            padding-left: 25px;
+            color:rgba(36, 35, 35, 0.88);
+            transition: 0.3s;
+        }
+
+        .sub-link:hover 
+        {
+            color: black;
+            background-color: #34495e;
+            border-radius: 4px;
+        }
+
     </style>
 </head>
 <body>
@@ -296,9 +337,16 @@ unset($row);
             <li class="nav-item">
                 <a class="nav-link" href="submitted_proposals.php"><i class="fas fa-home"></i> Dashboard</a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" href="new_proposal.php"><i class="fas fa-file-alt"></i> New Proposals</a>
-            </li>
+           <li class="nav-item">
+    <div class="nav-link dropdown-toggle" style="cursor: pointer;" onclick="toggleDropdown(event)">
+        <i class="fas fa-file-alt"></i> New Proposals
+    </div>
+    <ul id="proposalDropdown" class="dropdown-menu">
+        <li><a class="nav-link sub-link" href="new_proposal.php">Undergraduate Programs</a></li>
+        <li><a class="nav-link sub-link" href="new_proposal_postgraduate.php">Postgraduate Programs</a></li>
+        <li><a class="nav-link sub-link" href="new_proposal_external.php">External Programs</a></li>
+    </ul>
+</li>
 
             <li class="nav-item">
                 <hr class="text-light">
@@ -448,6 +496,14 @@ unset($row);
             document.getElementById('sidebar').classList.toggle('collapsed');
             document.getElementById('main-content').classList.toggle('collapsed');
         }
+
+    
+        function toggleDropdown() {
+            const menu = document.getElementById('proposalDropdown');
+            menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+        }
+    
+
     </script>
 </body>
 </html>
