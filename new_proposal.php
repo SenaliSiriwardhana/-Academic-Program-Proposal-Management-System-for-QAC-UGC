@@ -376,8 +376,7 @@ while ($row = $result->fetch_assoc()) {
                     <table class="table table-striped">
                         <thead>
                             <tr>
-                                <th>Proposal ID</th>
-                                <th>Proposal Name</th>
+                                <th>Proposal Code</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -388,7 +387,6 @@ while ($row = $result->fetch_assoc()) {
                             <?php } else {
                                 foreach ($drafts as $draft) { ?>
                                     <tr>
-                                        <td><?php echo htmlspecialchars($draft['proposal_id']); ?></td>
                                         <td><?php echo htmlspecialchars($draft['proposal_code']); ?></td>
                                         <td><?php echo htmlspecialchars($draft['status']); ?></td>
                                         <td>
