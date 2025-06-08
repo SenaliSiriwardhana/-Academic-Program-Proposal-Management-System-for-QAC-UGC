@@ -95,7 +95,7 @@ $_SESSION['university_id'] = $university_id;
 // Fetch pending proposals that match the required status
 $pendingProposals = [];
 $stmt = $connection->prepare("
-    SELECT p.proposal_id, p.submitted_at, u.first_name, u.last_name, u.email, gi.degree_name_english
+    SELECT p.proposal_id, p.proposal_code, p.submitted_at, u.first_name, u.last_name, u.email, gi.degree_name_english
     FROM proposals p
     JOIN users u ON p.created_by = u.id
     LEFT JOIN proposal_general_info gi 
@@ -150,7 +150,7 @@ $stmt->close();
 
 // Retrieve submitted proposals
 $submittedProposals = [];
-$stmt = $connection->prepare("SELECT p.proposal_id, p.status, gi.degree_name_english FROM proposals p JOIN proposal_general_info gi ON p.proposal_id = gi.proposal_id WHERE p.university_id = ? AND p.status NOT IN ('draft', 'fresh','submitted') ORDER BY p.proposal_id ASC");
+$stmt = $connection->prepare("SELECT p.proposal_id,p.proposal_code, p.status, gi.degree_name_english FROM proposals p JOIN proposal_general_info gi ON p.proposal_id = gi.proposal_id WHERE p.university_id = ? AND p.status NOT IN ('draft', 'fresh','submitted') ORDER BY p.proposal_id ASC");
 $stmt->bind_param("i", $university_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -294,7 +294,8 @@ $stmt->close();
         <div class="card-body">
             <table class="table">
                 <tr>
-                    <th>Proposal ID</th>
+                    
+                    <th>Proposal Code</th>
                     <th>Degree Name</th>
                     <th>Submitted Date</th>
                     <th>Submitted By</th>
@@ -302,7 +303,8 @@ $stmt->close();
                 </tr>
                 <?php foreach ($pendingProposals as $proposal) { ?>
                     <tr>
-                        <td><?php echo $proposal['proposal_id']; ?></td>
+                        
+                        <td><?php echo $proposal['proposal_code']; ?></td>
                         <td><?php echo $proposal['degree_name_english']; ?></td>
                         <td><?php echo $proposal['submitted_at']; ?></td>
                         <td><?php echo $proposal['first_name'] . " " . $proposal['last_name']; ?></td>
@@ -321,14 +323,14 @@ $stmt->close();
         <div class="card-body">
             <table class="table">
                 <tr>
-                    <th>Proposal ID</th>
+                    <th>Proposal Code</th>
                     <th>Degree Name </th>
                     <th>Status</th>
                     
                 </tr>
                 <?php foreach ($submittedProposals as $proposal) { ?>
                     <tr>
-                        <td><?php echo $proposal['proposal_id']; ?></td>
+                        <td><?php echo $proposal['proposal_code']; ?></td>
                         <td><?php echo $proposal['degree_name_english']; ?></td>
                         <td><?php echo $proposal['status']; ?></td>
                         

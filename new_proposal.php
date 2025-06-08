@@ -33,6 +33,36 @@ if ($result->num_rows > 0) {
     $_SESSION['university'] = $university;
 }
 
+// Get the proposal type from the URL parameter
+$proposal_type = isset($_GET['type']) ? $_GET['type'] : '';
+//echo "<pre>Proposal Type: $proposal_type</pre>";
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['proposal_type'])) {
+    $proposal_type = $_POST['proposal_type'];
+}
+
+$type_prefix = '';
+//echo "<pre>Proposal Type: $type_prefix</pre>";
+// Set the prefix based on proposal type
+switch($proposal_type) {
+    case 'undergraduate':
+        $type_prefix = 'UG';
+        break;
+    case 'postgraduate':
+        $type_prefix = 'PG';
+        break;
+    case 'external':
+        $type_prefix = 'EXT';
+        break;
+    
+    default:
+        error_log("Invalid proposal type: " . $proposal_type);
+    break;
+
+    
+}
+echo "<pre>Proposal Type (2): $type_prefix</pre>";
+
 
 // Define the upload directory
 $uploadDir = __DIR__ . '/../uploads/';  // Adjust path if necessary
@@ -53,6 +83,8 @@ function deleteUploadedFiles($section) {
         }
     }
 }
+
+
 
 //  If "Create New Proposal" button is clicked, reset all sections & delete files
 if (isset($_POST['create_new_proposal'])) {
@@ -76,16 +108,36 @@ if (isset($_POST['create_new_proposal'])) {
     }
 
     unset($_SESSION['proposal_id']);
-
+    
     //  Insert a new proposal
     $sql = "INSERT INTO proposals (university_id, created_at, status, created_by) VALUES (?, NOW(), 'fresh', ?)";
     $stmt = $connection->prepare($sql);
     $stmt->bind_param("ii", $university_id, $user_id);
 
+    
     if ($stmt->execute()) {
         $new_proposal_id = $stmt->insert_id;
         $_SESSION['proposal_id'] = $new_proposal_id;
-
+        
+       
+         // Always update proposal title with type prefix (even if empty)
+        $proposal_title = $type_prefix . $new_proposal_id;
+        //echo "<pre>Proposal Type: $proposal_title</pre>";
+        $update_sql = "UPDATE proposals SET proposal_code = ? WHERE proposal_id = ?";
+        $update_stmt = $connection->prepare($update_sql);
+    
+    if ($update_stmt) {
+        $update_stmt->bind_param("si", $proposal_title, $new_proposal_id);
+        if (!$update_stmt->execute()) {
+            error_log("Failed to update proposal_code: " . $update_stmt->error);
+        }
+        $update_stmt->close();
+    } else {
+        error_log("Prepare failed for update_stmt: " . $connection->error);
+    }
+    
+        
+        
         // Redirect to proposal_section.php with the proposal_id
         header("Location: new_proposal_section.php?proposal_id=" . $new_proposal_id);
         exit();
@@ -102,7 +154,7 @@ if (isset($_POST['create_new_proposal'])) {
 
 
 $drafts = [];
-$stmt = $connection->prepare("SELECT proposal_id, status FROM proposals WHERE status = 'draft' AND created_by = ? ORDER BY proposal_id ASC");
+$stmt = $connection->prepare("SELECT proposal_id, proposal_code, status FROM proposals WHERE status = 'draft' AND created_by = ? ORDER BY proposal_id ASC");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -248,13 +300,7 @@ while ($row = $result->fetch_assoc()) {
         }
 
     </style>
-    <script>
-        function confirmNewProposal() {
-            if (confirm("Are you sure you want to start a new proposal? This will create a fresh start and previous data will be lost.")) {
-                window.location.href = "new_proposal_section.php";
-            }
-        }
-    </script>
+   
 </head>
 <body>
 
@@ -276,9 +322,9 @@ while ($row = $result->fetch_assoc()) {
                 <i class="fas fa-file-alt"></i> New Proposals
             </div>
             <ul id="proposalDropdown" class="dropdown-menu">
-                <li><a class="nav-link sub-link" href="new_proposal.php">Undergraduate</a></li>
-                <li><a class="nav-link sub-link" href="new_proposal_postgraduate.php">Postgraduate Programs</a></li>
-                <li><a class="nav-link sub-link" href="new_proposal_external.php">External Programs</a></li>
+                <li><a class="nav-link sub-link" href="new_proposal.php?type=undergraduate">Undergraduate</a></li>
+                <li><a class="nav-link sub-link" href="new_proposal_postgraduate.php?type=postgraduate">Postgraduate Programs</a></li>
+                <li><a class="nav-link sub-link" href="new_proposal_external.php?type=external">External Programs</a></li>
             </ul>
             </li>
 
@@ -316,8 +362,11 @@ while ($row = $result->fetch_assoc()) {
             </div>
 
              <!-- Create New Proposal Button -->
-             <form id="newProposalForm" action="new_proposal.php" method="POST">
+             <form id="newProposalForm" action="new_proposal.php" method="POST" onsubmit="return confirm('Are you sure you want to start a new proposal? This will create a fresh start and previous data will be lost.');">
                 <button onclick="confirmNewProposal()" type="submit" name="create_new_proposal" class="btn btn-secondary mb-4">Create New Proposal</button>
+
+            <!-- this hidden input moves the proposal_type from the URL into the POST data -->
+                <input type="hidden" name="proposal_type" value="<?php echo htmlspecialchars($proposal_type); ?>">
             </form>
 
             <!-- Draft Proposals Table -->
@@ -328,6 +377,7 @@ while ($row = $result->fetch_assoc()) {
                         <thead>
                             <tr>
                                 <th>Proposal ID</th>
+                                <th>Proposal Name</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -339,6 +389,7 @@ while ($row = $result->fetch_assoc()) {
                                 foreach ($drafts as $draft) { ?>
                                     <tr>
                                         <td><?php echo htmlspecialchars($draft['proposal_id']); ?></td>
+                                        <td><?php echo htmlspecialchars($draft['proposal_code']); ?></td>
                                         <td><?php echo htmlspecialchars($draft['status']); ?></td>
                                         <td>
                                         <a href="new_proposal_section.php?proposal_id=<?php echo htmlspecialchars($draft['proposal_id']); ?>&edit=true&initial" class="btn btn-primary btn-sm">Edit</a>

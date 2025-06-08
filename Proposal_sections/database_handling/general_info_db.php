@@ -29,14 +29,14 @@ $proposal_id = $_SESSION['proposal_id'] ?? null;
 
 // Fetch saved data only if session is empty
 if ($proposal_id && !isset($_SESSION['proposal_general_info'])) {
-    $stmt = $connection->prepare("SELECT degree_name_english, degree_name_sinhala, degree_name_tamil, qua_name_english, qua_name_sinhala, qua_name_tamil, abbreviated_qualification FROM proposal_general_info WHERE proposal_id = ?");
+    $stmt = $connection->prepare("SELECT degree_name_english, degree_name_sinhala, degree_name_tamil, qualification_name_english, qualification_name_sinhala, qualification_name_tamil, abbreviated_qualification FROM proposal_general_info WHERE proposal_id = ?");
     $stmt->bind_param("i", $proposal_id);
     $stmt->execute();
     $result = $stmt->get_result();
     if ($row = $result->fetch_assoc()) {
         $_SESSION['proposal_general_info'] = $row;
     } else {
-        $_SESSION['proposal_general_info'] = ['degree_name_english' => '', 'degree_name_sinhala' => '', 'degree_name_tamil' => '','qua_name_english' => '', 'qua_name_sinhala' => '', 'qua_name_tamil' => '', 'abbreviated_qualification' => ''];
+        $_SESSION['proposal_general_info'] = ['degree_name_english' => '', 'degree_name_sinhala' => '', 'degree_name_tamil' => '','qualification_name_english' => '', 'qualification_name_sinhala' => '', 'qualification_name_tamil' => '', 'abbreviated_qualification' => ''];
     }
 }
 // Only store in session, don't save to database here
@@ -45,9 +45,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         'degree_name_english' => $_POST['degree_name_english'],
         'degree_name_sinhala' => $_POST['degree_name_sinhala'],
         'degree_name_tamil' => $_POST['degree_name_tamil'],
-        'qua_name_english' => $_POST['qua_name_english'],
-        'qua_name_sinhala' => $_POST['qua_name_sinhala'],
-        'qua_name_tamil' => $_POST['qua_name_tamil'],
+        'qualification_name_english' => $_POST['qualification_name_english'],
+        'qualification_name_sinhala' => $_POST['qualification_name_sinhala'],
+        'qualification_name_tamil' => $_POST['qualification_name_tamil'],
         'abbreviated_qualification' => $_POST['abbreviated_qualification']
     ];
     
@@ -67,15 +67,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Save to database immediately
     $stmt = $connection->prepare("INSERT INTO proposal_general_info 
-        (proposal_id, degree_name_english, degree_name_sinhala, degree_name_tamil, qua_name_english, qua_name_sinhala, qua_name_tamil, abbreviated_qualification) 
+        (proposal_id, degree_name_english, degree_name_sinhala, degree_name_tamil, qualification_name_english, qualification_name_sinhala, qualification_name_tamil, abbreviated_qualification) 
         VALUES (?, ?, ?, ?, ?) 
         ON DUPLICATE KEY UPDATE 
         degree_name_english = VALUES(degree_name_english),
         degree_name_sinhala = VALUES(degree_name_sinhala),
         degree_name_tamil = VALUES(degree_name_tamil),
-        qua_name_english = VALUES(qua_name_english),
-        qua_name_sinhala = VALUES(qua_name_sinhala),
-        qua_name_tamil = VALUES(qua_name_tamil),
+        qualification_name_english = VALUES(qualification_name_english),
+        qualification_name_sinhala = VALUES(qualification_name_sinhala),
+        qualification_name_tamil = VALUES(qualification_name_tamil),
         abbreviated_qualification = VALUES(abbreviated_qualification)");
     
     if ($stmt) {
@@ -84,10 +84,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_POST['degree_name_english'],
             $_POST['degree_name_sinhala'],
             $_POST['degree_name_tamil'],
-            $_POST['qua_name_english'],
-            $_POST['qua_name_sinhala'],
-            $_POST['qua_name_tamil'],
-            $_POST['qua_qualification']
+            $_POST['qualification_name_english'],
+            $_POST['qulificationa_name_sinhala'],
+            $_POST['qualification_name_tamil'],
+            $_POST['abbreviated_qualification']
         );
         
         if (!$stmt->execute()) {

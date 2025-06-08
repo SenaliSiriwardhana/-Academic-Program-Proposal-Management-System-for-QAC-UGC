@@ -207,9 +207,9 @@ if (isset($_SESSION['general_info'])) {
         degree_name_english = ?, 
         degree_name_sinhala = ?, 
         degree_name_tamil = ?, 
-        qua_name_english = ?, 
-        qua_name_sinhala = ?, 
-        qua_name_tamil = ?, 
+        qualification_name_english = ?, 
+        qualification_name_sinhala = ?, 
+        qualification_name_tamil = ?, 
         abbreviated_qualification = ? 
         WHERE proposal_id = ?");
     
@@ -217,9 +217,9 @@ if (isset($_SESSION['general_info'])) {
         $_SESSION['general_info']['degree_name_english'],
         $_SESSION['general_info']['degree_name_sinhala'],
         $_SESSION['general_info']['degree_name_tamil'],
-        $_SESSION['general_info']['qua_name_english'],
-        $_SESSION['general_info']['qua_name_sinhala'],
-        $_SESSION['general_info']['qua_name_tamil'],
+        $_SESSION['general_info']['qualification_name_english'],
+        $_SESSION['general_info']['qualification_name_sinhala'],
+        $_SESSION['general_info']['qualification_name_tamil'],
         $_SESSION['general_info']['abbreviated_qualification'],
         $proposal_id
     );

@@ -57,7 +57,7 @@ function deleteUploadedFiles($section) {
 
 // Retrieve list of draft proposals
 $drafts = [];
-$stmt = $connection->prepare("SELECT proposal_id, status FROM proposals WHERE status = 'submitted' AND university_id = ? ORDER BY proposal_id ASC");
+$stmt = $connection->prepare("SELECT proposal_id, proposal_code, status FROM proposals WHERE status = 'submitted' AND university_id = ? ORDER BY proposal_id ASC");
 $stmt->bind_param("i", $university_id); // Bind parameters 
 $stmt->execute();
 $result = $stmt->get_result();
@@ -68,7 +68,7 @@ while ($row = $result->fetch_assoc()) {
 
 // Retrieve submitted proposals
 $submittedProposals = [];
-$stmt = $connection->prepare("SELECT p.proposal_id, p.status, gi.degree_name_english FROM proposals p join proposal_general_info gi ON p.proposal_id = gi.proposal_id  WHERE university_id = ? AND status NOT IN ('draft', 'fresh') ORDER BY proposal_id ASC");
+$stmt = $connection->prepare("SELECT p.proposal_id, p.proposal_code, p.status, gi.degree_name_english FROM proposals p join proposal_general_info gi ON p.proposal_id = gi.proposal_id  WHERE university_id = ? AND status NOT IN ('draft', 'fresh') ORDER BY proposal_id ASC");
 $stmt->bind_param("i", $university_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -83,6 +83,7 @@ $stmt->close();
 $revisedProposals = [];
 $stmt = $connection->prepare("
     SELECT p.proposal_id, 
+           p.proposal_code,
            p.status, 
            gi.degree_name_english,
            c.comment, 
@@ -120,7 +121,7 @@ $stmt->close();
 $finalapprovedProposals = [];
 //$stmt = $connection->prepare("SELECT proposal_id, status FROM proposals WHERE university_id = ? AND status IN ('approvedbyugcacademic') ORDER BY proposal_id ASC");
 $stmt = $connection->prepare("
-    SELECT p.proposal_id, p.status, gi.degree_name_english,
+    SELECT p.proposal_id,p.proposal_code, p.status, gi.degree_name_english,
         COALESCE(pc.comment, 'No Comment') AS latest_comment,
         COALESCE(pc.proposal_status, 'No Status') AS latest_status
     FROM proposals p
@@ -349,9 +350,9 @@ unset($row);
         <i class="fas fa-file-alt"></i> New Proposals
     </div>
     <ul id="proposalDropdown" class="dropdown-menu">
-        <li><a class="nav-link sub-link" href="new_proposal.php">Undergraduate Programs</a></li>
-        <li><a class="nav-link sub-link" href="new_proposal_postgraduate.php">Postgraduate Programs</a></li>
-        <li><a class="nav-link sub-link" href="new_proposal_external.php">External Programs</a></li>
+        <li><a class="nav-link sub-link" href="new_proposal.php?type=undergraduate">Undergraduate Programs</a></li>
+        <li><a class="nav-link sub-link" href="new_proposal_postgraduate.php?type=postgraduate">Postgraduate Programs</a></li>
+        <li><a class="nav-link sub-link" href="new_proposal_external.php?type=external">External Programs</a></li>
     </ul>
 </li>
 
@@ -377,7 +378,7 @@ unset($row);
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>Proposal ID</th>
+                            <th>Proposal Code</th>
                             <th>Degree Name </th>
                             <th>Status</th>
                             
@@ -389,7 +390,7 @@ unset($row);
                         <?php } else {
                             foreach ($submittedProposals as $proposal) { ?>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($proposal['proposal_id']); ?></td>
+                                    <td><?php echo htmlspecialchars($proposal['proposal_code']); ?></td>
                                     <td><?php echo htmlspecialchars($proposal['degree_name_english']); ?></td>
                                     <td><?php echo htmlspecialchars($proposal['status']); ?></td>
                                     
@@ -410,7 +411,7 @@ unset($row);
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>Proposal ID</th>
+                            <th>Proposal Code</th>
                             <th>Degree Name </th>
                             <th>Status</th>
                             <th>Comment</th>
@@ -423,7 +424,7 @@ unset($row);
                         <?php } else {
                             foreach ($revisedProposals as $proposal) { ?>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($proposal['proposal_id']); ?></td>
+                                    <td><?php echo htmlspecialchars($proposal['proposal_code']); ?></td>
                                     <td><?php echo htmlspecialchars($proposal['degree_name_english']); ?></td>
                                     <td><?php echo htmlspecialchars($proposal['status']); ?></td>
                                     <td><?php echo htmlspecialchars($proposal['comment'] ?? "No Comment"); ?></td>
@@ -446,7 +447,7 @@ unset($row);
         <table class="table">
             <thead>
                 <tr>
-                    <th>Proposal ID</th>
+                    <th>Proposal Code</th>
                     <th>Degree Name </th>
                     <th>Status</th>
                     <th>Comment</th>
@@ -460,7 +461,7 @@ unset($row);
 
                 ?>
                     <tr>
-                        <td><?php echo htmlspecialchars($proposal['proposal_id']); ?></td>
+                        <td><?php echo htmlspecialchars($proposal['proposal_code']); ?></td>
                         <td><?php echo htmlspecialchars($proposal['degree_name_english']); ?></td>
                         <td><?php echo htmlspecialchars($proposal['latest_status']); ?></td>
                         <td><?php echo htmlspecialchars($proposal['latest_comment']); ?></td>

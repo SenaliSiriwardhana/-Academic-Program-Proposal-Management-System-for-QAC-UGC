@@ -45,7 +45,7 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 $proposal_id = $_GET['id'];
 
 // Fetch proposal details
-$proposalQuery = "SELECT proposal_id, status, created_at, updated_at, submitted_at FROM proposals WHERE proposal_id = ?";
+$proposalQuery = "SELECT proposal_code, status, created_at, updated_at, submitted_at FROM proposals WHERE proposal_id = ?";
 $stmt = $connection->prepare($proposalQuery);
 $stmt->bind_param("i", $proposal_id);
 $stmt->execute();
@@ -92,9 +92,9 @@ $generalInfoQuery = "SELECT
   degree_name_english,
   degree_name_sinhala,
   degree_name_tamil,
-  qua_name_english,
-  qua_name_sinhala,
-  qua_name_tamil,
+  qualification_name_english,
+  qualification_name_sinhala,
+  qualification_name_tamil,
   abbreviated_qualification FROM proposal_general_info WHERE proposal_id = ?";
 
 // Section: Program Entity (form-based)

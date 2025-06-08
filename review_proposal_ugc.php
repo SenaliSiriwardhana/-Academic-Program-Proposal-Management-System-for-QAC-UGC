@@ -84,9 +84,9 @@ $generalInfoQuery = "SELECT
   degree_name_english,
   degree_name_sinhala,
   degree_name_tamil,
-  qua_name_english,
-  qua_name_sinhala,
-  qua_name_tamil,
+  qualification_name_english,
+  qualification_name_sinhala,
+  qualification_name_tamil,
   abbreviated_qualification FROM proposal_general_info WHERE proposal_id = ?";
 
 // Section: Program Entity (form-based)

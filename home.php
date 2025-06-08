@@ -197,9 +197,9 @@ if ($result->num_rows > 0) {
         <i class="fas fa-file-alt"></i> New Proposals
     </div>
     <ul id="proposalDropdown" class="dropdown-menu">
-        <li><a class="nav-link sub-link" href="new_proposal.php">Undergraduate Programs</a></li>
-        <li><a class="nav-link sub-link" href="new_proposal_postgraduate.php">Postgraduate Programs</a></li>
-        <li><a class="nav-link sub-link" href="new_proposal_external.php">External Programs</a></li>
+        <li><a class="nav-link sub-link" href="new_proposal.php?type=undergraduate">Undergraduate Programs</a></li>
+        <li><a class="nav-link sub-link" href="new_proposal_postgraduate.php?type=postgraduate">Postgraduate Programs</a></li>
+        <li><a class="nav-link sub-link" href="new_proposal_external.php?type=external">External Programs</a></li>
     </ul>
 </li>
 

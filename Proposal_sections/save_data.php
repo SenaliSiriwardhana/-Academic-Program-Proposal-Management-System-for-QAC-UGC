@@ -92,9 +92,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $degreeNameEnglish = $_POST['degree_name_english'] ?? '';
             $degreeNameSinhala = $_POST['degree_name_sinhala'] ?? '';
             $degreeNameTamil = $_POST['degree_name_tamil'] ?? '';
-            $quaNameEnglish = $_POST['qua_name_english'] ?? '';
-            $quaNameSinhala = $_POST['qua_name_sinhala'] ?? '';
-            $quaNameTamil = $_POST['qua_name_tamil'] ?? '';
+            $quaNameEnglish = $_POST['qualification_name_english'] ?? '';
+            $quaNameSinhala = $_POST['qualification_name_sinhala'] ?? '';
+            $quaNameTamil = $_POST['qualification_name_tamil'] ?? '';
             $abbreviatedQualification = $_POST['abbreviated_qualification_english'] ?? '';
 
             // Save the data (temporarily using session; replace with database logic if needed)
@@ -102,9 +102,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'degree_name_english' => $degreeNameEnglish,
                 'degree_name_sinhala' => $degreeNameSinhala,
                 'degree_name_tamil' => $degreeNameTamil,
-                'qua_name_english' => $quaNameEnglish,
-                'qua_name_sinhala' => $quaNameSinhala,
-                'qua_name_tamil' => $quaNameTamil,
+                'qualification_name_english' => $quaNameEnglish,
+                'qualification_name_sinhala' => $quaNameSinhala,
+                'qualification_name_tamil' => $quaNameTamil,
                 'abbreviated_qualification' => $abbreviatedQualification,
             ];
 
