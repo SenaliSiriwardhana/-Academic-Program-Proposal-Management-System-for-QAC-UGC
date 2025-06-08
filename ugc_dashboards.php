@@ -202,14 +202,56 @@ $stmt->close();
     </ul>
 </div>
 
+
+ 
+
 <!-- Main Content -->
+
+
 <div id="main-content" class="main-content">
     <h3><?php echo $dashboardTitle; ?></h3>
+
+<!-- Search Bar -->
+<div class="input-group mb-3">
+  <input type="text" id="searchInput" class="form-control" placeholder="Search...">
+  <button class="btn"style="background-color:#593F59; color:white;" onclick="runSearch()"><i class="fas fa-search"></i> Search</button>
+  <button class="btn btn-outline-secondary" onclick="clearSearch()"><i class="fas fa-times"></i> Clear</button>
+</div>
+
+<p>Filter</p>
+<!-- Filter Panel -->
+<div class="row g-2 mb-2">
+  <div class="col-md-3"><input type="text" class="form-control" id="filterCode" placeholder="Proposal Code"></div>
+  <div class="col-md-3"><input type="text" class="form-control" id="filterDegree" placeholder="Degree Name"></div>
+  <div class="col-md-3"><select class="form-select" id="filterUniversity">
+  <option value="">All Universities</option>
+  <option>University of Colombo</option>
+  <option>University of Moratuwa</option>
+  <option>University of Peradeniya</option>
+  <option>University of Sri Jayewardenepura</option>
+  <option>University of Kelaniya</option>
+  <option>University of Jaffna</option>
+  <option>University of Ruhuna</option>
+  <option>Eastern University of Sri Lanka</option>
+  <option>Rajarata University of Sri Lanka</option>
+  <option>Sabaragamuwa University of Sri Lanka</option>
+  <option>Wayamba University of Sri Lanka</option>
+  <option>University of Visual and Performing Arts</option>
+  <option>University of Uwa Wellassa</option>
+  <option>South Eastern University of Sri Lanka</option>
+  <option>Open University</option>
+</select>
+  
+</div>
+<div class="mb-3">
+  <button class="btn" style="background-color:#F2935C; color:white;" onclick="runFilter()">Apply Filters</button>
+  <button class="btn btn-secondary" onclick="clearFilter()">Clear Filters</button>
+</div>
 
     <div class="card">
         <div class="card-header bg-warning">Pending Proposals</div>
         <div class="card-body">
-            <table class="table">
+            <table class="table" id="pendingTable">
                 <tr>
                     <th>Proposal Code</th>
                     <th>Degree Name </th>
@@ -238,7 +280,7 @@ $stmt->close();
     <div class="card">
         <div class="card-header bg-warning">Submitted Proposals Status</div>
             <div class="card-body">
-                <table class="table">
+                <table class="table" id="submittedTable">
                 <tr>
                         <th>Proposal Code</th>
                         <th>Degree Name</th>
@@ -271,7 +313,59 @@ $stmt->close();
             sidebar.classList.toggle('collapsed');
             mainContent.classList.toggle('collapsed');
         }
+
     </script>
+<script>
+function runSearch() {
+  const searchText = document.getElementById('searchInput').value.toLowerCase();
+
+  ['pendingTable', 'submittedTable'].forEach(tableId => {
+    const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+    rows.forEach(row => {
+      row.style.display = row.innerText.toLowerCase().includes(searchText) ? '' : 'none';
+    });
+  });
+}
+
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  showAllRows();
+}
+
+function runFilter() {
+  const code = document.getElementById('filterCode').value.toLowerCase();
+  const degree = document.getElementById('filterDegree').value.toLowerCase();
+  const university = document.getElementById('filterUniversity').value.toLowerCase();
+
+  ['pendingTable', 'submittedTable'].forEach(tableId => {
+    const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+    rows.forEach(row => {
+      const matchCode = !code || row.cells[0].innerText.toLowerCase().includes(code);
+      const matchDegree = !degree || row.cells[1].innerText.toLowerCase().includes(degree);
+      
+    // Adjust university index based on table
+      const uniIndex = tableId === 'pendingTable' ? 4 : 3;
+      const matchUniversity = !university || row.cells[uniIndex].innerText.trim().toLowerCase() === university.trim().toLowerCase();
+
+      row.style.display = (matchCode && matchDegree && matchUniversity) ? '' : 'none';
+    });
+  });
+}
+
+function clearFilter() {
+  document.getElementById('filterCode').value = '';
+  document.getElementById('filterDegree').value = '';
+  document.getElementById('filterUniversity').value = '';
+  showAllRows();
+}
+
+function showAllRows() {
+  ['pendingTable', 'submittedTable'].forEach(tableId => {
+    const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+    rows.forEach(row => row.style.display = '');
+  });
+}
+</script>
 
 
 </body>
