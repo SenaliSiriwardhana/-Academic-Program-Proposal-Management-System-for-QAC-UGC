@@ -61,7 +61,7 @@ switch($proposal_type) {
 
     
 }
-echo "<pre>Proposal Type (2): $type_prefix</pre>";
+//echo "<pre>Proposal Type (2): $type_prefix</pre>";
 
 
 // Define the upload directory
