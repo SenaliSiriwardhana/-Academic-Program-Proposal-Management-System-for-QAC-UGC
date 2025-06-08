@@ -315,42 +315,45 @@ $stmt->close();
         }
 
     </script>
-<script>
-function runSearch() {
-  const searchText = document.getElementById('searchInput').value.toLowerCase();
 
-  ['pendingTable', 'submittedTable'].forEach(tableId => {
-    const rows = document.querySelectorAll(`#${tableId} tbody tr`);
-    rows.forEach(row => {
-      row.style.display = row.innerText.toLowerCase().includes(searchText) ? '' : 'none';
+    <!-- Search and Filter Logic -->
+     
+    <script>
+    function runSearch() {
+    const searchText = document.getElementById('searchInput').value.toLowerCase();
+
+    ['pendingTable', 'submittedTable'].forEach(tableId => {
+        const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+        rows.forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(searchText) ? '' : 'none';
+        });
     });
-  });
-}
+    }
 
-function clearSearch() {
-  document.getElementById('searchInput').value = '';
-  showAllRows();
-}
+    function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    showAllRows();
+    }
 
-function runFilter() {
-  const code = document.getElementById('filterCode').value.toLowerCase();
-  const degree = document.getElementById('filterDegree').value.toLowerCase();
-  const university = document.getElementById('filterUniversity').value.toLowerCase();
+    function runFilter() {
+    const code = document.getElementById('filterCode').value.toLowerCase();
+    const degree = document.getElementById('filterDegree').value.toLowerCase();
+    const university = document.getElementById('filterUniversity').value.toLowerCase();
 
-  ['pendingTable', 'submittedTable'].forEach(tableId => {
-    const rows = document.querySelectorAll(`#${tableId} tbody tr`);
-    rows.forEach(row => {
-      const matchCode = !code || row.cells[0].innerText.toLowerCase().includes(code);
-      const matchDegree = !degree || row.cells[1].innerText.toLowerCase().includes(degree);
-      
-    // Adjust university index based on table
-      const uniIndex = tableId === 'pendingTable' ? 4 : 3;
-      const matchUniversity = !university || row.cells[uniIndex].innerText.trim().toLowerCase() === university.trim().toLowerCase();
+    ['pendingTable', 'submittedTable'].forEach(tableId => {
+        const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+        rows.forEach(row => {
+        const matchCode = !code || row.cells[0].innerText.toLowerCase().includes(code);
+        const matchDegree = !degree || row.cells[1].innerText.toLowerCase().includes(degree);
+        
+        // Adjust university index based on table
+        const uniIndex = tableId === 'pendingTable' ? 4 : 3;
+        const matchUniversity = !university || row.cells[uniIndex].innerText.trim().toLowerCase() === university.trim().toLowerCase();
 
-      row.style.display = (matchCode && matchDegree && matchUniversity) ? '' : 'none';
+        row.style.display = (matchCode && matchDegree && matchUniversity) ? '' : 'none';
+        });
     });
-  });
-}
+    }
 
 function clearFilter() {
   document.getElementById('filterCode').value = '';
