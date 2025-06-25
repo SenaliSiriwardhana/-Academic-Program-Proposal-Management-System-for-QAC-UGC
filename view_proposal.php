@@ -29,6 +29,10 @@ $ugc_roles = [
     "ugc - academic department" => "approvedbyugcacademic",
     "ugc - admission department" => "approvedbyugcadmission"
 ];
+// Normalize the Dean's role
+if (strpos($role, 'dean') !== false) {
+    $role = 'dean';
+}
 
 // Validate user role and set approval status
 if (!array_key_exists($role, $ugc_roles)) {

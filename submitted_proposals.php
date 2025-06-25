@@ -146,6 +146,46 @@ while ($row = $result->fetch_assoc()) {
 $stmt->close();
 
 
+// =================================================================
+// MODIFIED CODE BLOCK: Fetch history for ALL proposals on the page
+// =================================================================
+$history_by_proposal = [];
+
+// 1. Combine IDs from all three proposal groups
+$submitted_ids = array_column($submittedProposals, 'proposal_id');
+$revised_ids = array_column($revisedProposals, 'proposal_id');
+$approved_ids = array_column($finalapprovedProposals, 'proposal_id');
+$all_proposal_ids = array_unique(array_merge($submitted_ids, $revised_ids, $approved_ids));
+
+if (!empty($all_proposal_ids)) {
+    // 2. Prepare a single query for all unique IDs
+    $placeholders = implode(',', array_fill(0, count($all_proposal_ids), '?'));
+    $types = str_repeat('i', count($all_proposal_ids));
+
+    $history_query = "
+        SELECT proposal_id, proposal_status, `Date`, comment
+        FROM proposal_comments
+        WHERE proposal_id IN ($placeholders)
+        ORDER BY proposal_id, `Date` ASC
+    ";
+
+    $stmt_history = $connection->prepare($history_query);
+    // 3. Bind all IDs and execute
+    $stmt_history->bind_param($types, ...$all_proposal_ids);
+    $stmt_history->execute();
+    $history_result = $stmt_history->get_result();
+
+    // 4. Organize results into the history array, same as before
+    while ($history_row = $history_result->fetch_assoc()) {
+        $history_by_proposal[$history_row['proposal_id']][] = $history_row;
+    }
+    $stmt_history->close();
+}
+// =================================================================
+// END OF MODIFIED BLOCK
+// =================================================================
+
+
 // Fetch university data
 //$query = "SELECT  
                  //(SELECT COUNT(*) FROM proposals WHERE university_id = ? AND status NOT IN ('draft', 'fresh') ORDER BY proposal_id ASC) AS total_submissions,
@@ -366,139 +406,160 @@ unset($row);
         </ul>
     </div>
 
-    <!-- Main Content -->
+   <!-- Main Content -->
     <div id="main-content" class="main-content">
-        <div class="container">
-            <h5> Submitted Proposals List</h5>
-	 </div>
-           <!-- Submitted Proposals Table -->
-        <div class="card">
-            <div class="text-bg-dark p-3">Submitted Proposals</div>
-            <div class="card-body">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Proposal Code</th>
-                            <th>Degree Name </th>
-                            <th>Status</th>
-                            
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (empty($submittedProposals)) { ?>
-                            <tr><td colspan="3" class="text-center">No submitted proposals found.</td></tr>
-                        <?php } else {
-                            foreach ($submittedProposals as $proposal) { ?>
+        <div class="container-fluid">
+            <!-- Submitted Proposals Table -- MODIFIED -->
+            <div class="card mb-4">
+                <div class="card-header text-bg-dark">Submitted Proposals</div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($proposal['proposal_code']); ?></td>
-                                    <td><?php echo htmlspecialchars($proposal['degree_name_english']); ?></td>
-                                    <td><?php echo htmlspecialchars($proposal['status']); ?></td>
-                                    
+                                    <th>Proposal Code</th>
+                                    <th>Degree Name</th>
+                                    <th>Current Status</th>
+                                    <th>Status Workflow</th>
+                                    <th>Action</th>
                                 </tr>
-                            <?php }
-                        } ?>
-                    </tbody>
-                </table>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($submittedProposals)): ?>
+                                    <tr><td colspan="4" class="text-center">No submitted proposals found.</td></tr>
+                                <?php else: foreach ($submittedProposals as $proposal): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($proposal['proposal_code']); ?></td>
+                                        <td><?php echo htmlspecialchars($proposal['degree_name_english']); ?></td>
+                                        <td><span class="badge bg-info"><?php echo str_replace("_", " ", htmlspecialchars($proposal['status'])); ?></span></td>
+                                        <td>
+                                            <button type="button" class="btn btn-info btn-sm" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#statusModal"
+                                                    data-proposal-code="<?php echo htmlspecialchars($proposal['proposal_code']); ?>"
+                                                    data-history='<?php echo htmlspecialchars(json_encode($history_by_proposal[$proposal['proposal_id']] ?? [])); ?>'>
+                                                <i class="fas fa-sitemap"></i> View
+                                            </button>
+                                        </td>
+                                        <td>
+                                    <!-- NEW "View Proposal" BUTTON -->
+                                    <a href="view_proposal.php?id=<?php echo $proposal['proposal_id']; ?>" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-eye"></i> View Proposal
+                                    </a>
+                                </td>
+                                    </tr>
+                                <?php endforeach; endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revised/Rejected Proposals Table -- MODIFIED -->
+            <div class="card mb-4">
+                <div class="card-header text-bg-dark">Revised / Rejected Proposals</div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Proposal Code</th>
+                                    <th>Degree Name</th>
+                                    <th>Current Status</th>
+                                    <th>Status Workflow</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($revisedProposals)): ?>
+                                    <tr><td colspan="5" class="text-center">No revised or rejected proposals found.</td></tr>
+                                <?php else: foreach ($revisedProposals as $proposal): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($proposal['proposal_code']); ?></td>
+                                        <td><?php echo htmlspecialchars($proposal['degree_name_english']); ?></td>
+                                        <td><span class="badge bg-danger"><?php echo str_replace("_", " ", htmlspecialchars($proposal['status'])); ?></span></td>
+                                        <td>
+                                            <button type="button" class="btn btn-warning btn-sm" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#statusModal"
+                                                    data-proposal-code="<?php echo htmlspecialchars($proposal['proposal_code']); ?>"
+                                                    data-history='<?php echo htmlspecialchars(json_encode($history_by_proposal[$proposal['proposal_id']] ?? [])); ?>'>
+                                                <i class="fas fa-sitemap"></i> View
+                                            </button>
+                                        </td>
+                                        <td>
+                                            <a href="new_proposal_section.php?proposal_id=<?php echo $proposal['proposal_id']; ?>&edit=true&initial" class="btn btn-primary btn-sm">Edit</a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Final Approved Proposals Table (already modified) -->
+            <div class="card">
+                <div class="card-header text-bg-dark">Final Approved Proposals</div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Proposal Code</th>
+                                    <th>Degree Name</th>
+                                    <th>Status Workflow</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($finalapprovedProposals)): ?>
+                                    <tr><td colspan="4" class="text-center">No final approved proposals found.</td></tr>
+                                <?php else: foreach ($finalapprovedProposals as $proposal): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($proposal['proposal_code']); ?></td>
+                                        <td><?php echo htmlspecialchars($proposal['degree_name_english']); ?></td>
+                                        <td>
+                                            <button type="button" class="btn btn-success btn-sm" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#statusModal"
+                                                    data-proposal-code="<?php echo htmlspecialchars($proposal['proposal_code']); ?>"
+                                                    data-history='<?php echo htmlspecialchars(json_encode($history_by_proposal[$proposal['proposal_id']] ?? [])); ?>'>
+                                                <i class="fas fa-sitemap"></i> View
+                                            </button>
+                                        </td>
+                                        <td>
+                                            <a href="view_proposal.php?id=<?php echo $proposal['proposal_id']; ?>" class="btn btn-primary btn-sm"><i class="fas fa-eye"></i>View Proposal</a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <h5 class="mt-4">Revised / Rejected Proposals</h5>
-
-        <!-- Revised Proposals Table -->
-        <div class="card">
-            <div class="text-bg-dark p-3">Revised Proposals</div>
-            <div class="card-body">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Proposal Code</th>
-                            <th>Degree Name </th>
-                            <th>Status</th>
-                            <th>Comment</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (empty($revisedProposals)) { ?>
-                            <tr><td colspan="3" class="text-center">No revised proposals found.</td></tr>
-                        <?php } else {
-                            foreach ($revisedProposals as $proposal) { ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($proposal['proposal_code']); ?></td>
-                                    <td><?php echo htmlspecialchars($proposal['degree_name_english']); ?></td>
-                                    <td><?php echo htmlspecialchars($proposal['status']); ?></td>
-                                    <td><?php echo htmlspecialchars($proposal['comment'] ?? "No Comment"); ?></td>
-                                    <td>
-                                    <a href="new_proposal_section.php?proposal_id=<?php echo htmlspecialchars($proposal['proposal_id']); ?>&edit=true&initial" class="btn btn-primary btn-sm">Edit</a>
-                                    </td>
-                                </tr>
-                            <?php }
-                        } ?>
-                    </tbody>
-                </table>
+        <!-- Status History Modal (No changes needed here) -->
+    <div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable"> <!-- Added modal-dialog-scrollable -->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="statusModalLabel">Approval Workflow</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modal-body-content">
+                    <!-- Workflow steps will be injected here by JavaScript -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
-
-        <h5 class="mt-4">Final Approved Proposals</h5>
-<!-- Final Approved Proposals Table -->
-<div class="card">
-<div class="card">
-    <div class="card-body">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Proposal Code</th>
-                    <th>Degree Name </th>
-                    <th>Status</th>
-                    <th>Comment</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($finalapprovedProposals as $proposal) {
-                   
-
-
-                ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($proposal['proposal_code']); ?></td>
-                        <td><?php echo htmlspecialchars($proposal['degree_name_english']); ?></td>
-                        <td><?php echo htmlspecialchars($proposal['latest_status']); ?></td>
-                        <td><?php echo htmlspecialchars($proposal['latest_comment']); ?></td>
-                        <td>
-                           
-                        <a href="view_proposal.php?id=<?php echo $proposal['proposal_id']; ?>" class="btn btn-primary">View</a>
-                        </td>
-                    </tr>
-
-
-                      
-
-                    <?php
-                    
-                    ?>
-                <?php } ?>
-
-
-            </tbody>
-        </table>
-        
     </div>
 
-   
-</div>
-             
-        </div>
-        
-        
-    </div>
-        
-    </div>
 
-          
-        
-
-
+     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>                                
     <script>
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('collapsed');
@@ -512,6 +573,71 @@ unset($row);
         }
     
 
+    </script>
+
+
+<script>
+    // JavaScript for Modal (No changes needed, but I added comment display)
+        const statusModal = document.getElementById('statusModal');
+        statusModal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const proposalCode = button.getAttribute('data-proposal-code');
+            const history = JSON.parse(button.getAttribute('data-history'));
+
+            const modalTitle = statusModal.querySelector('.modal-title');
+            modalTitle.textContent = `Workflow for: ${proposalCode}`;
+
+            const modalBody = statusModal.querySelector('#modal-body-content');
+            modalBody.innerHTML = ''; 
+
+            if (history.length === 0) {
+                modalBody.innerHTML = '<p class="text-center">No workflow history available for this proposal yet.</p>';
+                return;
+            }
+
+            history.forEach(step => {
+                const statusStr = step.proposal_status.toLowerCase();
+                const isApproved = statusStr.includes('approved') || statusStr.includes('recommended');
+                const isRejected = statusStr.includes('rejected') || statusStr.includes('revision');
+                
+                let iconHtml = '<i class="fas fa-info-circle text-info"></i>'; // Default/Submitted
+                if (isApproved) {
+                    iconHtml = '<i class="fas fa-check-circle text-success"></i>';
+                } else if (isRejected) {
+                    iconHtml = '<i class="fas fa-times-circle text-danger"></i>';
+                }
+
+                let statusText = (step.proposal_status || '')
+                    .replace(/by/g, ' by ')
+                    .replace(/_/g, ' ')
+                    .replace(/([A-Z])/g, ' $1')
+                    .replace(/^ / , '')
+                    .split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+                
+                // NEW: Add the comment if it exists
+                let commentHtml = '';
+                if (step.comment && step.comment.trim() !== '') {
+                    // Escape HTML in comment to prevent XSS
+                    const escapedComment = document.createElement('div');
+                    escapedComment.innerText = step.comment;
+                    commentHtml = `<div class="comment fst-italic bg-light p-2 rounded mt-2"><strong>Comment:</strong> ${escapedComment.innerHTML}</div>`;
+                }
+
+                const stepHtml = `
+                    <div class="workflow-step">
+                        <div class="workflow-icon">${iconHtml}</div>
+                        <div class="workflow-details">
+                            <div class="status">${statusText}</div>
+                            <div class="date">On: ${new Date(step.Date).toLocaleString()}</div>
+                            ${commentHtml}
+                        </div>
+                    </div>
+                `;
+                modalBody.insertAdjacentHTML('beforeend', stepHtml);
+            });
+        });
     </script>
 
     

@@ -74,6 +74,36 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
+// =================================================================
+// NEW CODE BLOCK START: Fetch history for the "Submitted Proposals" table
+// =================================================================
+$history_by_proposal = [];
+if (!empty($submittedProposals)) {
+    $proposal_ids = array_column($submittedProposals, 'proposal_id');
+    $placeholders = implode(',', array_fill(0, count($proposal_ids), '?'));
+    $types = str_repeat('i', count($proposal_ids));
+
+    $history_query = "
+        SELECT proposal_id, proposal_status, `Date`, comment
+        FROM proposal_comments
+        WHERE proposal_id IN ($placeholders)
+        ORDER BY proposal_id, `Date` ASC
+    ";
+
+    $stmt_history = $connection->prepare($history_query);
+    $stmt_history->bind_param($types, ...$proposal_ids);
+    $stmt_history->execute();
+    $history_result = $stmt_history->get_result();
+
+    while ($history_row = $history_result->fetch_assoc()) {
+        $history_by_proposal[$history_row['proposal_id']][] = $history_row;
+    }
+    $stmt_history->close();
+}
+// =================================================================
+// NEW CODE BLOCK END
+// =================================================================
+
 ?>
 
 <!DOCTYPE html>
@@ -165,6 +195,52 @@ $stmt->close();
             font-weight: bold;
             border-radius: 10px 10px 0 0;
         }
+        /* -- NEW CSS FOR WORKFLOW MODAL -- */
+        .workflow-step { 
+            display: flex; 
+            align-items: start; 
+            margin-bottom: 15px; 
+            padding-bottom: 15px; 
+            border-bottom: 1px solid #e9ecef; 
+        }
+        .workflow-step:last-child { 
+            border-bottom: none; 
+            margin-bottom: 0; 
+            padding-bottom: 0; 
+        }
+        .workflow-icon { 
+            font-size: 24px; 
+            margin-right: 15px; 
+            flex-shrink: 0; 
+            padding-top: 3px; 
+        }
+        .workflow-icon .fa-check-circle { 
+            color: #28a745; 
+        }
+        .workflow-icon .fa-times-circle { 
+            color: #dc3545; 
+        }
+        .workflow-icon .fa-info-circle { 
+            color: #0dcaf0; 
+        }
+        .workflow-details .status { 
+            font-weight: bold; 
+        }
+        .workflow-details .date { 
+            font-size: 0.85em; 
+            color: #6c757d; 
+        }
+        .workflow-details .comment { 
+            font-size: 0.9em; 
+            color: #495057; 
+            margin-top: 5px; 
+            white-space: pre-wrap; 
+            word-break: break-word; 
+        }
+        .badge { 
+            text-transform: capitalize; 
+        }
+
         footer {
             margin-top: 20px;
             font-size: 14px;
@@ -277,33 +353,79 @@ $stmt->close();
     <!-- Spacer -->
     <div class="mb-4"></div> <!-- Adds spacing between tables -->
 
+   <!-- Submitted Proposals Status Table -- MODIFIED SECTION -->
     <div class="card">
-        <div class="card-header bg-warning">Submitted Proposals Status</div>
-            <div class="card-body">
-                <table class="table" id="submittedTable">
-                <tr>
-                        <th>Proposal Code</th>
-                        <th>Degree Name</th>
-                        <th>Status</th>
-                        <th>University</th>
-                
-                </tr>
-                <?php foreach ($submittedProposals as $proposal) { ?>
-                    <tr>
-                        <td><?php echo $proposal['proposal_code']; ?></td>
-                        <td><?php echo $proposal['degree_name_english']; ?></td>
-                        <td><?php echo $proposal['status']; ?></td>
-                        <td><?php echo $proposal['university']?></td>
-                    
-                    </tr>
-                <?php } ?>
-            </table>
+        <div class="card-header bg-warning">Submitted Proposals status</div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="submittedTable">
+                    <thead>
+                        <tr>
+                            <th>Proposal Code</th>
+                            <th>Degree Name</th>
+                            <th>Current Status</th>
+                            <th>Status Workflow</th>
+                            <th>University</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($submittedProposals)): ?>
+                            <tr><td colspan="5" class="text-center">No other processed proposals to display.</td></tr>
+                        <?php else: foreach ($submittedProposals as $proposal): ?>
+                            <?php
+                                $status_lower = strtolower($proposal['status']);
+                                $badge_class = 'bg-info';
+                                if (strpos($status_lower, 'approved') !== false) $badge_class = 'bg-success';
+                                if (strpos($status_lower, 'rejected') !== false) $badge_class = 'bg-danger';
+                            ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($proposal['proposal_code']); ?></td>
+                                <td><?php echo htmlspecialchars($proposal['degree_name_english']); ?></td>
+                                <td><span class="badge <?php echo $badge_class; ?>"><?php echo str_replace("_", " ", htmlspecialchars($proposal['status'])); ?></span></td>
+                                <td>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#statusModal"
+                                            data-proposal-code="<?php echo htmlspecialchars($proposal['proposal_code']); ?>"
+                                            data-history='<?php echo htmlspecialchars(json_encode($history_by_proposal[$proposal['proposal_id']] ?? [])); ?>'>
+                                        <i class="fas fa-sitemap"></i> View
+                                    </button>
+                                </td>
+                                <td><?php echo htmlspecialchars($proposal['university']); ?></td>
+                                <td>
+                                    <!-- NEW "View Proposal" BUTTON -->
+                                    <a href="view_proposal.php?id=<?php echo $proposal['proposal_id']; ?>" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-eye"></i> View Proposal
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
-</div>
+
 
 <footer>Copyright © 2024 University Grants Commission. Developed by UGC.</footer>
+
+<!-- Status History Modal -->
+<div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="statusModalLabel">Approval Workflow</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modal-body-content"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -319,55 +441,107 @@ $stmt->close();
     <!-- Search and Filter Logic -->
      
     <script>
+   // Search and Filter Logic -- MODIFIED runFilter function
     function runSearch() {
-    const searchText = document.getElementById('searchInput').value.toLowerCase();
-
-    ['pendingTable', 'submittedTable'].forEach(tableId => {
-        const rows = document.querySelectorAll(`#${tableId} tbody tr`);
-        rows.forEach(row => {
-        row.style.display = row.innerText.toLowerCase().includes(searchText) ? '' : 'none';
+        const searchText = document.getElementById('searchInput').value.toLowerCase();
+        ['pendingTable', 'submittedTable'].forEach(tableId => {
+            const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+            rows.forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(searchText) ? '' : 'none';
+            });
         });
-    });
     }
 
-    function clearSearch() {
-    document.getElementById('searchInput').value = '';
-    showAllRows();
+       function clearSearch() {
+        document.getElementById('searchInput').value = '';
+        showAllRows();
     }
 
     function runFilter() {
-    const code = document.getElementById('filterCode').value.toLowerCase();
-    const degree = document.getElementById('filterDegree').value.toLowerCase();
-    const university = document.getElementById('filterUniversity').value.toLowerCase();
+        const code = document.getElementById('filterCode').value.toLowerCase();
+        const degree = document.getElementById('filterDegree').value.toLowerCase();
+        const university = document.getElementById('filterUniversity').value.toLowerCase();
 
-    ['pendingTable', 'submittedTable'].forEach(tableId => {
-        const rows = document.querySelectorAll(`#${tableId} tbody tr`);
-        rows.forEach(row => {
-        const matchCode = !code || row.cells[0].innerText.toLowerCase().includes(code);
-        const matchDegree = !degree || row.cells[1].innerText.toLowerCase().includes(degree);
-        
-        // Adjust university index based on table
-        const uniIndex = tableId === 'pendingTable' ? 4 : 3;
-        const matchUniversity = !university || row.cells[uniIndex].innerText.trim().toLowerCase() === university.trim().toLowerCase();
+        ['pendingTable', 'submittedTable'].forEach(tableId => {
+            const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+            rows.forEach(row => {
+                const matchCode = !code || (row.cells[0] && row.cells[0].innerText.toLowerCase().includes(code));
+                const matchDegree = !degree || (row.cells[1] && row.cells[1].innerText.toLowerCase().includes(degree));
+                
+                // MODIFIED: Adjust university index based on table's new column layout
+                const uniIndex = tableId === 'pendingTable' ? 4 : 4; // It is now column 5 (index 4) in BOTH tables
+                const matchUniversity = !university || (row.cells[uniIndex] && row.cells[uniIndex].innerText.trim().toLowerCase() === university.trim().toLowerCase());
 
-        row.style.display = (matchCode && matchDegree && matchUniversity) ? '' : 'none';
+                row.style.display = (matchCode && matchDegree && matchUniversity) ? '' : 'none';
+            });
         });
-    });
     }
 
-function clearFilter() {
-  document.getElementById('filterCode').value = '';
-  document.getElementById('filterDegree').value = '';
-  document.getElementById('filterUniversity').value = '';
-  showAllRows();
-}
+    function clearFilter() {
+      document.getElementById('filterCode').value = '';
+      document.getElementById('filterDegree').value = '';
+      document.getElementById('filterUniversity').value = '';
+      showAllRows();
+    }
 
-function showAllRows() {
-  ['pendingTable', 'submittedTable'].forEach(tableId => {
-    const rows = document.querySelectorAll(`#${tableId} tbody tr`);
-    rows.forEach(row => row.style.display = '');
-  });
-}
+    function showAllRows() {
+      ['pendingTable', 'submittedTable'].forEach(tableId => {
+        const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+        rows.forEach(row => row.style.display = '');
+      });
+    }
+</script>
+
+<script>
+    // Get History
+    const statusModal = document.getElementById('statusModal');
+    statusModal.addEventListener('show.bs.modal', event => {
+        const button = event.relatedTarget;
+        const proposalCode = button.getAttribute('data-proposal-code');
+        const history = JSON.parse(button.getAttribute('data-history'));
+
+        const modalTitle = statusModal.querySelector('.modal-title');
+        modalTitle.textContent = `Workflow for: ${proposalCode}`;
+
+        const modalBody = statusModal.querySelector('#modal-body-content');
+        modalBody.innerHTML = ''; 
+
+        if (history.length === 0) {
+            modalBody.innerHTML = '<p class="text-center">No workflow history available for this proposal yet.</p>';
+            return;
+        }
+
+        history.forEach(step => {
+            const statusStr = (step.proposal_status || '').toLowerCase();
+            const isApproved = statusStr.includes('approved') || statusStr.includes('recommended');
+            const isRejected = statusStr.includes('rejected') || statusStr.includes('revision');
+            
+            let iconHtml = '<i class="fas fa-info-circle text-info"></i>';
+            if (isApproved) iconHtml = '<i class="fas fa-check-circle text-success"></i>';
+            else if (isRejected) iconHtml = '<i class="fas fa-times-circle text-danger"></i>';
+
+            let statusText = (step.proposal_status || '').replace(/by/g, ' by ').replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            
+            let commentHtml = '';
+            if (step.comment && step.comment.trim() !== '') {
+                const escapedComment = document.createElement('div');
+                escapedComment.innerText = step.comment;
+                commentHtml = `<div class="comment fst-italic bg-light p-2 rounded mt-2"><strong>Comment:</strong> ${escapedComment.innerHTML}</div>`;
+            }
+
+            const stepHtml = `
+                <div class="workflow-step">
+                    <div class="workflow-icon">${iconHtml}</div>
+                    <div class="workflow-details">
+                        <div class="status">${statusText}</div>
+                        <div class="date">On: ${new Date(step.Date).toLocaleString()}</div>
+                        ${commentHtml}
+                    </div>
+                </div>
+            `;
+            modalBody.insertAdjacentHTML('beforeend', stepHtml);
+        });
+    });
 </script>
 
 
