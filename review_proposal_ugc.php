@@ -354,14 +354,34 @@ function displayTableSection($sectionTitle, $sectionData) {
                 <td><?php echo htmlspecialchars($comment['comment']); ?></td>
                 <td><?php echo htmlspecialchars($comment['Date']); ?></td>
                 <td>
-                    <?php 
-                    if (!empty($comment['seal_and_sign'])) {
-                        echo "<a href='{$comment['seal_and_sign']}'>View Signature</a>";
-                    } else {
-                        echo "No Signature Uploaded";
-                    }
-                    ?>
-                </td>
+    <?php
+    // If a signature file exists, always show the link.
+    if (!empty($comment['seal_and_sign'])) {
+          echo "<a href='{$comment['seal_and_sign']}'>View Signature</a>";
+    } else {
+        // If no signature exists, check the role based on the status.
+        $status = $comment['proposal_status'];
+
+        // Define the statuses for which a signature is not applicable.
+        // This includes approvals AND rejections by these roles.
+        $not_applicable_statuses = [
+            'approvedbydean', 
+            'rejectedbydean', 
+            'approvedbycqa', 
+            'rejectedbycqa'
+        ];
+
+        // Check if the current comment's status is in our list.
+        if (in_array($status, $not_applicable_statuses)) {
+            // For Dean and CQA, it's not applicable.
+            echo "Not Applicable";
+        } else {
+            // For any other role (like VC, UGC) who didn't upload one, show this.
+            echo "No Signature Uploaded";
+        }
+    }
+    ?>
+</td>
             </tr>
         <?php } ?>
     </table>

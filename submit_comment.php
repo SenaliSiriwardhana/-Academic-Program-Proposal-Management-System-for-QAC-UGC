@@ -29,13 +29,24 @@ $dean_comment = isset($_POST['dean_comment']) ? trim($_POST['dean_comment']) : '
 $proposal_status = '';
 
 //  Check if the role is Dean, VC, or CQA Director and assign the correct status
-if (isset($_POST['approve']) && !empty($_FILES['signature_file']['name'])) {
-    if (strpos($role, "Dean/Rector/Director") !== false) {
-        $proposal_status = 'approvedbydean'; // Dean approves
-    } elseif (strpos($role, "Vice Chancellor") !== false || strpos($role, "vc") !== false) {
+if (isset($_POST['approve'])) {
+    if (
+        strpos($role, "Dean/Rector/Director") !== false ||
+        strcasecmp(trim($role), "CQA Director") === 0
+    ) {
+        $proposal_status = (strpos($role, "Dean/Rector/Director") !== false) ? 'approvedbydean' : 'approvedbycqa';
+        // Skip file requirement for these two roles
+        $seal_and_sign = null;
+    } else {
+        // Require file for others
+        if (empty($_FILES['signature_file']['name'])) {
+          echo "<script>alert('Signature file is required for this role.'); window.history.back();</script>";
+            exit;
+
+        }
+
+    if (strpos($role, "Vice Chancellor") !== false || strpos($role, "vc") !== false) {
         $proposal_status = 'approvedbyvc'; // VC approves
-    } elseif (strcasecmp(trim($role), "CQA Director") === 0) { //  Case-insensitive check for CQA
-        $proposal_status = 'approvedbycqa'; // CQA approves
     } elseif (strcasecmp(trim($role), "Head of the qac-ugc Department") === 0) { //  Case-insensitive check for CQA
         $proposal_status = 'approvedbyqachead'; // UGC-HEAD approves
     }elseif (strcasecmp(trim($role), "UGC - Finance Department") === 0) { //  Case-insensitive check for Finance
@@ -53,7 +64,10 @@ if (isset($_POST['approve']) && !empty($_FILES['signature_file']['name'])) {
     } else {
         die("Access Denied: Unauthorized role.");
     }
-} elseif (isset($_POST['reject'])) {
+    }
+}
+
+elseif (isset($_POST['reject'])) {
     if (strpos($role, "Dean/Rector/Director") !== false) {
         $proposal_status = 'rejectedbydean'; // Dean rejects
     } elseif (strpos($role, "Vice Chancellor") !== false || strpos($role, "vc") !== false) {
@@ -86,7 +100,8 @@ if (isset($_POST['approve']) && !empty($_FILES['signature_file']['name'])) {
 
 //  Handle file upload (if provided)
 $seal_and_sign = NULL;
-if (!empty($_FILES['signature_file']['name'])) {
+if (!is_null($seal_and_sign) || !empty($_FILES['signature_file']['name'])) {
+    
     $upload_dir = $_SERVER['DOCUMENT_ROOT'] . "/qac_ugc/Proposal_sections/uploads/"; // Physical path
     $file_name = time() . "_" . basename($_FILES['signature_file']['name']);
     $target_path = $upload_dir . $file_name;
@@ -170,62 +185,44 @@ try {
     $connection->commit();
 
     // Redirect based on action
-    if (isset($_POST['approve']) && !empty($_FILES['signature_file']['name'])) {
-        if (strpos($role, "Dean/Rector/Director") !== false) {
-            echo "<script>alert('Proposal Application Approved successfully.'); window.location.href='approved_proposals.php';</script>";
-        } elseif (strpos($role, "Vice Chancellor") !== false || strpos($role, "vc") !== false) {
-            echo "<script>alert('Proposal Application Approved successfully.'); window.location.href='approved_proposals.php';</script>";
-        } elseif (strcasecmp(trim($role), "CQA Director") === 0) { 
-            echo "<script>alert('Proposal Application Approved successfully.'); window.location.href='approved_proposals.php';</script>";
-
-        } elseif (strcasecmp(trim($role), "Head of the qac-ugc Department") === 0) { 
-            echo "<script>alert('Proposal Application Approved successfully.'); window.location.href='approved_proposals_ugc.php';</script>";
-        }elseif (strcasecmp(trim($role), "UGC - Finance Department") === 0) { 
-            echo "<script>alert('Proposal Application Approved successfully.'); window.location.href='approved_proposals_ugc.php';</script>";
-        }elseif (strcasecmp(trim($role), "UGC - HR Department") === 0) { 
-            echo "<script>alert('Proposal Application Approved successfully.'); window.location.href='approved_proposals_ugc.php';</script>";
-        }elseif (strcasecmp(trim($role), "UGC - IDD Department") === 0) { 
-            echo "<script>alert('Proposal Application Approved successfully.'); window.location.href='approved_proposals_ugc.php';</script>";
-        }elseif (strcasecmp(trim($role), "UGC - Legal Department") === 0) { 
-            echo "<script>alert('Proposal Application Approved successfully.'); window.location.href='approved_proposals_ugc.php';</script>";
-        }elseif (strcasecmp(trim($role), "UGC - Academic Department") === 0) { 
-            echo "<script>alert('Proposal Application Approved successfully.'); window.location.href='approved_proposals_ugc.php';</script>";
-        }elseif (strcasecmp(trim($role), "UGC - Admission Department") === 0) { 
-            echo "<script>alert('Proposal Application Approved successfully.'); window.location.href='approved_proposals_ugc.php';</script>";
-        } else {
-            echo "<script>alert('Unauthorized Role.'); window.history.back();</script>";
-        }
-        
+if (isset($_POST['approve'])) {
+    if (in_array($proposal_status, ['approvedbydean', 'approvedbycqa', 'approvedbyvc'])) {
+        echo "<script>alert('Proposal Application Approved successfully.'); window.location.href='approved_proposals.php';</script>";
+    } elseif (in_array($proposal_status, [
+        'approvedbyqachead',
+        'approvedbyugcfinance',
+        'approvedbyugchr',
+        'approvedbyugcidd',
+        'approvedbyugclegal',
+        'approvedbyugcacademic',
+        'approvedbyugcadmission'
+    ])) {
+        echo "<script>alert('Proposal Application Approved successfully.'); window.location.href='approved_proposals_ugc.php';</script>";
+    } else {
+        echo "<script>alert('Unauthorized Role.'); window.history.back();</script>";
     }
-    elseif (isset($_POST['reject'])) {
-        
-        if (strpos($role, "Dean/Rector/Director") !== false) {
-            echo "<script>alert('Proposal Application Rejected.'); window.location.href='rejected_proposals.php';</script>";
-        } elseif (strpos($role, "Vice Chancellor") !== false || strpos($role, "vc") !== false) {
-            echo "<script>alert('Proposal Application Rejected.'); window.location.href='rejected_proposals.php';</script>";
-        } elseif (strcasecmp(trim($role), "CQA Director") === 0) { 
-            echo "<script>alert('Proposal Application Rejected.'); window.location.href='rejected_proposals.php';</script>";
+}
 
-        } elseif (strcasecmp(trim($role), "Head of the qac-ugc Department") === 0) { 
-            echo "<script>alert('Proposal Application Rejected.'); window.location.href='rejected_proposals_ugc.php';</script>";
-        }elseif (strcasecmp(trim($role), "UGC - Finance Department") === 0) { 
-            echo "<script>alert('Proposal Application Rejected.'); window.location.href='rejected_proposals_ugc.php';</script>";
-        }elseif (strcasecmp(trim($role), "UGC - HR Department") === 0) { 
-            echo "<script>alert('Proposal Application Rejected.'); window.location.href='rejected_proposals_ugc.php';</script>";
-        }elseif (strcasecmp(trim($role), "UGC - IDD Department") === 0) { 
-            echo "<script>alert('Proposal Application Rejected.'); window.location.href='rejected_proposals_ugc.php';</script>";
-        }elseif (strcasecmp(trim($role), "UGC - Legal Department") === 0) { 
-            echo "<script>alert('Proposal Application Rejected.'); window.location.href='rejected_proposals_ugc.php';</script>";
-        }elseif (strcasecmp(trim($role), "UGC - Academic Department") === 0) { 
-            echo "<script>alert('Proposal Application Rejected.'); window.location.href='rejected_proposals_ugc.php';</script>";
-        }elseif (strcasecmp(trim($role), "UGC - Admission Department") === 0) { 
-            echo "<script>alert('Proposal Application Rejected.'); window.location.href='rejected_proposals_ugc.php';</script>";
-        } else {
-            echo "<script>alert('Unauthorized Role.'); window.history.back();</script>";
-        }
+elseif (isset($_POST['reject'])) {
+    if (in_array($proposal_status, ['rejectedbydean', 'rejectedbycqa', 'rejectedbyvc'])) {
+        echo "<script>alert('Proposal Application Rejected.'); window.location.href='rejected_proposals.php';</script>";
+    } elseif (in_array($proposal_status, [
+        'rejectedbyqachead',
+        'rejectedbyugcfinance',
+        'rejectedbyugchr',
+        'rejectedbyugcidd',
+        'rejectedbyugclegal',
+        'rejectedbyugcacademic',
+        'rejectedbyugcadmission'
+    ])) {
+        echo "<script>alert('Proposal Application Rejected.'); window.location.href='rejected_proposals_ugc.php';</script>";
+    } else {
+        echo "<script>alert('Unauthorized Role.'); window.history.back();</script>";
     }
+}
 
-    exit();
+exit();
+
 
     } catch (Exception $e) {
      $connection->rollback();

@@ -350,10 +350,17 @@ function displayTableSection($sectionTitle, $sectionData) {
     <form action="submit_comment.php" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="proposal_id" value="<?php echo $proposal_id; ?>">
         <textarea name="dean_comment" class="form-control mb-3" rows="4" placeholder="Enter your comments here..."></textarea>
-        <div class = "d-flex gap-2 align-items-center">
-        <th><label for="signature" class="form-label">Seal and Signature</th>
-        <td><input type="file" name ="signature_file"></td>
+        <div class="d-flex align-items-center mb-2" style="gap: 8px;">
+            <?php
+                $isDean = strpos($role, "Dean/Rector/Director") !== false;
+                $isCqa = strcasecmp(trim($role), "CQA Director") === 0;
+                if (!$isDean && !$isCqa):
+            ?>
+        <label for="signature" class="form-label mb-0" style="white-space: nowrap;">Seal and Signature</label>
+        <input type="file" name="signature_file" class="form-control">
+            <?php endif; ?>
         </div>
+
         <div class="d-flex gap-2 align-items-center">
             <button type="submit" name="approve" class="btn btn-success">Approve</button>
             <button type="submit" name="reject" class="btn btn-danger">Reject</button>
