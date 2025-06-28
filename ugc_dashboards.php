@@ -195,47 +195,39 @@ if (!empty($submittedProposals)) {
             font-weight: bold;
             border-radius: 10px 10px 0 0;
         }
-        /* -- NEW CSS FOR WORKFLOW MODAL -- */
-        .workflow-step { 
-            display: flex; 
-            align-items: start; 
-            margin-bottom: 15px; 
-            padding-bottom: 15px; 
-            border-bottom: 1px solid #e9ecef; 
+              /* -- NEW CSS FOR WORKFLOW MODAL TABLE -- */
+        .workflow-table {
+            width: 100%;
+            border-collapse: collapse;
         }
-        .workflow-step:last-child { 
-            border-bottom: none; 
-            margin-bottom: 0; 
-            padding-bottom: 0; 
+        .workflow-table th, .workflow-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+            text-align: left;
+            vertical-align: top;
         }
-        .workflow-icon { 
-            font-size: 24px; 
-            margin-right: 15px; 
-            flex-shrink: 0; 
-            padding-top: 3px; 
+        .workflow-table th {
+            background-color: #f8f9fa;
+            font-weight: 500;
         }
-        .workflow-icon .fa-check-circle { 
-            color: #28a745; 
+        .workflow-table .status-icon {
+            font-size: 1.2rem;
+            width: 30px;
         }
-        .workflow-icon .fa-times-circle { 
-            color: #dc3545; 
+        .workflow-table .status-text {
+            font-weight: bold;
         }
-        .workflow-icon .fa-info-circle { 
-            color: #0dcaf0; 
+        .workflow-table .comment-text {
+            font-style: italic;
+            color: #555;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
-        .workflow-details .status { 
-            font-weight: bold; 
-        }
-        .workflow-details .date { 
-            font-size: 0.85em; 
-            color: #6c757d; 
-        }
-        .workflow-details .comment { 
-            font-size: 0.9em; 
-            color: #495057; 
-            margin-top: 5px; 
-            white-space: pre-wrap; 
-            word-break: break-word; 
+        /* END NEW CSS */
+
+        footer {
+            margin-top: 20px;
+            /* ... rest of footer css ... */
         }
         .badge { 
             text-transform: capitalize; 
@@ -511,39 +503,67 @@ if (!empty($submittedProposals)) {
             return;
         }
 
-        history.forEach(step => {
-            const statusStr = (step.proposal_status || '').toLowerCase();
-            const isApproved = statusStr.includes('approved') || statusStr.includes('recommended');
-            const isRejected = statusStr.includes('rejected') || statusStr.includes('revision');
-            
-            let iconHtml = '<i class="fas fa-info-circle text-info"></i>';
-            if (isApproved) iconHtml = '<i class="fas fa-check-circle text-success"></i>';
-            else if (isRejected) iconHtml = '<i class="fas fa-times-circle text-danger"></i>';
+        // --- START: BUILD THE TABLE ---
+            let tableHtml = `
+                <div class="table-responsive">
+                    <table class="workflow-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 5%;"></th>
+                                <th style="width: 25%;">Status</th>
+                                <th style="width: 25%;">Date</th>
+                                <th>Comment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
 
-            let statusText = (step.proposal_status || '').replace(/by/g, ' by ').replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-            
-            let commentHtml = '';
-            if (step.comment && step.comment.trim() !== '') {
-                const escapedComment = document.createElement('div');
-                escapedComment.innerText = step.comment;
-                commentHtml = `<div class="comment fst-italic bg-light p-2 rounded mt-2"><strong>Comment:</strong> ${escapedComment.innerHTML}</div>`;
-            }
+            history.forEach(step => {
+                const statusStr = (step.proposal_status || '').toLowerCase();
+                const isApproved = statusStr.includes('approved') || statusStr.includes('recommended');
+                const isRejected = statusStr.includes('rejected') || statusStr.includes('revision');
+                
+                let iconHtml = '<i class="fas fa-info-circle text-info"></i>'; // Default
+                if (isApproved) iconHtml = '<i class="fas fa-check-circle text-success"></i>';
+                else if (isRejected) iconHtml = '<i class="fas fa-times-circle text-danger"></i>';
 
-            const stepHtml = `
-                <div class="workflow-step">
-                    <div class="workflow-icon">${iconHtml}</div>
-                    <div class="workflow-details">
-                        <div class="status">${statusText}</div>
-                        <div class="date">On: ${new Date(step.Date).toLocaleString()}</div>
-                        ${commentHtml}
-                    </div>
+                let statusText = (step.proposal_status || '')
+                    .replace(/by/g, ' by ')
+                    .replace(/_/g, ' ')
+                    .replace(/\b\w/g, l => l.toUpperCase()); // Capitalize each word
+
+                // Securely handle comments
+                let commentText = (step.comment && step.comment.trim() !== '') ? step.comment : 'No comment provided.';
+                const tempDiv = document.createElement('div');
+                tempDiv.innerText = commentText; // Use .innerText to escape any potential HTML
+                const escapedComment = tempDiv.innerHTML;
+
+                const stepDate = new Date(step.Date).toLocaleString('en-GB', {
+                    year: 'numeric', month: 'short', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit', hour12: true
+                });
+
+                tableHtml += `
+                    <tr>
+                        <td class="status-icon">${iconHtml}</td>
+                        <td class="status-text">${statusText}</td>
+                        <td>${stepDate}</td>
+                        <td class="comment-text">${escapedComment}</td>
+                    </tr>
+                `;
+            });
+
+            tableHtml += `
+                        </tbody>
+                    </table>
                 </div>
             `;
-            modalBody.insertAdjacentHTML('beforeend', stepHtml);
-        });
-    });
-</script>
+            // --- END: BUILD THE TABLE ---
 
+            modalBody.innerHTML = tableHtml;
+        });
+    
+</script>
 
 </body>
 </html>
