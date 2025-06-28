@@ -30,23 +30,23 @@ $proposal_status = '';
 
 //  Check if the role is Dean, VC, or CQA Director and assign the correct status
 if (isset($_POST['approve'])) {
-    if (
-        strpos($role, "Dean/Rector/Director") !== false ||
-        strcasecmp(trim($role), "CQA Director") === 0
-    ) {
-        $proposal_status = (strpos($role, "Dean/Rector/Director") !== false) ? 'approvedbydean' : 'approvedbycqa';
-        // Skip file requirement for these two roles
-        $seal_and_sign = null;
-    } else {
-        // Require file for others
-        if (empty($_FILES['signature_file']['name'])) {
-          echo "<script>alert('Signature file is required for this role.'); window.history.back();</script>";
-            exit;
+    // Ensure the checkbox is checked for approval
+    if (!isset($_POST['recommend']) || $_POST['recommend'] !== 'on') {
+        die("<script>alert('Please mark the checkbox to confirm your recommendation and correctness of the proposal information.'); window.history.back();</script>");
+    }
 
-        }
+    // Ensure the digital signature checkbox is checked for approval
+    if (empty($_POST['signature_image'])) {
+        echo "<script>alert('Please provide your digital signature to approve the proposal.'); window.history.back();</script>";
+        exit();
+    }
 
-    if (strpos($role, "Vice Chancellor") !== false || strpos($role, "vc") !== false) {
+    if (strpos($role, "Dean/Rector/Director") !== false) {
+        $proposal_status = 'approvedbydean'; // Dean approves
+    } elseif (strpos($role, "Vice Chancellor") !== false || strpos($role, "vc") !== false) {
         $proposal_status = 'approvedbyvc'; // VC approves
+    } elseif (strcasecmp(trim($role), "CQA Director") === 0) { //  Case-insensitive check for CQA
+        $proposal_status = 'approvedbycqa'; // CQA approves
     } elseif (strcasecmp(trim($role), "Head of the qac-ugc Department") === 0) { //  Case-insensitive check for CQA
         $proposal_status = 'approvedbyqachead'; // UGC-HEAD approves
     }elseif (strcasecmp(trim($role), "UGC - Finance Department") === 0) { //  Case-insensitive check for Finance
@@ -64,10 +64,7 @@ if (isset($_POST['approve'])) {
     } else {
         die("Access Denied: Unauthorized role.");
     }
-    }
-}
-
-elseif (isset($_POST['reject'])) {
+} elseif (isset($_POST['reject'])) {
     if (strpos($role, "Dean/Rector/Director") !== false) {
         $proposal_status = 'rejectedbydean'; // Dean rejects
     } elseif (strpos($role, "Vice Chancellor") !== false || strpos($role, "vc") !== false) {
@@ -92,43 +89,11 @@ elseif (isset($_POST['reject'])) {
         die("Access Denied: Unauthorized role.");
     }
 } else {
-    echo "<script>alert('Invalid action. Please check whether signature file uploaded or not'); window.history.back();</script>";
+    echo "<script>alert('Invalid action. Please check the proposal information or try again.'); window.history.back();</script>";
   
     
 }
 
-
-//  Handle file upload (if provided)
-$seal_and_sign = NULL;
-if (!is_null($seal_and_sign) || !empty($_FILES['signature_file']['name'])) {
-    
-    $upload_dir = $_SERVER['DOCUMENT_ROOT'] . "/qac_ugc/Proposal_sections/uploads/"; // Physical path
-    $file_name = time() . "_" . basename($_FILES['signature_file']['name']);
-    $target_path = $upload_dir . $file_name;
-
-    $file_url = "http://localhost/qac_ugc/Proposal_sections/uploads/" . $file_name; // Public URL
-
-    //  Allow only PDF
-    $allowed_extensions = ['pdf'];
-    $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-
-    if (!in_array($file_ext, $allowed_extensions)) {
-        die("Invalid file type. Only PDF files are allowed.");
-    }
-
-    //  Move the uploaded file
-    if (move_uploaded_file($_FILES['signature_file']['tmp_name'], $target_path)) {
-        $seal_and_sign = $file_url; // Store full URL in database
-    } else {
-        die("Error uploading file.");
-    }
-
-    //  Enforce signature file upload when approving
-    if (isset($_POST['approve']) && empty($seal_and_sign)) {
-        die("Error: Signature file (PDF) is required for approval.");
-    }
-
-}
 
 //echo "<pre>DEBUG: Updated By User ID = " . ($_SESSION['id'] ?? 'NULL') . "</pre>";
 $updated_by = $_SESSION['id']; // Assign logged-in user ID
@@ -155,6 +120,27 @@ $updated_by = $_SESSION['id']; // Assign logged-in user ID
 $connection->begin_transaction();
 //require 'email_function.php';
 try {
+
+    // Save the signature image (base64 to image)
+        $signature_data = $_POST['signature_image'];
+        $signature_image = null;
+
+    // Check if base64 data is provided
+    if (!empty($signature_data)) {
+        // Remove the base64 prefix
+        $image_data = base64_decode(str_replace('data:image/png;base64,', '', $signature_data));
+
+        // Save the image to the server
+        $signature_file_name = 'signature_' . time() . '.png';
+        $signature_file_path = $_SERVER['DOCUMENT_ROOT'] . "/qac_ugc/Proposal_sections/uploads/" . $signature_file_name;
+
+        // Save the image
+        file_put_contents($signature_file_path, $image_data);
+
+        // Store the image URL in the database
+        $signature_image = "http://localhost/qac_ugc/Proposal_sections/uploads/" . $signature_file_name;
+    }
+
     //  Update proposals table status
         $updateProposalQuery = "UPDATE proposals SET status = ? WHERE proposal_id = ?";
         $stmt = $connection->prepare($updateProposalQuery);
@@ -176,7 +162,7 @@ try {
         $insertCommentQuery = "INSERT INTO proposal_comments (proposal_id, comment, seal_and_sign, proposal_status, id) 
                                VALUES (?, ?, ?, ?, ?)";
         $stmt = $connection->prepare($insertCommentQuery);
-        $stmt->bind_param("isssi", $proposal_id, $dean_comment, $seal_and_sign, $proposal_status, $user_id);
+        $stmt->bind_param("isssi", $proposal_id, $dean_comment, $signature_image, $proposal_status, $user_id);
         $stmt->execute();
     
         
@@ -185,45 +171,14 @@ try {
     $connection->commit();
 
     // Redirect based on action
-if (isset($_POST['approve'])) {
-    if (in_array($proposal_status, ['approvedbydean', 'approvedbycqa', 'approvedbyvc'])) {
+        // Redirect based on action
+    if (isset($_POST['approve'])) {
         echo "<script>alert('Proposal Application Approved successfully.'); window.location.href='approved_proposals.php';</script>";
-    } elseif (in_array($proposal_status, [
-        'approvedbyqachead',
-        'approvedbyugcfinance',
-        'approvedbyugchr',
-        'approvedbyugcidd',
-        'approvedbyugclegal',
-        'approvedbyugcacademic',
-        'approvedbyugcadmission'
-    ])) {
-        echo "<script>alert('Proposal Application Approved successfully.'); window.location.href='approved_proposals_ugc.php';</script>";
-    } else {
-        echo "<script>alert('Unauthorized Role.'); window.history.back();</script>";
-    }
-}
-
-elseif (isset($_POST['reject'])) {
-    if (in_array($proposal_status, ['rejectedbydean', 'rejectedbycqa', 'rejectedbyvc'])) {
+    } elseif (isset($_POST['reject'])) {
         echo "<script>alert('Proposal Application Rejected.'); window.location.href='rejected_proposals.php';</script>";
-    } elseif (in_array($proposal_status, [
-        'rejectedbyqachead',
-        'rejectedbyugcfinance',
-        'rejectedbyugchr',
-        'rejectedbyugcidd',
-        'rejectedbyugclegal',
-        'rejectedbyugcacademic',
-        'rejectedbyugcadmission'
-    ])) {
-        echo "<script>alert('Proposal Application Rejected.'); window.location.href='rejected_proposals_ugc.php';</script>";
-    } else {
-        echo "<script>alert('Unauthorized Role.'); window.history.back();</script>";
     }
-}
 
-exit();
-
-
+    
     } catch (Exception $e) {
      $connection->rollback();
     die("Error processing request: " . $e->getMessage());
