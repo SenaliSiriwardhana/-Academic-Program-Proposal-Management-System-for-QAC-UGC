@@ -27,7 +27,10 @@ $ugc_roles = [
     "ugc - idd department" => "approvedbyugcidd",
     "ugc - legal department" => "approvedbyugclegal",
     "ugc - academic department" => "approvedbyugcacademic",
-    "ugc - admission department" => "approvedbyugcadmission"
+    "ugc - admission department" => "approvedbyugcadmission",
+    "ugc - technical assistant" => "approvedbyTA",
+    "ugc - secretary" => "approvedbysecretary",
+    "standard committee" => "approvedbystandardcommittee"
 ];
 // Normalize the Dean's role
 if (strpos($role, 'dean') !== false) {
@@ -60,7 +63,7 @@ $stmt->close();
 // Fetch previous approvals from proposal_comments table
 $commentQuery = "SELECT id, proposal_status, comment, seal_and_sign, Date
 FROM proposal_comments 
-WHERE proposal_id = ? AND proposal_status IN ('approvedbyugcfinance', 'approvedbyugcidd', 'approvedbyugchr','approvedbyqachead','approvedbyugclegal','approvedbyugcacademic','approvedbyugcadmission','approvedbydean','approvedbyvc','approvedbycqa')
+WHERE proposal_id = ? AND proposal_status IN ('approvedbysecretary','approvedbyTA','approvedbyStandardCommitte','approvedbyugcfinance', 'approvedbyugcidd', 'approvedbyugchr','approvedbyqachead','approvedbyugclegal','approvedbyugcacademic','approvedbyugcadmission','approvedbydean','approvedbyvc','approvedbycqa')
 ORDER BY id ASC";
 
 

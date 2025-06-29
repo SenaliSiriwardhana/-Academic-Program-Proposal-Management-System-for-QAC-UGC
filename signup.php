@@ -146,6 +146,9 @@ $connection->close();
                             <option value="UGC - Legal Department">UGC - Legal Department</option>
                             <option value="UGC - Academic Department">UGC - Academic Department</option>
                             <option value="UGC - Admission Department">UGC - Admission Department</option>
+                            <option value="UGC - Secretary">UGC - Secretary</option>
+                            <option value="UGC - Technical Assistant"> UGC - Technical Assistant</option>
+                            <option value="Standard Committee">Standard Committee</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -187,7 +190,11 @@ $connection->close();
             "UGC - IDD Department",
             "UGC - Legal Department",
             "UGC - Academic Department",
-            "UGC - Admission Department"
+            "UGC - Admission Department",
+            "UGC - Secretary",
+            "UGC - Technical Assistant",
+            "Standard Committee"
+
         ];
 
         if (ugcRoles.includes(this.value)) {

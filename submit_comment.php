@@ -28,6 +28,33 @@ $proposal_id = $_POST['proposal_id'];
 $dean_comment = isset($_POST['dean_comment']) ? trim($_POST['dean_comment']) : '';
 $proposal_status = '';
 
+
+$role = strtolower(trim($_SESSION['role'])); // Get user role
+
+// Check if user is from UGC (including Standard Committee)
+$ugc_roles = [
+    "ugc - technical assistant",
+    "ugc - secretary",
+    "head of the qac-ugc department",
+    "ugc - finance department",
+    "ugc - hr department",
+    "ugc - idd department",
+    "ugc - legal department",
+    "ugc - academic department",
+    "ugc - admission department",
+    "standard committee"
+];
+
+// If the user's role is in the UGC list, set the UGC pages for redirection
+if (in_array($role, $ugc_roles)) {
+    $approved_page = 'approved_proposals_ugc.php';
+    $rejected_page = 'rejected_proposals_ugc.php';
+} else {
+    // If the user is from a university (non-UGC roles), use standard pages
+    $approved_page = 'approved_proposals.php';
+    $rejected_page = 'rejected_proposals.php';
+}
+
 //  Check if the role is Dean, VC, or CQA Director and assign the correct status
 if (isset($_POST['approve'])) {
     // Ensure the checkbox is checked for approval
@@ -47,6 +74,10 @@ if (isset($_POST['approve'])) {
         $proposal_status = 'approvedbyvc'; // VC approves
     } elseif (strcasecmp(trim($role), "CQA Director") === 0) { //  Case-insensitive check for CQA
         $proposal_status = 'approvedbycqa'; // CQA approves
+    } elseif (strcasecmp(trim($role), "UGC - Technical Assistant") === 0) { //  Case-insensitive check for TA
+        $proposal_status = 'approvedbyTA'; // TA approves
+    } elseif (strcasecmp(trim($role), "Secretary") === 0) { //  Case-insensitive check for Secretary
+        $proposal_status = 'approvedbysecretary'; // Secretary approves
     } elseif (strcasecmp(trim($role), "Head of the qac-ugc Department") === 0) { //  Case-insensitive check for CQA
         $proposal_status = 'approvedbyqachead'; // UGC-HEAD approves
     }elseif (strcasecmp(trim($role), "UGC - Finance Department") === 0) { //  Case-insensitive check for Finance
@@ -61,6 +92,9 @@ if (isset($_POST['approve'])) {
         $proposal_status = 'approvedbyugcacademic'; // UGC-Academic approves
     }elseif (strcasecmp(trim($role), "UGC - Admission Department") === 0) { //  Case-insensitive check for Admission
         $proposal_status = 'approvedbyugcadmission'; // UGC-Admission approves
+    }elseif (strcasecmp(trim($role), "Standard Committee") === 0) { //  Case-insensitive check for Standard Committee
+        $proposal_status = 'approvedbyStandardCommittee'; // Standard Committee approves
+    
     } else {
         die("Access Denied: Unauthorized role.");
     }
@@ -71,20 +105,26 @@ if (isset($_POST['approve'])) {
         $proposal_status = 'rejectedbyvc'; // VC rejects
     } elseif (strcasecmp(trim($role), "CQA Director") === 0) { //  CQA Director rejection
         $proposal_status = 'rejectedbycqa'; // CQA rejects
+    } elseif (strcasecmp(trim($role), "UGC - Technical Assistant") === 0) { //  Case-insensitive check for TA
+        $proposal_status = 'rejectedbyTA'; // TA rejects
+    } elseif (strcasecmp(trim($role), "Secretary") === 0) { //  Case-insensitive check for Secretary
+        $proposal_status = 'rejectedbysecretary'; // Secretary rejects
     } elseif (strcasecmp(trim($role), "Head of the qac-ugc Department") === 0) { //  Case-insensitive check for CQA
-        $proposal_status = 'rejectedbyqachead'; // UGC-HEAD approves
+        $proposal_status = 'rejectedbyqachead'; // UGC-HEAD rejectss
     }elseif (strcasecmp(trim($role), "UGC - Finance Department") === 0) { //  Case-insensitive check for Finance
-        $proposal_status = 'rejectedbyugcfinance'; // UGC-Finance approves
+        $proposal_status = 'rejectedbyugcfinance'; // UGC-Finance rejects
     }elseif (strcasecmp(trim($role), "UGC - HR Department") === 0) { //  Case-insensitive check for HR
-        $proposal_status = 'rejectedbyugchr'; // UGC-HR approves
+        $proposal_status = 'rejectedbyugchr'; // UGC-HR rejects
     }elseif (strcasecmp(trim($role), "UGC - IDD Department") === 0) { //  Case-insensitive check for IDD
-        $proposal_status = 'rejectedbyugcidd'; // UGC-IDD approves
+        $proposal_status = 'rejectedbyugcidd'; // UGC-IDD rejects
     }elseif (strcasecmp(trim($role), "UGC - Legal Department") === 0) { //  Case-insensitive check for Legal
-        $proposal_status = 'rejectedbyugclegal'; // UGC-Legal approves
+        $proposal_status = 'rejectedbyugclegal'; // UGC-Legal rejects
     }elseif (strcasecmp(trim($role), "UGC - Academic Department") === 0) { //  Case-insensitive check for Academic
-        $proposal_status = 'rejectedbyugcacademic'; // UGC-Academic approves
+        $proposal_status = 'rejectedbyugcacademic'; // UGC-Academic rejects
     }elseif (strcasecmp(trim($role), "UGC - Admission Department") === 0) { //  Case-insensitive check for Admission
-        $proposal_status = 'rejectedbyugcadmission'; // UGC-Admission approves
+        $proposal_status = 'rejectedbyugcadmission'; // UGC-Admission rejects
+     }elseif (strcasecmp(trim($role), "Standard Committee") === 0) { //  Case-insensitive check for Standard Committee
+        $proposal_status = 'rejectedbyStandardCommittee'; // Standard Committee rejects
     } else {
         die("Access Denied: Unauthorized role.");
     }
@@ -173,9 +213,9 @@ try {
     // Redirect based on action
         // Redirect based on action
     if (isset($_POST['approve'])) {
-        echo "<script>alert('Proposal Application Approved successfully.'); window.location.href='approved_proposals.php';</script>";
+        echo "<script>alert('Proposal Application Approved successfully.'); window.location.href='$approved_page';</script>";
     } elseif (isset($_POST['reject'])) {
-        echo "<script>alert('Proposal Application Rejected.'); window.location.href='rejected_proposals.php';</script>";
+        echo "<script>alert('Proposal Application Rejected.'); window.location.href='$rejected_page';</script>";
     }
 
     

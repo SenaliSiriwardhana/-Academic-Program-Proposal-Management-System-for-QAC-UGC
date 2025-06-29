@@ -26,13 +26,16 @@ if ($result->num_rows > 0) {
 
 // Define UGC roles with corresponding dashboard titles & status filters
 $ugc_settings = [
+    "ugc - technical assistant" => ["title" => "UGC - Technical Assistant Dashboard","status" => "rejectedbyvc"],
+    "ugc - secretary" => ["title" => "UGC - Secretary Dashboard","status" => "rejectedbyTA"],
     "head of the qac-ugc department" => ["title" => "Head of QAC-UGC Dashboard", "status" => "rejectedbyqachead"],
     "ugc - finance department" => ["title" => "UGC - Finance Department Dashboard", "status" => "rejectedbyugcfinance"],
     "ugc - hr department" => ["title" => "UGC - Human Resources Dashboard", "status" => "rejectedbyugchr"],
     "ugc - idd department" => ["title" => "UGC - Institutional Development Dashboard", "status" => "rejectedbyugcidd"],
     "ugc - legal department" => ["title" => "UGC - Legal Affairs Dashboard", "status" => "rejectedbyugclegal"],
     "ugc - academic department" => ["title" => "UGC - Academic Affairs Dashboard", "status" => "rejectedbyugcacademic"],
-    "ugc - admission department" => ["title" => "UGC - Admission Department", "status" => "rejectedbyugcadmission"]
+    "ugc - admission department" => ["title" => "UGC - Admission Department", "status" => "rejectedbyugcadmission"],
+    "standard committee" => ["title" => "Standard Committee Dashboard", "status" => "rejectedbyqachead"]
 ];
 
 // Validate user role and set dashboard properties

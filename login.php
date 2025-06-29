@@ -79,6 +79,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 case 'UGC - Admission Department':
                     header("Location:  ugc_dashboards.php");
                     break;
+                case 'UGC - Technical Assistant':
+                    header("Location:  ugc_dashboards.php");
+                    break;
+                case 'UGC - Secretary':
+                    header("Location:  ugc_dashboards.php");
+                    break;
+                case 'Standard Committee':
+                    header("Location:  ugc_dashboards.php");
+                    break;
                 default:
                     echo "<script>alert('Unauthorized role. Contact admin.');</script>";
                     session_destroy();

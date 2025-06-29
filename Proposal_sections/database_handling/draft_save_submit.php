@@ -53,7 +53,10 @@ $rejected_statuses = [
     'rejectedbyugclegal',
     'rejectedbyugcacademic',
     'rejectedbyugcadmission',
-    'rejectedbyqachead'
+    'rejectedbyqachead',
+    'rejectedbyTA',
+    'rejectedbysecretary',
+    'rejectedbyStandardCommittee'
 ];
 
 // Count total rejections for this proposal from history

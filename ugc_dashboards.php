@@ -26,13 +26,16 @@ if ($result->num_rows > 0) {
 
 // Define UGC roles with corresponding dashboard titles & status filters
 $ugc_settings = [
-    "head of the qac-ugc department" => ["title" => "Head of QAC-UGC Dashboard", "status" => "approvedbyvc"],
+    "ugc - technical assistant" => ["title" => "UGC - Technical Assistant Dashboard","status" => "approvedbyvc"],
+    "ugc - secretary" => ["title" => "UGC - Secretary Dashboard","status" => "approvedbyTA"],
+    "head of the qac-ugc department" => ["title" => "Head of QAC-UGC Dashboard", "status" => "approvedbysecretary"],
     "ugc - finance department" => ["title" => "UGC - Finance Department Dashboard", "status" => "approvedbyqachead"],
     "ugc - hr department" => ["title" => "UGC - Human Resources Dashboard", "status" => "approvedbyugcfinance"],
     "ugc - idd department" => ["title" => "UGC -IDD Dashboard", "status" => "approvedbyugchr"],
     "ugc - legal department" => ["title" => "UGC - Legal Affairs Dashboard", "status" => "approvedbyugcidd"],
     "ugc - academic department" => ["title" => "UGC - Academic Affairs Dashboard", "status" => "approvedbyugcadmission"],
-    "ugc - admission department" => ["title" => "UGC - Admission Department", "status" => "approvedbyugclegal"]
+    "ugc - admission department" => ["title" => "UGC - Admission Department Dashboard", "status" => "approvedbyugclegal"],
+    "standard committee" => ["title" => "Standard Committee Dashboard", "status" => "approvedbyqachead"]
 ];
 
 // Validate user role and set dashboard properties
@@ -227,7 +230,7 @@ if (!empty($submittedProposals)) {
 
         footer {
             margin-top: 20px;
-            /* ... rest of footer css ... */
+           
         }
         .badge { 
             text-transform: capitalize; 

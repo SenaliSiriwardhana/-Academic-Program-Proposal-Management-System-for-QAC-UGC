@@ -13,13 +13,16 @@ $user_id = $_SESSION['id']; // User ID for tracking approvals
 
 // Ensure user is from UGC
 $ugc_roles = [
+    "ugc - technical assistant" => "approvedbyTA",
+    "ugc - secretary" => "approvedbysecretary",
     "head of the qac-ugc department" => "approvedbyqachead",
     "ugc - finance department" => "approvedbyugcfinance",
     "ugc - hr department" => "approvedbyugchr",
     "ugc - idd department" => "approvedbyugcidd",
     "ugc - legal department" => "approvedbyugclegal",
     "ugc - academic department" => "approvedbyugcacademic",
-    "ugc - admission department" => "approvedbyugcadmission"
+    "ugc - admission department" => "approvedbyugcadmission",
+    "standard committee" => "approvedbystandardcommittee"
 ];
 
 // Validate user role and set approval status
@@ -264,7 +267,6 @@ function displayTableSection($sectionTitle, $sectionData) {
         echo "<h4 class='mt-4'>$sectionTitle</h4>";
         echo "<div class='table-responsive'><table class='table table-bordered'>";
         
-        // Table headers
         echo "<thead><tr>";
         foreach (array_keys($sectionData[0]) as $column) {
             echo "<th>" . ucfirst(str_replace('_', ' ', $column)) . "</th>";
