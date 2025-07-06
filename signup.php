@@ -143,8 +143,7 @@ $connection->close();
                             <option value="UGC - Finance Department">UGC - Finance Department</option>
                             <option value="UGC - HR Department">UGC - HR Department</option>
                             <option value="UGC - IDD Department">UGC - IDD Department</option>
-                            <option value="UGC - Legal Department">UGC - Legal Department</option>
-                            <option value="UGC - Academic Department">UGC - Academic Department</option>
+                            <option value="UGC - Academic Department">UGC - Academic Department (Academic Affairs)</option>
                             <option value="UGC - Admission Department">UGC - Admission Department</option>
                             <option value="UGC - Secretary">UGC - Secretary</option>
                             <option value="UGC - Technical Assistant"> UGC - Technical Assistant</option>
@@ -152,8 +151,27 @@ $connection->close();
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="university" class="form-label">University</label>
-                        <input type="text" class="form-control" id="university" name="university" required>
+                        <label for="university" class="form-label">University/Department</label>
+                        <select class="form-control" id="university" name="university" required>
+                            <option value="">Select a University</option>
+                            <option value="University of Colombo">University of Colombo</option>
+                            <option value="University of Moratuwa">University of Moratuwa</option>
+                            <option value="University of Peradeniya">University of Peradeniya</option>
+                            <option value="University of Sri Jayawardenepura">University of Sri Jayawardenepura</option>
+                            <option value="University of Kelaniya">University of Kelaniya</option>
+                            <option value="University of Jaffna">University of Jaffna</option>
+                            <option value="University of Ruhuna">University of Ruhuna</option>
+                            <option value="Eastern University of SriLanka">Eastern University of SriLanka</option>
+                            <option value="Rajarata University of SriLanka">Rajarata University of SriLanka</option>
+                            <option value="Sabaragamuwa University of SriLanka">Sabaragamuwa University of SriLanka</option>
+                            <option value="Wayamba University of SriLanka">Wayamba University of SriLanka</option>
+                            <option value="University of Visual and Performing Arts">University of Visual and Performing Arts</option>
+                            <option value="University of Uwa Wellassa">University of Uwa Wellassa</option>
+                            <option value="South Eastern University of SriLanka">South Eastern University of SriLanka</option>
+                            <option value="Open University">Open University</option>
+                            <option value="QAC-UGC">QAC-UGC</option>
+                        </select>
+
                     </div>
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
@@ -180,15 +198,14 @@ $connection->close();
     <script>
     document.addEventListener("DOMContentLoaded", function () {
         const roleSelect = document.getElementById("role");
-        const universityInput = document.getElementById("university");
+        const universitySelect = document.getElementById("university");
 
-    roleSelect.addEventListener("change", function () {
+    
         const ugcRoles = [
             "Head of the QAC-UGC Department",
             "UGC - Finance Department",
             "UGC - HR Department",
             "UGC - IDD Department",
-            "UGC - Legal Department",
             "UGC - Academic Department",
             "UGC - Admission Department",
             "UGC - Secretary",
@@ -197,12 +214,13 @@ $connection->close();
 
         ];
 
+        roleSelect.addEventListener("change", function () {
         if (ugcRoles.includes(this.value)) {
-            universityInput.value = "QAC-UGC";
-            universityInput.setAttribute("readonly", "true"); // Prevent editing
+            universitySelect.value = "QAC-UGC";
+            universitySelect.setAttribute("disabled", true);
         } else {
-            universityInput.value = "";
-            universityInput.removeAttribute("readonly");
+            universitySelect.value = "";
+            universitySelect.removeAttribute("disabled");
         }
     });
 });
