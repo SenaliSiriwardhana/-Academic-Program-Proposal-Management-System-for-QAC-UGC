@@ -105,7 +105,7 @@ if (isset($_GET['proposal_id']) && $isEditing && $initialFetch) {
         $result = $stmt->get_result();
         
         // Handle sections that can have multiple records
-        if ($section === 'program_structure' || $section === 'program_content') {
+        if ($section === 'program_structure' || $section === 'program_content' || $section === 'panel_of_teachers') {
             $_SESSION[$section] = [];
             while ($row = $result->fetch_assoc()) {
                 $_SESSION[$section][] = $row;
@@ -142,31 +142,31 @@ if (isset($_GET['proposal_id']) && $isEditing && $initialFetch) {
         }
         }
 
-        if ($section === 'panel_of_teachers') {
-            $_SESSION[$section] = [];
+        // if ($section === 'panel_of_teachers') {
+        //     $_SESSION[$section] = [];
         
-            // Clear existing session data to prevent duplication
-            if (!isset($_SESSION[$section]) || empty($_SESSION[$section])) {
-                while ($row = $result->fetch_assoc()) {
-                    // Check if this teacher already exists in session to prevent duplicates
-                    $exists = false;
-                    foreach ($_SESSION[$section] as $existingRow) {
-                        if ($existingRow['teacher_id'] === $row['teacher_id']) { // Change 'teacher_id' based on your table schema
-                            $exists = true;
-                            break;
-                        }
-                    }
+        //     // Clear existing session data to prevent duplication
+        //     if (!isset($_SESSION[$section]) || empty($_SESSION[$section])) {
+        //         while ($row = $result->fetch_assoc()) {
+        //             // Check if this teacher already exists in session to prevent duplicates
+        //             $exists = false;
+        //             foreach ($_SESSION[$section] as $existingRow) {
+        //                 if ($existingRow['teacher_id'] === $row['teacher_id']) { // Change 'teacher_id' based on your table schema
+        //                     $exists = true;
+        //                     break;
+        //                 }
+        //             }
         
-                    if (!$exists) {
-                        $_SESSION[$section][] = $row;
-                    }
-                }
-            }
+        //             if (!$exists) {
+        //                 $_SESSION[$section][] = $row;
+        //             }
+        //         }
+        //     }
         
-            if (count($_SESSION[$section]) > 0) {
-                $_SESSION['status_' . $section] = 'Completed';
-            }
-        }
+        //     if (count($_SESSION[$section]) > 0) {
+        //         $_SESSION['status_' . $section] = 'Completed';
+        //     }
+        // }
         
     }
 
