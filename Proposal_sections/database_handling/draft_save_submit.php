@@ -50,7 +50,7 @@ $rejected_statuses = [
     'rejectedbyugcfinance', 
     'rejectedbyugchr',
     'rejectedbyugcidd',
-    'rejectedbyugclegal',
+    //'rejectedbyugclegal',
     'rejectedbyugcacademic',
     'rejectedbyugcadmission',
     'rejectedbyqachead',
@@ -140,11 +140,80 @@ if ($proposal) {
     } elseif ($is_final_submit /*&& $status === "draft"|| $status === "fresh"*/) {
         // Final submission: Only allow if all sections are complete
 
+        //  START: LOGIC TO DETERMINE AND SET PROPOSAL_TYPE
+        // =================================================================================
+
+        // 1. Fetch the entire rejection history from the proposal_status_history table.
+        $history_query = "SELECT new_status FROM proposal_status_history WHERE proposal_id = ? ORDER BY history_id ASC";
+        $stmt_history = $connection->prepare($history_query);
+        $stmt_history->bind_param("i", $proposal_id);
+        $stmt_history->execute();
+        $history_result = $stmt_history->get_result();
+
+        $has_st_rejection = false;
+        $has_ugc_rejection = false;
+
+         $ugc_rejection_statuses = [
+        'rejectedbyqachead',
+        'rejectedbyStandardCommittee'
+    ];
+
+        while ($row = $history_result->fetch_assoc()) {
+            $status_in_history = $row['new_status'];
+
+            // Check if it was ever rejected by the Standard Committee
+            if ($status_in_history === 'rejectedbyStandardCommittee') {
+                $has_st_rejection = true;
+            }
+
+            // Check if it was ever rejected by any other UGC entity (using the list from payment logic)
+            if (in_array($status_in_history, $ugc_rejection_statuses)) {
+                $has_ugc_rejection = true;
+            }
+        }
+        $stmt_history->close();
+
+        // 2. Fetch the CURRENT proposal_type from the `proposals` table.
+        $current_type_query = "SELECT proposal_type FROM proposals WHERE proposal_id = ?";
+        $stmt_current_type = $connection->prepare($current_type_query);
+        $stmt_current_type->bind_param("i", $proposal_id);
+        $stmt_current_type->execute();
+        $current_type_result = $stmt_current_type->get_result()->fetch_assoc();
+        $current_type = $current_type_result['proposal_type'] ?? 'initial_proposal';
+        $stmt_current_type->close();
+
+        // 3. Determine the NEW proposal_type based on the rejection history.
+        $new_proposal_type = 'initial_proposal'; // Default
+
+        // This logic triggers on RESUBMISSION after a rejection.
+        if ($has_ugc_rejection) {
+            if ($has_st_rejection) {
+                // If the standing committee ever rejected it, this resubmission is of type 'revised_ST'.
+                $new_proposal_type = 'revised_ST';
+            } else {
+                // It was rejected by another UGC entity...
+                if ($current_type === 'initial_proposal' || $current_type === 'revised_ST') {
+                    // This is the first revision after an initial submission or an ST revision.
+                    $new_proposal_type = 'revised_1';
+                } elseif (strpos($current_type, 'revised_') === 0) {
+                    // It was already a numbered revision, so we increment it.
+                    $number = (int) str_replace('revised_', '', $current_type);
+                    $new_proposal_type = 'revised_' . ($number + 1);
+                }
+            }
+        }
+        // If there are no UGC rejections in its history, it remains 'initial_proposal'.
+
+        // =================================================================================
+        //  END: LOGIC TO DETERMINE AND SET PROPOSAL_TYPE
+        // =================================================================================
+
+
             // Get current timestamp
             $submitted_at = date('Y-m-d H:i:s');
         
-            $stmt = $connection->prepare("UPDATE proposals SET status = 'submitted', submitted_at = ? WHERE proposal_id = ?");
-            $stmt->bind_param("si", $submitted_at, $proposal_id,);
+            $stmt = $connection->prepare("UPDATE proposals SET status = 'submitted', proposal_type = ?, submitted_at = ? WHERE proposal_id = ?");
+            $stmt->bind_param("ssi",$new_proposal_type, $submitted_at, $proposal_id,);
             if ($stmt->execute()) {
            //echo "<pre>DEBUG: Proposal ID $proposal_id status successfully submitted.</pre>";
            echo "<script>alert('Proposal successfully submitted.');</script>";

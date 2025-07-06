@@ -30,12 +30,12 @@ $ugc_settings = [
     "ugc - secretary" => ["title" => "UGC - Secretary Dashboard","status" => "approvedbyTA"],
     "head of the qac-ugc department" => ["title" => "Head of QAC-UGC Dashboard", "status" => "approvedbysecretary"],
     "ugc - finance department" => ["title" => "UGC - Finance Department Dashboard", "status" => "approvedbyqachead"],
-    "ugc - hr department" => ["title" => "UGC - Human Resources Dashboard", "status" => "approvedbyugcfinance"],
-    "ugc - idd department" => ["title" => "UGC -IDD Dashboard", "status" => "approvedbyugchr"],
-    "ugc - legal department" => ["title" => "UGC - Legal Affairs Dashboard", "status" => "approvedbyugcidd"],
-    "ugc - academic department" => ["title" => "UGC - Academic Affairs Dashboard", "status" => "approvedbyugcadmission"],
-    "ugc - admission department" => ["title" => "UGC - Admission Department Dashboard", "status" => "approvedbyugclegal"],
-    "standard committee" => ["title" => "Standard Committee Dashboard", "status" => "approvedbyqachead"]
+    "ugc - hr department" => ["title" => "UGC - Human Resources Dashboard", "status" => "approvedbyqachead"],
+    "ugc - idd department" => ["title" => "UGC -IDD Dashboard", "status" => "approvedbyqachead"],
+    //"ugc - legal department" => ["title" => "UGC - Legal Affairs Dashboard", "status" => "approvedbyqachead"],
+    "ugc - academic department" => ["title" => "UGC - Academic Affairs Dashboard", "status" => "approvedbyqachead"],
+    "ugc - admission department" => ["title" => "UGC - Admission Department Dashboard", "status" => "approvedbyqachead"],
+    "standard committee" => ["title" => "Standard Committee Dashboard", "status" => "approvedbyacademic"]
 ];
 
 // Validate user role and set dashboard properties
@@ -50,7 +50,7 @@ $statusFilter = $ugc_settings[$_SESSION['role']]['status'];
 // Retrieve submitted proposals
 $pendingProposals = [];
 //$stmt = $connection->prepare("SELECT proposal_id, status FROM proposals WHERE status IN ('approvedbycqa') ORDER BY proposal_id ASC");
-$stmt = $connection->prepare("SELECT p.proposal_id,p.proposal_code, p.submitted_at, u.first_name, u.last_name, u.university, gi.degree_name_english
+$stmt = $connection->prepare("SELECT p.proposal_id,p.proposal_code,p.proposal_type, p.submitted_at, u.first_name, u.last_name, u.university, gi.degree_name_english
     FROM proposals p
     JOIN users u ON p.created_by = u.id
     LEFT JOIN proposal_general_info gi 
@@ -68,7 +68,7 @@ $stmt->close();
 
 // Retrieve submitted proposals
 $submittedProposals = [];
-$stmt = $connection->prepare("SELECT p.proposal_id,p.proposal_code, p.status, u.university, gi.degree_name_english FROM proposals p join users u on p.created_by=u.id LEFT JOIN proposal_general_info gi 
+$stmt = $connection->prepare("SELECT p.proposal_id,p.proposal_code, p.proposal_type, p.status, u.university, gi.degree_name_english FROM proposals p join users u on p.created_by=u.id LEFT JOIN proposal_general_info gi 
     ON p.proposal_id = gi.proposal_id WHERE p.status NOT IN ('draft', 'fresh','submitted','approvedbydean','rejectedbydean','approvedbyvc','rejectedbyvc','rejectedbycqa') ORDER BY proposal_id ASC");
 $stmt->execute();
 $result = $stmt->get_result();
@@ -77,9 +77,7 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
-// =================================================================
-// NEW CODE BLOCK START: Fetch history for the "Submitted Proposals" table
-// =================================================================
+
 $history_by_proposal = [];
 if (!empty($submittedProposals)) {
     $proposal_ids = array_column($submittedProposals, 'proposal_id');
@@ -103,9 +101,7 @@ if (!empty($submittedProposals)) {
     }
     $stmt_history->close();
 }
-// =================================================================
-// NEW CODE BLOCK END
-// =================================================================
+
 
 ?>
 
@@ -325,6 +321,7 @@ if (!empty($submittedProposals)) {
             <table class="table" id="pendingTable">
                 <tr>
                     <th>Proposal Code</th>
+                    <th>Proposal Type</th>
                     <th>Degree Name </th>
                     <th>Submitted Date</th>
                     <th>Submitted By</th>
@@ -334,6 +331,7 @@ if (!empty($submittedProposals)) {
                 <?php foreach ($pendingProposals as $pproposal) { ?>
                     <tr>
                         <td><?php echo $pproposal['proposal_code']; ?></td>
+                        <td><?php echo $pproposal['proposal_type']; ?></td>
                         <td><?php echo $pproposal['degree_name_english']; ?></td>
                         <td><?php echo $pproposal['submitted_at']; ?></td>
                         <td><?php echo $pproposal['first_name'] . " " . $pproposal['last_name']; ?></td>
@@ -357,6 +355,7 @@ if (!empty($submittedProposals)) {
                     <thead>
                         <tr>
                             <th>Proposal Code</th>
+                            <th>Proposal Type</th>
                             <th>Degree Name</th>
                             <th>Current Status</th>
                             <th>Status Workflow</th>
@@ -376,6 +375,7 @@ if (!empty($submittedProposals)) {
                             ?>
                             <tr>
                                 <td><?php echo htmlspecialchars($proposal['proposal_code']); ?></td>
+                                <td><?php echo htmlspecialchars($proposal['proposal_type']); ?></td>
                                 <td><?php echo htmlspecialchars($proposal['degree_name_english']); ?></td>
                                 <td><span class="badge <?php echo $badge_class; ?>"><?php echo str_replace("_", " ", htmlspecialchars($proposal['status'])); ?></span></td>
                                 <td>
