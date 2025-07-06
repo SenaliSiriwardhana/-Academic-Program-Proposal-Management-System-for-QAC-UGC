@@ -39,7 +39,6 @@ $ugc_roles = [
     "ugc - finance department",
     "ugc - hr department",
     "ugc - idd department",
-    "ugc - legal department",
     "ugc - academic department",
     "ugc - admission department",
     "standard committee"
@@ -68,9 +67,9 @@ if (isset($_POST['approve'])) {
         exit();
     }
 
-    if (strpos($role, "Dean/Rector/Director") !== false) {
+    if (strpos($role, "dean/rector/director") !== false) {
         $proposal_status = 'approvedbydean'; // Dean approves
-    } elseif (strpos($role, "Vice Chancellor") !== false || strpos($role, "vc") !== false) {
+    } elseif (strpos($role, "vice chancellor") !== false || strpos($role, "vc") !== false) {
         $proposal_status = 'approvedbyvc'; // VC approves
     } elseif (strcasecmp(trim($role), "CQA Director") === 0) { //  Case-insensitive check for CQA
         $proposal_status = 'approvedbycqa'; // CQA approves
@@ -86,8 +85,8 @@ if (isset($_POST['approve'])) {
         $proposal_status = 'approvedbyugchr'; // UGC-HR approves
     }elseif (strcasecmp(trim($role), "UGC - IDD Department") === 0) { //  Case-insensitive check for IDD
         $proposal_status = 'approvedbyugcidd'; // UGC-IDD approves
-    }elseif (strcasecmp(trim($role), "UGC - Legal Department") === 0) { //  Case-insensitive check for Legal
-        $proposal_status = 'approvedbyugclegal'; // UGC-Legal approves
+    //}elseif (strcasecmp(trim($role), "UGC - Legal Department") === 0) { //  Case-insensitive check for Legal
+        //$proposal_status = 'approvedbyugclegal'; // UGC-Legal approves
     }elseif (strcasecmp(trim($role), "UGC - Academic Department") === 0) { //  Case-insensitive check for Academic
         $proposal_status = 'approvedbyugcacademic'; // UGC-Academic approves
     }elseif (strcasecmp(trim($role), "UGC - Admission Department") === 0) { //  Case-insensitive check for Admission
@@ -99,9 +98,9 @@ if (isset($_POST['approve'])) {
         die("Access Denied: Unauthorized role.");
     }
 } elseif (isset($_POST['reject'])) {
-    if (strpos($role, "Dean/Rector/Director") !== false) {
+    if (strpos($role, "dean/rector/director") !== false) {
         $proposal_status = 'rejectedbydean'; // Dean rejects
-    } elseif (strpos($role, "Vice Chancellor") !== false || strpos($role, "vc") !== false) {
+    } elseif (strpos($role, "vice chancellor") !== false || strpos($role, "vc") !== false) {
         $proposal_status = 'rejectedbyvc'; // VC rejects
     } elseif (strcasecmp(trim($role), "CQA Director") === 0) { //  CQA Director rejection
         $proposal_status = 'rejectedbycqa'; // CQA rejects
@@ -117,8 +116,8 @@ if (isset($_POST['approve'])) {
         $proposal_status = 'rejectedbyugchr'; // UGC-HR rejects
     }elseif (strcasecmp(trim($role), "UGC - IDD Department") === 0) { //  Case-insensitive check for IDD
         $proposal_status = 'rejectedbyugcidd'; // UGC-IDD rejects
-    }elseif (strcasecmp(trim($role), "UGC - Legal Department") === 0) { //  Case-insensitive check for Legal
-        $proposal_status = 'rejectedbyugclegal'; // UGC-Legal rejects
+    //}elseif (strcasecmp(trim($role), "UGC - Legal Department") === 0) { //  Case-insensitive check for Legal
+        //$proposal_status = 'rejectedbyugclegal'; // UGC-Legal rejects
     }elseif (strcasecmp(trim($role), "UGC - Academic Department") === 0) { //  Case-insensitive check for Academic
         $proposal_status = 'rejectedbyugcacademic'; // UGC-Academic rejects
     }elseif (strcasecmp(trim($role), "UGC - Admission Department") === 0) { //  Case-insensitive check for Admission
