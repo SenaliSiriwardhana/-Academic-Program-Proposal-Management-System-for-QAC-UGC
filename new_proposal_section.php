@@ -207,7 +207,23 @@ if (isset($_GET['proposal_id']) && $isEditing && $initialFetch) {
             if ($row = $result->fetch_assoc()) {
                 $_SESSION['program_entity']["ref_{$key}"] = $row['reference_no'];
                 $_SESSION['program_entity']["date_{$key}"] = $row['date_of_approval'];
-                $_SESSION['program_entity']["evidence_{$key}"] = '/qac_ugc/' . $row['evidence'];
+                //$_SESSION['program_entity']["evidence_{$key}"] = '/qac_ugc/' . $row['evidence'];
+                  // === THIS IS THE FIX ===
+                    $db_path = $row['evidence'];
+                    $base_prefix = '/qac_ugc/';
+                    
+                    // Check if the path already starts with the prefix.
+                    if (strpos($db_path, $base_prefix) === 0) {
+                        // If it does, use the path as is.
+                        $final_url = $db_path;
+                    } else {
+                        // If it doesn't, add the prefix.
+                        $final_url = $base_prefix . $db_path;
+                    }
+
+                    // Clean up any double slashes just in case.
+                    $_SESSION['program_entity']["evidence_{$key}"] = str_replace('//', '/', $final_url);
+                
             }
             $stmt->close();
         }

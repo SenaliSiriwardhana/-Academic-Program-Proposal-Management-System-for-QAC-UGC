@@ -128,7 +128,7 @@ $programEntity = $_SESSION['program_entity'] ?? [
                                 <td>Corporate / Strategic Plan of the University</td>
                                 <td><input type="text" class="form-control" name="ref_corporate_plan" placeholder="Reference Number"value="<?php echo htmlspecialchars($programEntity['ref_corporate_plan'] ?? ""); ?>"></td>
                                 <td><input type="date" class="form-control" name="date_corporate_plan" value="<?php echo htmlspecialchars($programEntity['date_corporate_plan'] ?? ""); ?>"></td>
-                                <td><input type="file" class="form-control" name="evidence_corporate_plan"required>
+                                <td><input type="file" class="form-control" name="evidence_corporate_plan" <?php echo empty($programEntity['evidence_corporate_plan']) ? 'required' : ''; ?>>
                                 <?php if (!empty($programEntity['evidence_corporate_plan'])): ?>
                                     <p>Uploaded: <a href="<?php echo htmlspecialchars($programEntity['evidence_corporate_plan']); ?>" target="_blank">View File</a></p>
                                 <?php endif; ?>
@@ -138,7 +138,7 @@ $programEntity = $_SESSION['program_entity'] ?? [
                                 <td>Action Plan of the Faculty/Institute/Center/Unit</td>
                                 <td><input type="text" class="form-control" name="ref_action_plan" placeholder="Reference Number" value="<?php echo htmlspecialchars($programEntity['ref_action_plan'] ?? ""); ?>"></td>
                                 <td><input type="date" class="form-control" name="date_action_plan" value="<?php echo htmlspecialchars($programEntity['date_action_plan'] ?? ""); ?>"></td>
-                                <td><input type="file" class="form-control" name="evidence_action_plan"required>
+                                <td><input type="file" class="form-control" name="evidence_action_plan" <?php echo empty($programEntity['evidence_action_plan']) ? 'required' : ''; ?>>
                                 <?php if (!empty($programEntity['evidence_action_plan'])): ?>
                                     <p>Uploaded: <a href="<?php echo htmlspecialchars($programEntity['evidence_action_plan']); ?>" target="_blank">View File</a></p>
                                 <?php endif; ?>
@@ -150,7 +150,7 @@ $programEntity = $_SESSION['program_entity'] ?? [
                                 <td>Faculty Approval</td>
                                 <td><input type="text" class="form-control" name="ref_faculty_approval" placeholder="Reference Number" value="<?php echo htmlspecialchars($programEntity['ref_faculty_approval'] ?? ""); ?>"></td>
                                 <td><input type="date" class="form-control" name="date_faculty_approval" value="<?php echo htmlspecialchars($programEntity['date_faculty_approval'] ?? ""); ?>"></td>
-                                <td><input type="file" class="form-control" name="evidence_faculty_approval"required>
+                                <td><input type="file" class="form-control" name="evidence_faculty_approval" <?php echo empty($programEntity['evidence_faculty_approval']) ? 'required' : ''; ?>>
                                 <?php if (!empty($programEntity['evidence_faculty_approval'])): ?>
                                     <p>Uploaded: <a href="<?php echo htmlspecialchars($programEntity['evidence_faculty_approval']); ?>" target="_blank">View File</a></p>
                                 <?php endif; ?>
@@ -161,7 +161,7 @@ $programEntity = $_SESSION['program_entity'] ?? [
                                 <td>Final Senate Approval</td>
                                 <td><input type="text" class="form-control" name="ref_senate_approval" placeholder="Reference Number" value="<?php echo htmlspecialchars($programEntity['ref_senate_approval'] ?? ""); ?>"></td>
                                 <td><input type="date" class="form-control" name="date_senate_approval" value="<?php echo htmlspecialchars($programEntity['date_senate_approval'] ?? ""); ?>"></td>
-                                <td><input type="file" class="form-control" name="evidence_senate_approval"required>
+                                <td><input type="file" class="form-control" name="evidence_senate_approval" <?php echo empty($programEntity['evidence_senate_approval']) ? 'required' : ''; ?>>
                                 <?php if (!empty($programEntity['evidence_senate_approval'])): ?>
                                     <p>Uploaded: <a href="<?php echo htmlspecialchars($programEntity['evidence_senate_approval']); ?>" target="_blank">View File</a></p>
                                 <?php endif; ?>
@@ -172,7 +172,7 @@ $programEntity = $_SESSION['program_entity'] ?? [
                                 <td>Final Council Approval</td>
                                 <td><input type="text" class="form-control" name="ref_council_approval" placeholder="Reference Number" value="<?php echo htmlspecialchars($programEntity['ref_council_approval'] ?? ""); ?>"></td>
                                 <td><input type="date" class="form-control" name="date_council_approval" value="<?php echo htmlspecialchars($programEntity['date_council_approval'] ?? ""); ?>"></td>
-                                <td><input type="file" class="form-control" name="evidence_council_approval" required>
+                                <td><input type="file" class="form-control" name="evidence_council_approval" <?php echo empty($programEntity['evidence_council_approval']) ? 'required' : ''; ?>>
                                 <?php if (!empty($programEntity['evidence_council_approval'])): ?>
                                     <p>Uploaded: <a href="<?php echo htmlspecialchars($programEntity['evidence_council_approval']); ?>" target="_blank">View File</a></p>
                                 <?php endif; ?>
