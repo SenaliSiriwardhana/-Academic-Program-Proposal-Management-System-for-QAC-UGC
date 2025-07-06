@@ -350,6 +350,11 @@ if (!empty($submittedProposals)) {
             </a>
         </li>
     <?php endif; ?>
+        <li class="nav-item">
+            <a class="nav-link" href="edit_profile.php">
+                <i class="fas fa-user-edit"></i> Edit Profile
+            </a>
+        </li>
         <li class="nav-item"><a class="nav-link" href="login.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
     </ul>
 </div>

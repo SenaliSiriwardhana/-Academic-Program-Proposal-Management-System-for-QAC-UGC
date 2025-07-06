@@ -263,8 +263,12 @@ if (!empty($submittedProposals)) {
                 <i class="fas fa-chart-line"></i> Management Reports
             </a>
         </li>
-        <?php endif; ?>
-
+    <?php endif; ?>
+        <li class="nav-item">
+            <a class="nav-link" href="edit_profile.php">
+                <i class="fas fa-user-edit"></i> Edit Profile
+            </a>
+        </li>
         <li class="nav-item"><a class="nav-link" href="login.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
     </ul>
 </div>
