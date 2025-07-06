@@ -32,7 +32,7 @@ $ugc_settings = [
     "ugc - finance department" => ["title" => "UGC - Finance Department Dashboard", "status" => "approvedbyugcfinance"],
     "ugc - hr department" => ["title" => "UGC - Human Resources Dashboard", "status" => "approvedbyugchr"],
     "ugc - idd department" => ["title" => "UGC - Institutional Development Dashboard", "status" => "approvedbyugcidd"],
-    "ugc - legal department" => ["title" => "UGC - Legal Affairs Dashboard", "status" => "approvedbyugclegal"],
+    //"ugc - legal department" => ["title" => "UGC - Legal Affairs Dashboard", "status" => "approvedbyugclegal"],
     "ugc - academic department" => ["title" => "UGC - Academic Affairs Dashboard", "status" => "approvedbyugcacademic"],
     "ugc - admission department" => ["title" => "UGC - Admission Department", "status" => "approvedbyugcadmission"],
     "standard committee" => ["title" => "Standard Committee Dashboard", "status" => "approvedbyqachead"]

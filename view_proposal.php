@@ -25,7 +25,7 @@ $ugc_roles = [
     "ugc - finance department" => "approvedbyugcfinance",
     "ugc - hr department" => "approvedbyugchr",
     "ugc - idd department" => "approvedbyugcidd",
-    "ugc - legal department" => "approvedbyugclegal",
+    //"ugc - legal department" => "approvedbyugclegal",
     "ugc - academic department" => "approvedbyugcacademic",
     "ugc - admission department" => "approvedbyugcadmission",
     "ugc - technical assistant" => "approvedbyTA",
@@ -63,7 +63,7 @@ $stmt->close();
 // Fetch previous approvals from proposal_comments table
 $commentQuery = "SELECT id, proposal_status, comment, seal_and_sign, Date
 FROM proposal_comments 
-WHERE proposal_id = ? AND proposal_status IN ('approvedbysecretary','approvedbyTA','approvedbyStandardCommitte','approvedbyugcfinance', 'approvedbyugcidd', 'approvedbyugchr','approvedbyqachead','approvedbyugclegal','approvedbyugcacademic','approvedbyugcadmission','approvedbydean','approvedbyvc','approvedbycqa')
+WHERE proposal_id = ? AND proposal_status IN ('approvedbyStandardCommitte','approvedbyqachead','approvedbydean','approvedbyvc','approvedbycqa')
 ORDER BY id ASC";
 
 
@@ -368,7 +368,7 @@ function displayTableSection($sectionTitle, $sectionData) {
                         elseif ($comment['proposal_status'] === 'approvedbyugcfinance') echo "UGC - Finance Department";
                         elseif ($comment['proposal_status'] === 'approvedbyugchr') echo "UGC - HR Department";
                         elseif ($comment['proposal_status'] === 'approvedbyugcidd') echo "UGC - IDD Department";
-                        elseif ($comment['proposal_status'] === 'approvedbyugclegal') echo "UGC - Legal Department";
+                        //elseif ($comment['proposal_status'] === 'approvedbyugclegal') echo "UGC - Legal Department";
                         elseif ($comment['proposal_status'] === 'approvedbyugcacademic') echo "UGC - Academic Department";
                         elseif ($comment['proposal_status'] === 'approvedbyugcadmission') echo "UGC - Admission Department";
                     ?>
