@@ -368,6 +368,35 @@ unset($row);
             text-align: center;
             color: #7f8c8d;
         }
+	
+	 .workflow-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .workflow-table th, .workflow-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+            text-align: left;
+            vertical-align: top;
+        }
+        .workflow-table th {
+            background-color: #f8f9fa;
+            font-weight: 500;
+        }
+        .workflow-table .status-icon {
+            font-size: 1.2rem;
+            width: 30px;
+        }
+        .workflow-table .status-text {
+            font-weight: bold;
+        }
+        .workflow-table .comment-text {
+            font-style: italic;
+            color: #555;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        /* END NEW CSS */
 
     </style>
 </head>
@@ -577,70 +606,88 @@ unset($row);
 
 
 <script>
-    // JavaScript for Modal (No changes needed, but I added comment display)
-        const statusModal = document.getElementById('statusModal');
-        statusModal.addEventListener('show.bs.modal', event => {
-            const button = event.relatedTarget;
-            const proposalCode = button.getAttribute('data-proposal-code');
-            const history = JSON.parse(button.getAttribute('data-history'));
+     // =================================================================
+    // NEW CODE BLOCK START: JavaScript for Modal
+    // =================================================================
+    const statusModal = document.getElementById('statusModal');
+    statusModal.addEventListener('show.bs.modal', event => {
+        const button = event.relatedTarget;
+        const proposalCode = button.getAttribute('data-proposal-code');
+        const history = JSON.parse(button.getAttribute('data-history'));
 
-            const modalTitle = statusModal.querySelector('.modal-title');
-            modalTitle.textContent = `Workflow for: ${proposalCode}`;
+        const modalTitle = statusModal.querySelector('.modal-title');
+        modalTitle.textContent = `Workflow for: ${proposalCode}`;
 
-            const modalBody = statusModal.querySelector('#modal-body-content');
-            modalBody.innerHTML = ''; 
+        const modalBody = statusModal.querySelector('#modal-body-content');
+        modalBody.innerHTML = ''; 
 
-            if (history.length === 0) {
-                modalBody.innerHTML = '<p class="text-center">No workflow history available for this proposal yet.</p>';
-                return;
-            }
+        if (history.length === 0) {
+            modalBody.innerHTML = '<p class="text-center">No workflow history available for this proposal yet.</p>';
+            return;
+        }
+
+        // --- START: BUILD THE TABLE ---
+            let tableHtml = `
+                <div class="table-responsive">
+                    <table class="workflow-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 5%;"></th>
+                                <th style="width: 25%;">Status</th>
+                                <th style="width: 25%;">Date</th>
+                                <th>Comment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
 
             history.forEach(step => {
-                const statusStr = step.proposal_status.toLowerCase();
+                const statusStr = (step.proposal_status || '').toLowerCase();
                 const isApproved = statusStr.includes('approved') || statusStr.includes('recommended');
                 const isRejected = statusStr.includes('rejected') || statusStr.includes('revision');
                 
-                let iconHtml = '<i class="fas fa-info-circle text-info"></i>'; // Default/Submitted
-                if (isApproved) {
-                    iconHtml = '<i class="fas fa-check-circle text-success"></i>';
-                } else if (isRejected) {
-                    iconHtml = '<i class="fas fa-times-circle text-danger"></i>';
-                }
+                let iconHtml = '<i class="fas fa-info-circle text-info"></i>'; // Default
+                if (isApproved) iconHtml = '<i class="fas fa-check-circle text-success"></i>';
+                else if (isRejected) iconHtml = '<i class="fas fa-times-circle text-danger"></i>';
 
                 let statusText = (step.proposal_status || '')
                     .replace(/by/g, ' by ')
                     .replace(/_/g, ' ')
-                    .replace(/([A-Z])/g, ' $1')
-                    .replace(/^ / , '')
-                    .split(' ')
-                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(' ');
-                
-                // NEW: Add the comment if it exists
-                let commentHtml = '';
-                if (step.comment && step.comment.trim() !== '') {
-                    // Escape HTML in comment to prevent XSS
-                    const escapedComment = document.createElement('div');
-                    escapedComment.innerText = step.comment;
-                    commentHtml = `<div class="comment fst-italic bg-light p-2 rounded mt-2"><strong>Comment:</strong> ${escapedComment.innerHTML}</div>`;
-                }
+                    .replace(/\b\w/g, l => l.toUpperCase()); // Capitalize each word
 
-                const stepHtml = `
-                    <div class="workflow-step">
-                        <div class="workflow-icon">${iconHtml}</div>
-                        <div class="workflow-details">
-                            <div class="status">${statusText}</div>
-                            <div class="date">On: ${new Date(step.Date).toLocaleString()}</div>
-                            ${commentHtml}
-                        </div>
-                    </div>
+                // Securely handle comments
+                let commentText = (step.comment && step.comment.trim() !== '') ? step.comment : 'No comment provided.';
+                const tempDiv = document.createElement('div');
+                tempDiv.innerText = commentText; // Use .innerText to escape any potential HTML
+                const escapedComment = tempDiv.innerHTML;
+
+                const stepDate = new Date(step.Date).toLocaleString('en-GB', {
+                    year: 'numeric', month: 'short', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit', hour12: true
+                });
+
+                tableHtml += `
+                    <tr>
+                        <td class="status-icon">${iconHtml}</td>
+                        <td class="status-text">${statusText}</td>
+                        <td>${stepDate}</td>
+                        <td class="comment-text">${escapedComment}</td>
+                    </tr>
                 `;
-                modalBody.insertAdjacentHTML('beforeend', stepHtml);
             });
-        });
-    </script>
 
+            tableHtml += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            // --- END: BUILD THE TABLE ---
+
+            modalBody.innerHTML = tableHtml;
+        });
     
+</script>
+
 
     <footer>
         Copyright © 2024 University Grants Commission. Developed by UGC.
