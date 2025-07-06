@@ -19,7 +19,7 @@ $ugc_roles = [
     "ugc - finance department" => "approvedbyugcfinance",
     "ugc - hr department" => "approvedbyugchr",
     "ugc - idd department" => "approvedbyugcidd",
-    "ugc - legal department" => "approvedbyugclegal",
+    //"ugc - legal department" => "approvedbyugclegal",
     "ugc - academic department" => "approvedbyugcacademic",
     "ugc - admission department" => "approvedbyugcadmission",
     "standard committee" => "approvedbystandardcommittee"
@@ -51,7 +51,7 @@ $stmt->close();
 // Fetch previous approvals from proposal_comments table
 $commentQuery = "SELECT id, proposal_status, comment, seal_and_sign, Date
 FROM proposal_comments 
-WHERE proposal_id = ? AND proposal_status IN ('approvedbyugcfinance', 'approvedbyugcidd', 'approvedbyugchr','approvedbyqachead','approvedbyugclegal','approvedbyugcacademic','approvedbyugcadmission','approvedbydean','approvedbyvc','approvedbycqa')
+WHERE proposal_id = ? AND proposal_status IN ('approvedbyqachead','approvedbydean','approvedbyvc','approvedbycqa')
 ORDER BY id ASC";
 
 
@@ -347,7 +347,7 @@ function displayTableSection($sectionTitle, $sectionData) {
                         elseif ($comment['proposal_status'] === 'approvedbyugcfinance') echo "UGC - Finance Department";
                         elseif ($comment['proposal_status'] === 'approvedbyugchr') echo "UGC - HR Department";
                         elseif ($comment['proposal_status'] === 'approvedbyugcidd') echo "UGC - IDD Department";
-                        elseif ($comment['proposal_status'] === 'approvedbyugclegal') echo "UGC - Legal Department";
+                        //elseif ($comment['proposal_status'] === 'approvedbyugclegal') echo "UGC - Legal Department";
                         elseif ($comment['proposal_status'] === 'approvedbyugcacademic') echo "UGC - Academic Department";
                         elseif ($comment['proposal_status'] === 'approvedbyugcadmission') echo "UGC - Admission Department";
                     ?>
@@ -368,20 +368,112 @@ function displayTableSection($sectionTitle, $sectionData) {
         <?php } ?>
     </table>
 
+
+    <!-- Include the Signature Pad Library -->
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+
     <!-- Comment Section -->
     <h4 class="mt-4 text-primary">Comments</h4>
     <form action="submit_comment.php" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="proposal_id" value="<?php echo $proposal_id; ?>">
         <textarea name="dean_comment" class="form-control mb-3" rows="4" placeholder="Enter your comments here..."></textarea>
-        <div class = "d-flex gap-2 align-items-center">
-        <th><label for="signature" class="form-label">Seal and Signature</th>
-        <td><input type="file" name ="signature_file"></td>
+        
+        <!-- Checkbox for confirmation -->
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="recommend" name="recommend">
+            <label class="form-check-label" for="recommend">I hereby endorse the proposal, confirming that all the above information provided is accurate and complete.</label>
         </div>
+
+        <!-- Signature Pad -->
+            <h4 class="mt-4">Digital Signature</h4>
+
+            <!-- Add this block for the signer's name -->
+        <div class="mb-2">
+            <label for="signer_name" class="form-label">Signer's Name (as it will appear on the signature):</label>
+            <input type="text" id="signer_name" class="form-control" value="<?php echo htmlspecialchars(trim(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? ''))); ?>" readonly>
+        </div>
+        
+         
+            <canvas id="signature-pad" width="400" height="150" style="border: 1px solid #000;"></canvas>
+            <br>
+            <button type="button" id="clear" class="btn btn-warning">Clear</button>
+            <br>
+
+        <!-- Hidden input to store the signature image -->
+            <input type="hidden" name="signature_image" id="signature_image">
+
+        <br>
+
         <div class="d-flex gap-2 align-items-center">
             <button type="submit" name="approve" class="btn btn-success">Approve</button>
             <button type="submit" name="reject" class="btn btn-danger">Reject</button>
             
         </div>
+
+        <script>
+            // Initialize Signature Pad
+            var canvas = document.getElementById('signature-pad');
+            var signaturePad = new SignaturePad(canvas);
+
+            // Clear button functionality
+            document.getElementById('clear').addEventListener('click', function () {
+                signaturePad.clear();
+            });
+
+            // Add an event listener to the form's submit event
+            document.querySelector('form').addEventListener('submit', function (event) {
+                // Find out which button was clicked to submit the form
+                const submitter = event.submitter;
+
+                // --- LOGIC FOR APPROVAL ---
+                // Only perform signature checks if the 'approve' button was clicked
+                if (submitter && submitter.name === 'approve') {
+                    
+                    // Check 1: Is the recommendation checkbox ticked?
+                    if (!document.getElementById('recommend').checked) {
+                        alert('Please mark the checkbox to confirm your recommendation and correctness of the proposal information.');
+                        event.preventDefault(); // Stop form submission
+                        return; // Exit the function
+                    }
+
+                    // Check 2: Is the signature pad empty?
+                    if (signaturePad.isEmpty()) {
+                        alert("Please provide your digital signature to approve the proposal.");
+                        event.preventDefault(); // Stop form submission
+                        return; // Exit the function
+                    }
+
+                    
+                    // Draw Name and Date on the Canvas ---
+
+                    // Get the 2D context of the canvas
+                    var ctx = canvas.getContext('2d');
+                    
+                    // Get the name from the readonly input field
+                    var signerName = document.getElementById('signer_name').value;
+                    
+                    // Get the current date
+                    var currentDate = new Date().toLocaleDateString();
+
+                    // Set font and color for the text
+                    ctx.font = '14px "Helvetica", "Arial", sans-serif';
+                    ctx.fillStyle = '#000'; // Black text
+                    ctx.textAlign = 'left'; // Align text to the left
+
+                    // Draw the name and date at the bottom of the canvas
+                    // You can adjust the coordinates (10, 140) as needed
+                    ctx.fillText(`Signed by: ${signerName} on ${currentDate}`, 10, 140);
+                    // --- END NEW LOGIC ---
+
+                    // If all checks pass for approval, save the signature data to the hidden input
+                    document.getElementById('signature_image').value = signaturePad.toDataURL();
+                }
+
+                // --- LOGIC FOR REJECTION (or any other button) ---
+                // For the 'reject' button, no special client-side validation is needed here.
+                // The form will submit normally without checking the signature.
+            });
+        </script>
 
 </body>
 </html>
