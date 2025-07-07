@@ -143,6 +143,8 @@ if ($proposal) {
         //  START: LOGIC TO DETERMINE AND SET PROPOSAL_TYPE
         // =================================================================================
 
+        //echo "<h3>--- DEBUGGING PROPOSAL TYPE LOGIC ---</h3>";
+
         // 1. Fetch the entire rejection history from the proposal_status_history table.
         $history_query = "SELECT new_status FROM proposal_status_history WHERE proposal_id = ? ORDER BY history_id ASC";
         $stmt_history = $connection->prepare($history_query);
@@ -151,15 +153,19 @@ if ($proposal) {
         $history_result = $stmt_history->get_result();
 
         $has_st_rejection = false;
-        $has_ugc_rejection = false;
+        $has_qac_rejection = false;
 
-         $ugc_rejection_statuses = [
-        'rejectedbyqachead',
-        'rejectedbyStandardCommittee'
-    ];
+        $qac_rejection_statuses = ['rejectedbyqachead', 'rejectedbystandardcommittee']; // Initializing the array correctly
+
+            // echo "<b>Checking for these QAC rejection statuses:</b><pre>";
+            // print_r($qac_rejection_statuses);
+            // echo "</pre>";
+
+            // echo "<b>Proposal's Status History from Database:</b><ul>";
 
         while ($row = $history_result->fetch_assoc()) {
             $status_in_history = $row['new_status'];
+            //  echo "<li>Found status: '{$status_in_history}'</li>";
 
             // Check if it was ever rejected by the Standard Committee
             if ($status_in_history === 'rejectedbyStandardCommittee') {
@@ -167,11 +173,17 @@ if ($proposal) {
             }
 
             // Check if it was ever rejected by any other UGC entity (using the list from payment logic)
-            if (in_array($status_in_history, $ugc_rejection_statuses)) {
-                $has_ugc_rejection = true;
+            if (in_array($status_in_history, $qac_rejection_statuses)) {
+                $has_qac_rejection = true;
             }
         }
+        // echo "</ul>";
         $stmt_history->close();
+
+        // echo "<b>Result of history check:</b><br>";
+        // echo "Has QAC Rejection? " . ($has_qac_rejection ? '<b>YES</b>' : 'NO') . "<br>";
+        // echo "Has ST Rejection? " . ($has_st_rejection ? '<b>YES</b>' : 'NO') . "<br><hr>";
+
 
         // 2. Fetch the CURRENT proposal_type from the `proposals` table.
         $current_type_query = "SELECT proposal_type FROM proposals WHERE proposal_id = ?";
@@ -182,11 +194,13 @@ if ($proposal) {
         $current_type = $current_type_result['proposal_type'] ?? 'initial_proposal';
         $stmt_current_type->close();
 
+          //echo "<b>Current proposal_type from DB is:</b> '{$current_type}'<br><hr>";
+
         // 3. Determine the NEW proposal_type based on the rejection history.
         $new_proposal_type = 'initial_proposal'; // Default
 
         // This logic triggers on RESUBMISSION after a rejection.
-        if ($has_ugc_rejection) {
+        if ($has_qac_rejection) {
             if ($has_st_rejection) {
                 // If the standing committee ever rejected it, this resubmission is of type 'revised_ST'.
                 $new_proposal_type = 'revised_ST';
@@ -202,6 +216,10 @@ if ($proposal) {
                 }
             }
         }
+
+        // echo "<b>Final Calculated proposal_type will be:</b> <b style='color:red; font-size: 1.2em;'>'{$new_proposal_type}'</b><br><hr>";
+        // echo "<p>If the final type is 'initial_proposal' but you expected 'revised_1', it means 'Has QAC Rejection?' was NO. Check for typos between the history statuses and the QAC rejection list.</p>";
+
         // If there are no UGC rejections in its history, it remains 'initial_proposal'.
 
         // =================================================================================
@@ -216,15 +234,15 @@ if ($proposal) {
             $stmt->bind_param("ssi",$new_proposal_type, $submitted_at, $proposal_id,);
             if ($stmt->execute()) {
            //echo "<pre>DEBUG: Proposal ID $proposal_id status successfully submitted.</pre>";
-           echo "<script>alert('Proposal successfully submitted.');</script>";
+           //echo "<script>alert('Proposal successfully submitted.');</script>";
         } else {
            //echo "<pre>ERROR: Failed to update status. SQL Error: " . $stmt->error . "</pre>";
-           echo "<script>alert('Proposal submission failed.');</script>";
+           //echo "<script>alert('Proposal submission failed.');</script>";
         };
             $stmt->close();
         } else {
             //echo "<pre>ERROR: Please complete all sections before submitting.</pre>";
-            echo "<script>alert('Please complete all sections before submitting.');</script>";
+            //echo "<script>alert('Please complete all sections before submitting.');</script>";
         }
         
    
