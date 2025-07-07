@@ -40,13 +40,18 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 $proposal_id = $_GET['id'];
 
 // Fetch proposal details
-$proposalQuery = "SELECT proposal_id, status, created_at, updated_at, submitted_at FROM proposals WHERE proposal_id = ?";
+$proposalQuery = "SELECT proposal_id, status, created_at, updated_at, submitted_at, proposal_type FROM proposals WHERE proposal_id = ?";
 $stmt = $connection->prepare($proposalQuery);
 $stmt->bind_param("i", $proposal_id);
 $stmt->execute();
 $proposal = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
+// Get the proposal type for button logic
+$proposal_type = $proposal['proposal_type'];
+
+// Initialize the flag to check if the current user is the Director-QAC
+$is_director_qac = ($role === 'head of the qac-ugc department');
 
 // Fetch previous approvals from proposal_comments table
 $commentQuery = "SELECT id, proposal_status, comment, seal_and_sign, Date
@@ -405,75 +410,105 @@ function displayTableSection($sectionTitle, $sectionData) {
         <br>
 
         <div class="d-flex gap-2 align-items-center">
+
+            <?php if ($is_director_qac): ?>
+            <!-- Special buttons for the Director-QAC -->
+            <button type="submit" name="director_action" value="rejectedbyqachead" class="btn btn-danger">Request Revision</button>
+            
+            <?php if ($proposal_type === 'initial_proposal'): ?>
+                <button type="submit" name="director_action" value="approvedbyqachead" class="btn btn-success">Approve</button>
+            
+                <?php else: // It's a revised proposal ?>
+                <button type="submit" name="director_action" value="approvedbyqachead_revised" class="btn btn-primary">Recommend Revised Proposal</button>
+            <?php endif; ?>
+
+            <?php else: ?>
+
             <button type="submit" name="approve" class="btn btn-success">Approve</button>
             <button type="submit" name="reject" class="btn btn-danger">Reject</button>
+
+             <?php endif; ?>
             
         </div>
 
-        <script>
-            // Initialize Signature Pad
-            var canvas = document.getElementById('signature-pad');
-            var signaturePad = new SignaturePad(canvas);
+       <script>
+    // Initialize Signature Pad
+    var canvas = document.getElementById('signature-pad');
+    var signaturePad = new SignaturePad(canvas);
 
-            // Clear button functionality
-            document.getElementById('clear').addEventListener('click', function () {
-                signaturePad.clear();
-            });
+    // Clear button functionality
+    document.getElementById('clear').addEventListener('click', function () {
+        signaturePad.clear();
+    });
 
-            // Add an event listener to the form's submit event
-            document.querySelector('form').addEventListener('submit', function (event) {
-                // Find out which button was clicked to submit the form
-                const submitter = event.submitter;
+    // Add an event listener to the form's submit event
+    document.querySelector('form').addEventListener('submit', function (event) {
+        // Find out which button was clicked to submit the form
+        const submitter = event.submitter;
 
-                // --- LOGIC FOR APPROVAL ---
-                // Only perform signature checks if the 'approve' button was clicked
-                if (submitter && submitter.name === 'approve') {
-                    
-                    // Check 1: Is the recommendation checkbox ticked?
-                    if (!document.getElementById('recommend').checked) {
-                        alert('Please mark the checkbox to confirm your recommendation and correctness of the proposal information.');
-                        event.preventDefault(); // Stop form submission
-                        return; // Exit the function
-                    }
+        // If for some reason there's no submitter, stop.
+        if (!submitter) {
+            event.preventDefault();
+            return;
+        }
 
-                    // Check 2: Is the signature pad empty?
-                    if (signaturePad.isEmpty()) {
-                        alert("Please provide your digital signature to approve the proposal.");
-                        event.preventDefault(); // Stop form submission
-                        return; // Exit the function
-                    }
+        // =====================================================================
+        //  STEP 1: Determine if the action is an "Approval"
+        // =====================================================================
+        let isApprovalAction = false;
 
-                    
-                    // Draw Name and Date on the Canvas ---
+        // Check the standard 'Approve' button
+        if (submitter.name === 'approve') {
+            isApprovalAction = true;
+        } 
+        // Check the Director's special buttons
+        else if (submitter.name === 'director_action') {
+            // This is an approval if the button's value contains "approved"
+            if (submitter.value.includes('approved')) {
+                isApprovalAction = true;
+            }
+        }
+        // =====================================================================
 
-                    // Get the 2D context of the canvas
-                    var ctx = canvas.getContext('2d');
-                    
-                    // Get the name from the readonly input field
-                    var signerName = document.getElementById('signer_name').value;
-                    
-                    // Get the current date
-                    var currentDate = new Date().toLocaleDateString();
 
-                    // Set font and color for the text
-                    ctx.font = '14px "Helvetica", "Arial", sans-serif';
-                    ctx.fillStyle = '#000'; // Black text
-                    ctx.textAlign = 'left'; // Align text to the left
+        // =====================================================================
+        //  STEP 2: Run validation ONLY if the action is an approval
+        // =====================================================================
+        if (isApprovalAction) {
+            
+            // Check 1: Is the endorsement checkbox ticked?
+            if (!document.getElementById('recommend').checked) {
+                alert('Please check the endorsement box to confirm your action.');
+                event.preventDefault(); // Stop form submission
+                return; 
+            }
 
-                    // Draw the name and date at the bottom of the canvas
-                    // You can adjust the coordinates (10, 140) as needed
-                    ctx.fillText(`Signed by: ${signerName} on ${currentDate}`, 10, 140);
-                    // --- END NEW LOGIC ---
+            // Check 2: Is the signature pad empty?
+            if (signaturePad.isEmpty()) {
+                alert("Please provide your digital signature to complete the approval.");
+                event.preventDefault(); // Stop form submission
+                return;
+            }
 
-                    // If all checks pass for approval, save the signature data to the hidden input
-                    document.getElementById('signature_image').value = signaturePad.toDataURL();
-                }
+            // If all checks pass, draw text and save the signature data
+            var ctx = canvas.getContext('2d');
+            var signerName = document.getElementById('signer_name').value;
+            var currentDate = new Date().toLocaleDateString('en-GB');
 
-                // --- LOGIC FOR REJECTION (or any other button) ---
-                // For the 'reject' button, no special client-side validation is needed here.
-                // The form will submit normally without checking the signature.
-            });
-        </script>
+            ctx.font = '14px "Helvetica", "Arial", sans-serif';
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'left';
+            
+            ctx.fillText(`Signed by: ${signerName} on ${currentDate}`, 10, 140);
+            
+            document.getElementById('signature_image').value = signaturePad.toDataURL();
+        }
+        // =====================================================================
+        
+        // If 'isApprovalAction' is false (i.e., it's a rejection), 
+        // the code above is skipped and the form submits without validation.
+    });
+</script>
 
 </body>
 </html>

@@ -66,6 +66,31 @@ if (isset($_POST['approve'])) {
         echo "<script>alert('Please provide your digital signature to approve the proposal.'); window.history.back();</script>";
         exit();
     }
+}
+
+// STEP 1: Check for the Director's special actions first.
+if (isset($_POST['director_action'])) {
+    
+    // The value from the button IS the new status.
+    $proposal_status = $_POST['director_action'];
+    
+    // Simple validation to ensure the value is one of the expected ones.
+    $allowed_director_statuses = ['approvedbyqachead', 'approvedbyqachead_revised', 'rejectedbyqachead'];
+    if (!in_array($proposal_status, $allowed_director_statuses)) {
+        die("Invalid director action.");
+    }
+
+} 
+// STEP 2: Handle the standard 'approve' button for all other roles.
+elseif (isset($_POST['approve'])) {
+    
+    // Your existing validation for checkbox and signature is here.
+    if (!isset($_POST['recommend']) || $_POST['recommend'] !== 'on') {
+        die("<script>alert('Please mark the checkbox to confirm your recommendation.'); window.history.back();</script>");
+    }
+    if (empty($_POST['signature_image'])) {
+        die("<script>alert('Please provide your digital signature to approve the proposal.'); window.history.back();</script>");
+    }
 
     if (strpos($role, "dean/rector/director") !== false) {
         $proposal_status = 'approvedbydean'; // Dean approves
@@ -75,10 +100,10 @@ if (isset($_POST['approve'])) {
         $proposal_status = 'approvedbycqa'; // CQA approves
     } elseif (strcasecmp(trim($role), "UGC - Technical Assistant") === 0) { //  Case-insensitive check for TA
         $proposal_status = 'approvedbyTA'; // TA approves
-    } elseif (strcasecmp(trim($role), "Secretary") === 0) { //  Case-insensitive check for Secretary
+    } elseif (strcasecmp(trim($role), "UGC - Secretary") === 0) { //  Case-insensitive check for Secretary
         $proposal_status = 'approvedbysecretary'; // Secretary approves
-    } elseif (strcasecmp(trim($role), "Head of the qac-ugc Department") === 0) { //  Case-insensitive check for CQA
-        $proposal_status = 'approvedbyqachead'; // UGC-HEAD approves
+    //} elseif (strcasecmp(trim($role), "Head of the qac-ugc Department") === 0) { //  Case-insensitive check for CQA
+       // $proposal_status = 'approvedbyqachead'; // UGC-HEAD approves
     }elseif (strcasecmp(trim($role), "UGC - Finance Department") === 0) { //  Case-insensitive check for Finance
         $proposal_status = 'approvedbyugcfinance'; // UGC-Finance approves
     }elseif (strcasecmp(trim($role), "UGC - HR Department") === 0) { //  Case-insensitive check for HR
@@ -108,8 +133,8 @@ if (isset($_POST['approve'])) {
         $proposal_status = 'rejectedbyTA'; // TA rejects
     } elseif (strcasecmp(trim($role), "Secretary") === 0) { //  Case-insensitive check for Secretary
         $proposal_status = 'rejectedbysecretary'; // Secretary rejects
-    } elseif (strcasecmp(trim($role), "Head of the qac-ugc Department") === 0) { //  Case-insensitive check for CQA
-        $proposal_status = 'rejectedbyqachead'; // UGC-HEAD rejectss
+   // } elseif (strcasecmp(trim($role), "Head of the qac-ugc Department") === 0) { //  Case-insensitive check for CQA
+       // $proposal_status = 'rejectedbyqachead'; // UGC-HEAD rejectss
     }elseif (strcasecmp(trim($role), "UGC - Finance Department") === 0) { //  Case-insensitive check for Finance
         $proposal_status = 'rejectedbyugcfinance'; // UGC-Finance rejects
     }elseif (strcasecmp(trim($role), "UGC - HR Department") === 0) { //  Case-insensitive check for HR
@@ -209,13 +234,23 @@ try {
     //  Commit transaction
     $connection->commit();
 
-    // Redirect based on action
-        // Redirect based on action
-    if (isset($_POST['approve'])) {
-        echo "<script>alert('Proposal Application Approved successfully.'); window.location.href='$approved_page';</script>";
-    } elseif (isset($_POST['reject'])) {
-        echo "<script>alert('Proposal Application Rejected.'); window.location.href='$rejected_page';</script>";
-    }
+    $final_status = $proposal_status; 
+
+if (strpos($final_status, 'approved') !== false) {
+    // This handles ALL approval statuses, including 'approvedbyqachead' and 'approvedbyqachead_revised'.
+    echo "<script>alert('Proposal Application Approved. The process will continue.'); window.location.href='$approved_page';</script>";
+    exit();
+
+} elseif (strpos($final_status, 'rejected') !== false) {
+    // This handles ALL rejection statuses, including the Director's 'rejectedbyqachead'.
+    echo "<script>alert('Proposal Rejected.'); window.location.href='$rejected_page';</script>";
+    exit();
+
+} else {
+    // A fallback for any other case, though it shouldn't be reached with the current logic.
+    echo "<script>alert('Action processed successfully.'); window.location.href='$approved_page';</script>";
+    exit();
+}
 
     
     } catch (Exception $e) {
