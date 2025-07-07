@@ -26,8 +26,8 @@ if ($result->num_rows > 0) {
 
 // Define UGC roles with corresponding dashboard titles & status filters
 $ugc_settings = [
-    "ugc - technical assistant" => ["title" => "UGC - Technical Assistant Dashboard","status" => "rejectedbyvc"],
-    "ugc - secretary" => ["title" => "UGC - Secretary Dashboard","status" => "rejectedbyTA"],
+    "ugc - technical assistant" => ["title" => "UGC - Technical Assistant Dashboard","status" => "rejectedbyTA"],
+    "ugc - secretary" => ["title" => "UGC - Secretary Dashboard","status" => "rejectedbysecretary"],
     "head of the qac-ugc department" => ["title" => "Head of QAC-UGC Dashboard", "status" => "rejectedbyqachead"],
     "ugc - finance department" => ["title" => "UGC - Finance Department Dashboard", "status" => "rejectedbyugcfinance"],
     "ugc - hr department" => ["title" => "UGC - Human Resources Dashboard", "status" => "rejectedbyugchr"],

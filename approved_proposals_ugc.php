@@ -2,6 +2,7 @@
 session_start();
 require 'databaseconnection.php'; // Database connection
 
+
 // Ensure user is logged in
 if (!isset($_SESSION['username'])) {
     header('Location: login.php');
@@ -26,8 +27,8 @@ if ($result->num_rows > 0) {
 
 // Define UGC roles with corresponding dashboard titles & status filters
 $ugc_settings = [
-    "ugc - technical assistant" => ["title" => "UGC - Technical Assistant Dashboard","status" => "approvedbyvc"],
-    "ugc - secretary" => ["title" => "UGC - Secretary Dashboard","status" => "approvedbyTA"],
+    "ugc - technical assistant" => ["title" => "UGC - Technical Assistant Dashboard","status" => "approvedbyTA"],
+    "ugc - secretary" => ["title" => "UGC - Secretary Dashboard","status" => "approvedbysecretary"],
     "head of the qac-ugc department" => ["title" => "Head of QAC-UGC Dashboard", "status" => "approvedbyqachead"],
     "ugc - finance department" => ["title" => "UGC - Finance Department Dashboard", "status" => "approvedbyugcfinance"],
     "ugc - hr department" => ["title" => "UGC - Human Resources Dashboard", "status" => "approvedbyugchr"],
@@ -35,7 +36,7 @@ $ugc_settings = [
     //"ugc - legal department" => ["title" => "UGC - Legal Affairs Dashboard", "status" => "approvedbyugclegal"],
     "ugc - academic department" => ["title" => "UGC - Academic Affairs Dashboard", "status" => "approvedbyugcacademic"],
     "ugc - admission department" => ["title" => "UGC - Admission Department", "status" => "approvedbyugcadmission"],
-    "standard committee" => ["title" => "Standard Committee Dashboard", "status" => "approvedbyqachead"]
+    "standard committee" => ["title" => "Standard Committee Dashboard", "status" => "approvedbyStandardCommittee"]
 ];
 
 // Validate user role and set dashboard properties
