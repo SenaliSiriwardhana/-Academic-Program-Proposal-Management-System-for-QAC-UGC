@@ -379,6 +379,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
                 if (!empty($_POST['module_code'])) {
                     for ($i = 0; $i < count($_POST['module_code']); $i++) {
+                        $qualifier1 = isset($_POST['qualifier1_related'][$i]) ? 'Yes' : 'No';
+                        $qualifier2 = isset($_POST['qualifier2_related'][$i]) ? 'Yes' : 'No';
+
                         $_SESSION['program_structure'][] = [
                             'semester' => $_POST['semesters'][$i] ?? '',
                             'module_code' => $_POST['module_code'][$i] ?? '',
@@ -386,8 +389,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'credit_value' => $_POST['credit_value'][$i] ?? 0,
                             'module_status' => $_POST['module_status'][$i] ?? '',
                             'module_type' => $_POST['module_type'][$i] ?? '',
-                            'qualifier1_related' => $_POST['qualifier1_related'][$i],
-                            'qualifier2_related' => $_POST['qualifier2_related'][$i],
+                            'qualifier1_related' => $qualifier1,
+                            'qualifier2_related' => $qualifier2,
                         ];
                     }
                 }

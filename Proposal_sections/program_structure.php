@@ -115,7 +115,7 @@ $programStructure = $_SESSION['program_structure'] ?? [];
                             <td><input type="text" class="form-control" name="module_name[]" placeholder="Enter name" required></td>
                             <td><input type="number" class="form-control" name="credit_value[]" placeholder="Enter credits" required></td>
                             <td>
-                                <select class="form-select" name="status[]">
+                                <select class="form-select" name="module_status[]">
                                     <option value="Compulsory">Compulsory</option>
                                     <option value="Optional">Optional</option>
                                 </select>
@@ -165,7 +165,7 @@ $programStructure = $_SESSION['program_structure'] ?? [];
                 <td><input type="text" class="form-control" name="module_name[]" placeholder="Enter name" required></td>
                 <td><input type="number" class="form-control" name="credit_value[]" placeholder="Enter credits" required></td>
                 <td>
-                    <select class="form-select" name="status[]">
+                    <select class="form-select" name="module_status[]">
                         <option value="Compulsory">Compulsory</option>
                         <option value="Optional">Optional</option>
                     </select>
