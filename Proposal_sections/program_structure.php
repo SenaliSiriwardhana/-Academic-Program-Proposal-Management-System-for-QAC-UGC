@@ -126,8 +126,8 @@ $programStructure = $_SESSION['program_structure'] ?? [];
                                     <option value="New">New</option>
                                 </select>
                             </td>
-                            <td><input type="checkbox" name="qualifier1_related[]" value="Yes"></td>
-                            <td><input type="checkbox" name="qualifier2_related[]" value="Yes"></td>
+                            <td><input type="checkbox" name="qualifier1_related[0]" value="Yes"></td>
+                            <td><input type="checkbox" name="qualifier2_related[0]" value="Yes"></td>
                             <td><button type="button" class="btn btn-danger" onclick="removeRow(this)">Remove</button></td>
                         </tr>
                         <?php endif; ?>
@@ -157,6 +157,7 @@ $programStructure = $_SESSION['program_structure'] ?? [];
     <script>
         function addRow() {
             const tableBody = document.querySelector('#programStructureTable tbody');
+            const newIndex = tableBody.rows.length;
             const newRow = document.createElement('tr');
 
             newRow.innerHTML = `
@@ -176,8 +177,8 @@ $programStructure = $_SESSION['program_structure'] ?? [];
                         <option value="New">New</option>
                     </select>
                 </td>
-                <td><input type="checkbox" name="qualifier1_related[]" value="Yes"></td>
-                <td><input type="checkbox" name="qualifier2_related[]" value="Yes"></td>
+                <td><input type="checkbox" name="qualifier1_related[${newIndex}]" value="Yes"></td>
+                <td><input type="checkbox" name="qualifier2_related[${newIndex}]" value="Yes"></td>
                 <td><button type="button" class="btn btn-danger" onclick="removeRow(this)">Remove</button></td>
             `;
             tableBody.appendChild(newRow);
