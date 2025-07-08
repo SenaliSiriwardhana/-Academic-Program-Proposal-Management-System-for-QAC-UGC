@@ -130,7 +130,7 @@ if ($proposal) {
         $stmt->bind_param("i", $proposal_id);
         if ($stmt->execute()) {
            //echo "<pre>DEBUG: Proposal ID $proposal_id status successfully updated to Draft.</pre>";
-           echo "<script>alert('Draft Save Successfully.');</script>";
+           echo "<script>alert('Draft Save Successfully.');window.location.href='/qac_ugc/new_proposal.php';</script>";
         } else {
            //echo "<pre>ERROR: Failed to update status. SQL Error: " . $stmt->error . "</pre>";
            echo "<script>alert('Draft save failed.');</script>";
@@ -234,15 +234,16 @@ if ($proposal) {
             $stmt->bind_param("ssi",$new_proposal_type, $submitted_at, $proposal_id,);
             if ($stmt->execute()) {
            //echo "<pre>DEBUG: Proposal ID $proposal_id status successfully submitted.</pre>";
-           //echo "<script>alert('Proposal successfully submitted.');</script>";
+           echo "<script>alert('Proposal successfully submitted.');
+           window.location.href='/qac_ugc/submitted_proposals.php';</script>";
         } else {
            //echo "<pre>ERROR: Failed to update status. SQL Error: " . $stmt->error . "</pre>";
-           //echo "<script>alert('Proposal submission failed.');</script>";
+           echo "<script>alert('Proposal submission failed.');</script>";
         };
             $stmt->close();
         } else {
             //echo "<pre>ERROR: Please complete all sections before submitting.</pre>";
-            //echo "<script>alert('Please complete all sections before submitting.');</script>";
+            echo "<script>alert('Please complete all sections before submitting.');</script>";
         }
         
    
@@ -1189,6 +1190,9 @@ if (isset($_SESSION['program_content']) && is_array($_SESSION['program_content']
 if (isset($_SESSION['panel_of_teachers']) && is_array($_SESSION['panel_of_teachers'])) {
     ensure_section_exists($connection, $proposal_id, "proposal_panel_of_teachers");
 
+    
+
+
     // Fetch existing records from the database for the current proposal
     $existingModules = [];
     $stmt = $connection->prepare("SELECT teacher_id FROM proposal_panel_of_teachers WHERE proposal_id = ?");
@@ -1248,6 +1252,12 @@ if (isset($_SESSION['panel_of_teachers']) && is_array($_SESSION['panel_of_teache
         };
         $stmt->close();
     }
+
+    // Clear all existing panel_of_teachers records for this proposal to avoid duplicates
+        $stmt = $connection->prepare("DELETE FROM proposal_panel_of_teachers WHERE proposal_id = ?");
+        $stmt->bind_param("i", $proposal_id);
+        $stmt->execute();
+        $stmt->close();
 
     foreach ($_SESSION['panel_of_teachers'] as $module) {
         // Ensure required fields are properly accessed

@@ -78,6 +78,7 @@ $panelOfTeachers = $_SESSION['panel_of_teachers'] ?? [];
                     <?php if (!empty($panelOfTeachers)): ?>
                         <?php foreach ($panelOfTeachers as $teacher): ?>
                             <tr>
+                                <input type="hidden" name="teacher_id[]" value="<?php echo htmlspecialchars($teacher['teacher_id'] ?? ''); ?>"></span>
                                 <td><input type="text" class="form-control" name="lecturer_name[]" value="<?php echo htmlspecialchars($teacher['lecturer_name']); ?>"></td>
                                 <td><input type="text" class="form-control" name="designation[]" value="<?php echo htmlspecialchars($teacher['designation']); ?>"></td>
                                 <td><input type="number" class="form-control hours-input" name="internal_ug_hours[]" value="<?php echo htmlspecialchars($teacher['internal_ug_hours']); ?>"></td>
@@ -91,6 +92,7 @@ $panelOfTeachers = $_SESSION['panel_of_teachers'] ?? [];
                         <?php endforeach; ?>
                     <?php else: ?>
                             <tr>
+                                <input type="hidden" name="teacher_id[]" value=""></span>
                                 <td><input type="text" class="form-control" name="lecturer_name[]"></td>
                                 <td><input type="text" class="form-control" name="designation[]"></td>
                                 <td><input type="number" class="form-control hours-input" name="internal_ug_hours[]"></td>
@@ -126,6 +128,7 @@ $panelOfTeachers = $_SESSION['panel_of_teachers'] ?? [];
             const tableBody = document.querySelector("#panelTable tbody");
             const newRow = document.createElement("tr");
             newRow.innerHTML = `
+                <input type="hidden" name="teacher_id[]" value=""></span>
                 <td><input type="text" class="form-control" name="lecturer_name[]"></td>
                 <td><input type="text" class="form-control" name="designation[]"></td>
                 <td><input type="number" class="form-control" name="internal_ug_hours[]"></td>
