@@ -24,47 +24,100 @@ if ($result->num_rows > 0) {
     die("<pre>Error: User details not found.</pre>");
 }
 
-// Define UGC roles with corresponding dashboard titles & status filters
-$ugc_settings = [
-    "ugc - technical assistant" => ["title" => "UGC - Technical Assistant Dashboard","status" => "approvedbyvc"],
-    "ugc - secretary" => ["title" => "UGC - Secretary Dashboard","status" => "approvedbyTA"],
-    "head of the qac-ugc department" => ["title" => "Head of QAC-UGC Dashboard", "status" => "approvedbysecretary"],
-    "ugc - finance department" => ["title" => "UGC - Finance Department Dashboard", "status" => "approvedbyqachead"],
-    "ugc - hr department" => ["title" => "UGC - Human Resources Dashboard", "status" => "approvedbyqachead"],
-    "ugc - idd department" => ["title" => "UGC -IDD Dashboard", "status" => "approvedbyqachead"],
-    //"ugc - legal department" => ["title" => "UGC - Legal Affairs Dashboard", "status" => "approvedbyqachead"],
-    "ugc - academic department" => ["title" => "UGC - Academic Affairs Dashboard", "status" => "approvedbyqachead"],
-    "ugc - admission department" => ["title" => "UGC - Admission Department Dashboard", "status" => "approvedbyqachead"],
-    "standard committee" => ["title" => "Standard Committee Dashboard", "status" => "approvedbyacademic"]
-];
+$role = $_SESSION['role'];
+
+
+
+
 
 // Validate user role and set dashboard properties
-if (!array_key_exists($_SESSION['role'], $ugc_settings)) {
-    die("<pre>Error: Unauthorized access. Role detected: " . htmlspecialchars($_SESSION['role']) . "</pre>");
-}
+// if (!array_key_exists($_SESSION['role'], $ugc_settings)) {
+//     die("<pre>Error: Unauthorized access. Role detected: " . htmlspecialchars($_SESSION['role']) . "</pre>");
+// }
 
-$dashboardTitle = $ugc_settings[$_SESSION['role']]['title'];
-$statusFilter = $ugc_settings[$_SESSION['role']]['status'];
+// $dashboardTitle = $ugc_settings[$_SESSION['role']]['title'];
+// $statusFilter = $ugc_settings[$_SESSION['role']]['status'];
 
 
 // Retrieve submitted proposals
 $pendingProposals = [];
-//$stmt = $connection->prepare("SELECT proposal_id, status FROM proposals WHERE status IN ('approvedbycqa') ORDER BY proposal_id ASC");
-$stmt = $connection->prepare("SELECT p.proposal_id,p.proposal_code,p.proposal_type, p.submitted_at, u.first_name, u.last_name, u.university, gi.degree_name_english
-    FROM proposals p
-    JOIN users u ON p.created_by = u.id
-    LEFT JOIN proposal_general_info gi 
-    ON p.proposal_id = gi.proposal_id
-    WHERE p.status = ? 
-    ORDER BY p.submitted_at ASC");
 
-$stmt->bind_param("s", $statusFilter);
+$base_query = "SELECT p.proposal_id,p.proposal_code,p.proposal_type, p.submitted_at, u.first_name, u.last_name, u.university, 
+gi.degree_name_english FROM proposals p JOIN users u ON p.created_by = u.id LEFT JOIN proposal_general_info gi 
+ON p.proposal_id = gi.proposal_id";
+
+// --- Special logic for Technical Assistant ---
+if ($role === 'ugc - technical assistant') {
+    $dashboardTitle = "UGC - Technical Assistant Dashboard";
+    // TA sees: 1) Initial proposals approved by VC. 2) Revised proposals approved by CQA.
+    $query = "$base_query WHERE (p.status = 'approvedbyvc') OR (p.status = 'approvedbycqa' AND p.proposal_type LIKE 'revised%') ORDER BY p.submitted_at ASC";
+    $stmt = $connection->prepare($query);
+    
+} else {
+    
+
+    // Define the list of statuses for the UGC-Departments
+    $dept_queue_statuses = ['approvedbyqachead', 'approvedbyqachead_revised', 're-signed_vc'];
+
+    // --- Standard logic for all other UGC roles ---
+    $ugc_settings = [
+        "ugc - secretary" => ["title" => "UGC - Secretary Dashboard", "status" => "approvedbyTA"],
+        "head of the qac-ugc department" => ["title" => "Director QAC Dashboard", "status" => "approvedbysecretary"],
+        "ugc - finance department" => ["title" => "UGC - Finance Department Dashboard", "status" =>  $dept_queue_statuses],
+        "ugc - hr department" => ["title" => "UGC - HR Dashboard", "status" =>  $dept_queue_statuses],
+        "ugc - idd department" => ["title" => "UGC - IDD Dashboard", "status" =>  $dept_queue_statuses],
+        "ugc - academic department" => ["title" => "Academic Affairs Dashboard", "status" =>  $dept_queue_statuses],
+        "ugc - admission department" => ["title" => "UGC - Admission Dashboard", "status" =>  $dept_queue_statuses],
+        "standard committee" => ["title" => "Standard Committee Dashboard", "status" => "approvedbyugcacademic"], // This should likely be 'approvedbyqachead' too
+    ];
+
+    if (!array_key_exists($role, $ugc_settings)) {
+        die("Unauthorized access for role: " . htmlspecialchars($role));
+    }
+    $dashboardTitle = $ugc_settings[$role]['title'];
+    $statusFilter = $ugc_settings[$role]['status'];
+    if (is_array($statusFilter)) {
+        // If the filter is an array, build an IN clause
+        $placeholders = implode(',', array_fill(0, count($statusFilter), '?'));
+        $query = "$base_query WHERE p.status IN ($placeholders) ORDER BY p.submitted_at ASC";
+        $stmt = $connection->prepare($query);
+        // Bind each value in the array
+        $stmt->bind_param(str_repeat('s', count($statusFilter)), ...$statusFilter);
+    } else {
+        // If the filter is a single string, use the simple query
+        $query = "$base_query WHERE p.status = ? ORDER BY p.submitted_at ASC";
+        $stmt = $connection->prepare($query);
+        $stmt->bind_param("s", $statusFilter);
+    }
+    // $query = "$base_query WHERE p.status = ? ORDER BY p.submitted_at ASC";
+    // $stmt = $connection->prepare($query);
+    // $stmt->bind_param("s", $statusFilter);
+}
+
+// Execute and fetch results
 $stmt->execute();
 $result = $stmt->get_result();
 while ($row = $result->fetch_assoc()) {
     $pendingProposals[] = $row;
 }
 $stmt->close();
+
+//$stmt = $connection->prepare("SELECT proposal_id, status FROM proposals WHERE status IN ('approvedbycqa') ORDER BY proposal_id ASC");
+// $stmt = $connection->prepare("SELECT p.proposal_id,p.proposal_code,p.proposal_type, p.submitted_at, u.first_name, u.last_name, u.university, gi.degree_name_english
+//     FROM proposals p
+//     JOIN users u ON p.created_by = u.id
+//     LEFT JOIN proposal_general_info gi 
+//     ON p.proposal_id = gi.proposal_id
+//     WHERE p.status = ? 
+//     ORDER BY p.submitted_at ASC");
+
+// $stmt->bind_param("s", $statusFilter);
+// $stmt->execute();
+// $result = $stmt->get_result();
+// while ($row = $result->fetch_assoc()) {
+//     $pendingProposals[] = $row;
+// }
+// $stmt->close();
 
 // Retrieve submitted proposals
 $submittedProposals = [];

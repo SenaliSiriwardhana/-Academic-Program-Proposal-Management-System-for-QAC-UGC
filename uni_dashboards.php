@@ -49,30 +49,6 @@ if (stripos($normalizedRole, "dean") !== false) {
 
 
 
-if (strpos($normalizedRole, "dean") !== false) {
-    $dashboardTitle = "Dean Dashboard";
-    $statusFilter = "submitted"; // Dean sees submitted proposals
-    $approvedPage = "approved_proposals.php";
-    $rejectedPage = "rejected_proposals.php";
-
-}elseif (strpos($role, "vice chancellor") !== false || strpos($role, "vc") !== false) {
-    $dashboardTitle = "VC Dashboard";
-    $statusFilter = "approvedbycqa"; // VC sees proposals approved by Dean
-    $approvedPage = "approved_proposals.php";
-    $rejectedPage = "rejected_proposals.php";
-
-} elseif (stripos($role, "cqa director") !== false) {  //  Case-insensitive & Flexible
-    error_log("DEBUG: Entered CQA Director Condition");
-    $dashboardTitle = "CQA Director Dashboard";
-    $statusFilter = "approvedbydean"; // CQA sees proposals approved by VC
-    $approvedPage = "approved_proposals.php";
-    $rejectedPage = "rejected_proposals.php";
-  
-      
-} else {
-    die("<pre>Error: Unauthorized access. Role detected: " . htmlspecialchars($role) . "</pre>");
-}
-
 
 // Fetch university_id using university name
 $query = "SELECT university_id FROM universities WHERE university_name = ?";
@@ -94,26 +70,74 @@ $_SESSION['university_id'] = $university_id;
 
 // Fetch pending proposals that match the required status
 $pendingProposals = [];
-$stmt = $connection->prepare("
-    SELECT p.proposal_id, p.proposal_code, p.submitted_at, u.first_name, u.last_name, u.email, gi.degree_name_english
+$base_query="
+    SELECT p.proposal_id, p.proposal_code, p.proposal_type, p.submitted_at, u.first_name, u.last_name, u.email, gi.degree_name_english
     FROM proposals p
     JOIN users u ON p.created_by = u.id
     LEFT JOIN proposal_general_info gi 
     ON p.proposal_id = gi.proposal_id
-    WHERE p.status = ? 
-    AND u.university_id = ? 
-    ORDER BY p.submitted_at ASC
 "
+;
+$where_clause = "";
+$params = [];
+$types = "";
 
-);
 
-$stmt->bind_param("si", $statusFilter, $university_id);
-$stmt->execute();
-$result = $stmt->get_result();
-while ($row = $result->fetch_assoc()) {
-    $pendingProposals[] = $row;
+
+
+if (strpos($normalizedRole, "dean") !== false) {
+    $dashboardTitle = "Dean Dashboard";
+    // Dean sees ALL proposals with status 'submitted' OR those needing re-signature.
+    $where_clause = "WHERE u.university_id = ? AND p.status IN ('submitted', 'approvedbyqachead_revised', 'resignature_request_from_university')";
+    $params = [$university_id];
+    $types = "i";
+    $approvedPage = "approved_proposals.php";
+    $rejectedPage = "rejected_proposals.php";
+
+}elseif (strpos($role, "vice chancellor") !== false || strpos($role, "vc") !== false) {
+    $dashboardTitle = "VC Dashboard";
+    // VC sees initial proposals approved by CQA, AND proposals needing re-signature approved by CQA.
+    $where_clause = "WHERE u.university_id = ? AND (p.status = 'approvedbycqa' AND p.proposal_type LIKE 'initial_proposal') OR (p.status = 're-signed_cqa') ";
+    $params = [$university_id];
+    $types = "i";
+    $approvedPage = "approved_proposals.php";
+    $rejectedPage = "rejected_proposals.php";
+
+} elseif (stripos($role, "cqa director") !== false) {  //  Case-insensitive & Flexible
+    error_log("DEBUG: Entered CQA Director Condition");
+    $dashboardTitle = "CQA Director Dashboard";
+   // CQA sees ALL proposals approved by the Dean.
+    $where_clause = "WHERE u.university_id = ? AND p.status IN ('approvedbydean','re-signed_dean')";
+    $params = [$university_id];
+    $types = "i";
+    $approvedPage = "approved_proposals.php";
+    $rejectedPage = "rejected_proposals.php";
+  
+      
+} else {
+    die("<pre>Error: Unauthorized access. Role detected: " . htmlspecialchars($role) . "</pre>");
 }
-$stmt->close();
+
+if (!empty($where_clause)) {
+    $stmt = $connection->prepare("$base_query $where_clause ORDER BY p.submitted_at ASC");
+    if (!empty($types)) {
+        $stmt->bind_param($types, ...$params);
+    }
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $pendingProposals[] = $row;
+    }
+    $stmt->close();
+}
+
+// $stmt->bind_param("si", $statusFilter, $university_id);
+// $stmt->execute();
+// $result = $stmt->get_result();
+// while ($row = $result->fetch_assoc()) {
+//     $pendingProposals[] = $row;
+// }
+// $stmt->close();
 
 
 //echo "<pre>Debug SQL: ";

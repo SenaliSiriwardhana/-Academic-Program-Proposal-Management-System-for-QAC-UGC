@@ -419,8 +419,9 @@ function displayTableSection($sectionTitle, $sectionData) {
                 <button type="submit" name="director_action" value="approvedbyqachead" class="btn btn-success">Approve</button>
             
                 <?php else: // It's a revised proposal ?>
-                <button type="submit" name="director_action" value="approvedbyqachead_revised" class="btn btn-primary">Recommend Revised Proposal</button>
-            <?php endif; ?>
+                <!--<button type="submit" name="director_action" value="approvedbyqachead_revised" class="btn btn-primary" onclick="handleRevisedRecommendation()">Recommend Revised Proposal</button>-->
+                <button type="button" class="btn btn-primary" onclick="handleRevisedRecommendation()">Recommend Revised Proposal</button>
+                <?php endif; ?>
 
             <?php else: ?>
 
@@ -440,6 +441,61 @@ function displayTableSection($sectionTitle, $sectionData) {
     document.getElementById('clear').addEventListener('click', function () {
         signaturePad.clear();
     });
+
+    function handleRevisedRecommendation() {
+        // --- VALIDATION STEP 1: Perform signature and checkbox checks FIRST ---
+        if (!document.getElementById('recommend').checked) {
+            alert('Please check the endorsement box to confirm your action.');
+            return; // Stop the function
+        }
+        if (signaturePad.isEmpty()) {
+            alert("Please provide your digital signature to recommend the proposal.");
+            return; // Stop the function
+        }
+        // --- END OF VALIDATION ---
+
+        // If validation passes, then show the pop-up box
+        const needsResignature = confirm("Does this revised proposal require re-signatures from the university (Dean, CQA, VC)?\n\n- Click 'OK' for YES.\n- Click 'Cancel' for NO.");
+
+        // Get the form
+        const form = document.querySelector('form');
+
+        // Create a hidden input to hold the chosen action
+        let hiddenInput = form.querySelector('input[name="director_action"]');
+        if (!hiddenInput) {
+            hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'director_action';
+            form.appendChild(hiddenInput);
+        }
+        
+        // Set the value based on the user's choice
+        if (needsResignature) {
+            // User clicked "OK" (Yes, needs signature)
+            hiddenInput.value = 'resignature_request_from_university';
+        } else {
+            // User clicked "Cancel" (No, send to committees)
+            hiddenInput.value = 'approvedbyqachead_revised';
+        }
+
+         // Draw text onto the signature canvas before submitting
+            var ctx = canvas.getContext('2d');
+            var signerName = document.getElementById('signer_name').value;
+            var currentDate = new Date().toLocaleDateString('en-GB');
+            ctx.font = '14px "Helvetica", "Arial", sans-serif';
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Signed by: ${signerName} on ${currentDate}`, 10, 140);
+            
+            // Save the signature data to the hidden input
+            document.getElementById('signature_image').value = signaturePad.toDataURL();
+            
+            // Finally, submit the form
+            form.submit();
+    
+
+   
+    }
 
     // Add an event listener to the form's submit event
     document.querySelector('form').addEventListener('submit', function (event) {
@@ -509,6 +565,8 @@ function displayTableSection($sectionTitle, $sectionData) {
         // the code above is skipped and the form submits without validation.
     });
 </script>
+
+
 
 </body>
 </html>

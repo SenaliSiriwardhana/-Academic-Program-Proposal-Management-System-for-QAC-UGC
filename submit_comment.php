@@ -54,37 +54,153 @@ if (in_array($role, $ugc_roles)) {
     $rejected_page = 'rejected_proposals.php';
 }
 
-//  Check if the role is Dean, VC, or CQA Director and assign the correct status
-if (isset($_POST['approve'])) {
-    // Ensure the checkbox is checked for approval
-    if (!isset($_POST['recommend']) || $_POST['recommend'] !== 'on') {
-        die("<script>alert('Please mark the checkbox to confirm your recommendation and correctness of the proposal information.'); window.history.back();</script>");
-    }
+// //  Check if the role is Dean, VC, or CQA Director and assign the correct status
+// if (isset($_POST['approve'])) {
+//     // Ensure the checkbox is checked for approval
+//     if (!isset($_POST['recommend']) || $_POST['recommend'] !== 'on') {
+//         die("<script>alert('Please mark the checkbox to confirm your recommendation and correctness of the proposal information.'); window.history.back();</script>");
+//     }
 
-    // Ensure the digital signature checkbox is checked for approval
-    if (empty($_POST['signature_image'])) {
-        echo "<script>alert('Please provide your digital signature to approve the proposal.'); window.history.back();</script>";
-        exit();
-    }
-}
+//     // Ensure the digital signature checkbox is checked for approval
+//     if (empty($_POST['signature_image'])) {
+//         echo "<script>alert('Please provide your digital signature to approve the proposal.'); window.history.back();</script>";
+//         exit();
+//     }
 
-// STEP 1: Check for the Director's special actions first.
+//     if (stripos($role, "dean/rector/director") !== false) {
+//         $proposal_status = 're-signed_dean'; // New status after Dean's re-signature
+//     } elseif (stripos($role, "cqa director") !== false) {
+//         $proposal_status = 're-signed_cqa'; // New status after CQA's re-signature
+//     } elseif (stripos($role, "vice chancellor") !== false) {
+//         $proposal_status = 're-signed_vc'; // New status after VC's re-signature
+//     } 
+// }
+
+// // STEP 1: Check for the Director's special actions first.
+// if (isset($_POST['director_action'])) {
+    
+//     // The value from the button IS the new status.
+//     $proposal_status = $_POST['director_action'];
+    
+//     // Simple validation to ensure the value is one of the expected ones.
+//     $allowed_director_statuses = ['approvedbyqachead', 'approvedbyqachead_revised', 'rejectedbyqachead', 'resignature_request_from_university'];
+//     if (!in_array($proposal_status, $allowed_director_statuses)) {
+//         die("Invalid director action.");
+//     }
+
+// } 
+// STEP 2: Handle the standard 'approve' button for all other roles.
+// elseif (isset($_POST['approve'])) {
+    
+//     // Your existing validation for checkbox and signature is here.
+//     if (!isset($_POST['recommend']) || $_POST['recommend'] !== 'on') {
+//         die("<script>alert('Please mark the checkbox to confirm your recommendation.'); window.history.back();</script>");
+//     }
+//     if (empty($_POST['signature_image'])) {
+//         die("<script>alert('Please provide your digital signature to approve the proposal.'); window.history.back();</script>");
+//     }
+
+//     if (strpos($role, "dean/rector/director") !== false) {
+//         $proposal_status = 'approvedbydean'; // Dean approves
+//     } elseif (strpos($role, "vice chancellor") !== false || strpos($role, "vc") !== false) {
+//         $proposal_status = 'approvedbyvc'; // VC approves
+//     } elseif (strcasecmp(trim($role), "CQA Director") === 0) { //  Case-insensitive check for CQA
+//         $proposal_status = 'approvedbycqa'; // CQA approves
+//     } elseif (strcasecmp(trim($role), "UGC - Technical Assistant") === 0) { //  Case-insensitive check for TA
+//         $proposal_status = 'approvedbyTA'; // TA approves
+//     } elseif (strcasecmp(trim($role), "UGC - Secretary") === 0) { //  Case-insensitive check for Secretary
+//         $proposal_status = 'approvedbysecretary'; // Secretary approves
+//     //} elseif (strcasecmp(trim($role), "Head of the qac-ugc Department") === 0) { //  Case-insensitive check for CQA
+//        // $proposal_status = 'approvedbyqachead'; // UGC-HEAD approves
+//     }elseif (strcasecmp(trim($role), "UGC - Finance Department") === 0) { //  Case-insensitive check for Finance
+//         $proposal_status = 'approvedbyugcfinance'; // UGC-Finance approves
+//     }elseif (strcasecmp(trim($role), "UGC - HR Department") === 0) { //  Case-insensitive check for HR
+//         $proposal_status = 'approvedbyugchr'; // UGC-HR approves
+//     }elseif (strcasecmp(trim($role), "UGC - IDD Department") === 0) { //  Case-insensitive check for IDD
+//         $proposal_status = 'approvedbyugcidd'; // UGC-IDD approves
+//     //}elseif (strcasecmp(trim($role), "UGC - Legal Department") === 0) { //  Case-insensitive check for Legal
+//         //$proposal_status = 'approvedbyugclegal'; // UGC-Legal approves
+//     }elseif (strcasecmp(trim($role), "UGC - Academic Department") === 0) { //  Case-insensitive check for Academic
+//         $proposal_status = 'approvedbyugcacademic'; // UGC-Academic approves
+//     }elseif (strcasecmp(trim($role), "UGC - Admission Department") === 0) { //  Case-insensitive check for Admission
+//         $proposal_status = 'approvedbyugcadmission'; // UGC-Admission approves
+//     }elseif (strcasecmp(trim($role), "Standard Committee") === 0) { //  Case-insensitive check for Standard Committee
+//         $proposal_status = 'approvedbyStandardCommittee'; // Standard Committee approves
+    
+//     } else {
+//         die("Access Denied: Unauthorized role.");
+//     }
+// } elseif (isset($_POST['reject'])) {
+//     if (strpos($role, "dean/rector/director") !== false) {
+//         $proposal_status = 'rejectedbydean'; // Dean rejects
+//     } elseif (strpos($role, "vice chancellor") !== false || strpos($role, "vc") !== false) {
+//         $proposal_status = 'rejectedbyvc'; // VC rejects
+//     } elseif (strcasecmp(trim($role), "CQA Director") === 0) { //  CQA Director rejection
+//         $proposal_status = 'rejectedbycqa'; // CQA rejects
+//     } elseif (strcasecmp(trim($role), "UGC - Technical Assistant") === 0) { //  Case-insensitive check for TA
+//         $proposal_status = 'rejectedbyTA'; // TA rejects
+//     } elseif (strcasecmp(trim($role), "Secretary") === 0) { //  Case-insensitive check for Secretary
+//         $proposal_status = 'rejectedbysecretary'; // Secretary rejects
+//    // } elseif (strcasecmp(trim($role), "Head of the qac-ugc Department") === 0) { //  Case-insensitive check for CQA
+//        // $proposal_status = 'rejectedbyqachead'; // UGC-HEAD rejectss
+//     }elseif (strcasecmp(trim($role), "UGC - Finance Department") === 0) { //  Case-insensitive check for Finance
+//         $proposal_status = 'rejectedbyugcfinance'; // UGC-Finance rejects
+//     }elseif (strcasecmp(trim($role), "UGC - HR Department") === 0) { //  Case-insensitive check for HR
+//         $proposal_status = 'rejectedbyugchr'; // UGC-HR rejects
+//     }elseif (strcasecmp(trim($role), "UGC - IDD Department") === 0) { //  Case-insensitive check for IDD
+//         $proposal_status = 'rejectedbyugcidd'; // UGC-IDD rejects
+//     //}elseif (strcasecmp(trim($role), "UGC - Legal Department") === 0) { //  Case-insensitive check for Legal
+//         //$proposal_status = 'rejectedbyugclegal'; // UGC-Legal rejects
+//     }elseif (strcasecmp(trim($role), "UGC - Academic Department") === 0) { //  Case-insensitive check for Academic
+//         $proposal_status = 'rejectedbyugcacademic'; // UGC-Academic rejects
+//     }elseif (strcasecmp(trim($role), "UGC - Admission Department") === 0) { //  Case-insensitive check for Admission
+//         $proposal_status = 'rejectedbyugcadmission'; // UGC-Admission rejects
+//      }elseif (strcasecmp(trim($role), "Standard Committee") === 0) { //  Case-insensitive check for Standard Committee
+//         $proposal_status = 'rejectedbyStandardCommittee'; // Standard Committee rejects
+//     } else {
+//         die("Access Denied: Unauthorized role.");
+//     }
+// } else {
+//     echo "<script>alert('Invalid action. Please check the proposal information or try again.'); window.history.back();</script>";
+  
+    
+// }
+
+// =========================================================================
+//  MODIFIED AND UNIFIED STATUS DETERMINATION LOGIC
+// =========================================================================
+
+
+
+// STEP 1: Handle Director's unique actions first.
 if (isset($_POST['director_action'])) {
-    
-    // The value from the button IS the new status.
-    $proposal_status = $_POST['director_action'];
-    
-    // Simple validation to ensure the value is one of the expected ones.
-    $allowed_director_statuses = ['approvedbyqachead', 'approvedbyqachead_revised', 'rejectedbyqachead'];
-    if (!in_array($proposal_status, $allowed_director_statuses)) {
+    $action = $_POST['director_action'];
+    $allowed_actions = ['approvedbyqachead','approvedbyqachead_revised', 'rejectedbyqachead', 'resignature_request_from_university'];
+    if (in_array($action, $allowed_actions)) {
+        $proposal_status = $action;
+    } else {
         die("Invalid director action.");
     }
-
 } 
-// STEP 2: Handle the standard 'approve' button for all other roles.
+// STEP 2: Handle standard rejections from any role.
+elseif (isset($_POST['reject'])) {
+    if (stripos($role, "dean") !== false) $proposal_status = 'rejectedbydean';
+    elseif (stripos($role, "cqa director") !== false) $proposal_status = 'rejectedbycqa';
+    elseif (stripos($role, "vice chancellor") !== false) $proposal_status = 'rejectedbyvc';
+    elseif (strcasecmp($role, "ugc - technical assistant") === 0) $proposal_status = 'rejectedbyTA';
+    elseif (strcasecmp($role, "ugc - secretary") === 0) $proposal_status = 'rejectedbysecretary';
+    elseif (strcasecmp($role, "ugc - finance department") === 0) $proposal_status = 'rejectedbyugcfinance';
+    elseif (strcasecmp($role, "ugc - hr department") === 0) $proposal_status = 'rejectedbyugchr';
+    elseif (strcasecmp($role, "ugc - idd department") === 0) $proposal_status = 'rejectedbyugcidd';
+    elseif (strcasecmp($role, "ugc - academic department") === 0) $proposal_status = 'rejectedbyugcacademic';
+    elseif (strcasecmp($role, "ugc - admission department") === 0) $proposal_status = 'rejectedbyugcadmission';
+    elseif (strcasecmp($role, "standard committee") === 0) $proposal_status = 'rejectedbyStandardCommittee';
+    else { die("Access Denied: Unauthorized role for rejection."); }
+}
+
+// STEP 3: Handle all "Approve" clicks, which are context-dependent.
 elseif (isset($_POST['approve'])) {
-    
-    // Your existing validation for checkbox and signature is here.
+    // Validation for signature and checkbox
     if (!isset($_POST['recommend']) || $_POST['recommend'] !== 'on') {
         die("<script>alert('Please mark the checkbox to confirm your recommendation.'); window.history.back();</script>");
     }
@@ -92,71 +208,86 @@ elseif (isset($_POST['approve'])) {
         die("<script>alert('Please provide your digital signature to approve the proposal.'); window.history.back();</script>");
     }
 
-    if (strpos($role, "dean/rector/director") !== false) {
-        $proposal_status = 'approvedbydean'; // Dean approves
-    } elseif (strpos($role, "vice chancellor") !== false || strpos($role, "vc") !== false) {
-        $proposal_status = 'approvedbyvc'; // VC approves
-    } elseif (strcasecmp(trim($role), "CQA Director") === 0) { //  Case-insensitive check for CQA
-        $proposal_status = 'approvedbycqa'; // CQA approves
-    } elseif (strcasecmp(trim($role), "UGC - Technical Assistant") === 0) { //  Case-insensitive check for TA
-        $proposal_status = 'approvedbyTA'; // TA approves
-    } elseif (strcasecmp(trim($role), "UGC - Secretary") === 0) { //  Case-insensitive check for Secretary
-        $proposal_status = 'approvedbysecretary'; // Secretary approves
-    //} elseif (strcasecmp(trim($role), "Head of the qac-ugc Department") === 0) { //  Case-insensitive check for CQA
-       // $proposal_status = 'approvedbyqachead'; // UGC-HEAD approves
-    }elseif (strcasecmp(trim($role), "UGC - Finance Department") === 0) { //  Case-insensitive check for Finance
-        $proposal_status = 'approvedbyugcfinance'; // UGC-Finance approves
-    }elseif (strcasecmp(trim($role), "UGC - HR Department") === 0) { //  Case-insensitive check for HR
-        $proposal_status = 'approvedbyugchr'; // UGC-HR approves
-    }elseif (strcasecmp(trim($role), "UGC - IDD Department") === 0) { //  Case-insensitive check for IDD
-        $proposal_status = 'approvedbyugcidd'; // UGC-IDD approves
-    //}elseif (strcasecmp(trim($role), "UGC - Legal Department") === 0) { //  Case-insensitive check for Legal
-        //$proposal_status = 'approvedbyugclegal'; // UGC-Legal approves
-    }elseif (strcasecmp(trim($role), "UGC - Academic Department") === 0) { //  Case-insensitive check for Academic
-        $proposal_status = 'approvedbyugcacademic'; // UGC-Academic approves
-    }elseif (strcasecmp(trim($role), "UGC - Admission Department") === 0) { //  Case-insensitive check for Admission
-        $proposal_status = 'approvedbyugcadmission'; // UGC-Admission approves
-    }elseif (strcasecmp(trim($role), "Standard Committee") === 0) { //  Case-insensitive check for Standard Committee
-        $proposal_status = 'approvedbyStandardCommittee'; // Standard Committee approves
-    
-    } else {
-        die("Access Denied: Unauthorized role.");
+    // Fetch the proposal's CURRENT status and type to make a smart decision
+    $stmt_current = $connection->prepare("SELECT status, proposal_type FROM proposals WHERE proposal_id = ?");
+    $stmt_current->bind_param("i", $proposal_id);
+    $stmt_current->execute();
+    $proposal_data = $stmt_current->get_result()->fetch_assoc();
+    $current_status = $proposal_data['status'];
+    $proposal_type = $proposal_data['proposal_type'];
+    $stmt_current->close();
+
+    // Use a switch statement to handle the different workflows based on the current status.
+    switch ($current_status) {
+        // --- Re-Signature Workflow ---
+        case 'resignature_request_from_university':
+            if (stripos($role, "dean") !== false) $proposal_status = 're-signed_dean';
+            break;
+        case 're-signed_dean':
+            if (stripos($role, "cqa director") !== false) $proposal_status = 're-signed_cqa';
+            break;
+        case 're-signed_cqa':
+            if (stripos($role, "vice chancellor") !== false) $proposal_status = 're-signed_vc';
+            break;
+
+        // --- Initial & Revised University Workflow ---
+        case 'submitted':
+            if (stripos($role, "dean") !== false) $proposal_status = 'approvedbydean';
+            break;
+        case 'approvedbydean':
+            if (stripos($role, "cqa director") !== false) $proposal_status = 'approvedbycqa';
+            break;
+        
+        // --- This case handles the split for Initial vs. Revised proposals ---
+        case 'approvedbycqa':
+            // If it's an initial proposal, it needs VC approval.
+            if ($proposal_type === 'initial_proposal' && stripos($role, "vice chancellor") !== false) {
+                 $proposal_status = 'approvedbyvc';
+            } 
+            // If it's a revised proposal, it needs TA approval (skipping VC).
+            elseif (strpos($proposal_type, 'revised_') === 0 && strcasecmp($role, "ugc - technical assistant") === 0) {
+                 $proposal_status = 'approvedbyTA';
+            }
+            break;
+
+        // --- UGC Intake Workflow ---
+        case 'approvedbyvc': // Can only be an initial proposal
+            if (strcasecmp($role, "ugc - technical assistant") === 0) $proposal_status = 'approvedbyTA';
+            break;
+        case 'approvedbyTA':
+             if (strcasecmp($role, "ugc - secretary") === 0) $proposal_status = 'approvedbysecretary';
+             break;
+        
+        // --- Final Committee Parallel Review ---
+        case 'approvedbyqachead': // From initial QAC approval
+        case 're-signed_vc':      // From re-signature VC approval
+        case 'approvedbyqachead_revised':   // From "no signature needed" revised approval
+
+            // For parallel reviews, the main proposal 'status' does not change.
+            // We just set a status for the comment itself.
+            if (strcasecmp($role, "ugc - finance department") === 0) $proposal_status = 'approvedbyugcfinance';
+            elseif (strcasecmp($role, "ugc - hr department") === 0) $proposal_status = 'approvedbyugchr';
+            elseif (strcasecmp($role, "ugc - idd department") === 0) $proposal_status = 'approvedbyugcidd';
+            elseif (strcasecmp($role, "ugc - admission department") === 0) $proposal_status = 'approvedbyugcadmission';
+            elseif (strcasecmp($role, "ugc - academic department") === 0) $proposal_status = 'approvedbyugcacademic';
+            break;
+
+        // --- Final Decider ---
+        case 'approvedbyugcacademic':
+            if (strcasecmp($role, "standard committee") === 0) $proposal_status = 'approvedbyStandardCommittee';
+            break;
     }
-} elseif (isset($_POST['reject'])) {
-    if (strpos($role, "dean/rector/director") !== false) {
-        $proposal_status = 'rejectedbydean'; // Dean rejects
-    } elseif (strpos($role, "vice chancellor") !== false || strpos($role, "vc") !== false) {
-        $proposal_status = 'rejectedbyvc'; // VC rejects
-    } elseif (strcasecmp(trim($role), "CQA Director") === 0) { //  CQA Director rejection
-        $proposal_status = 'rejectedbycqa'; // CQA rejects
-    } elseif (strcasecmp(trim($role), "UGC - Technical Assistant") === 0) { //  Case-insensitive check for TA
-        $proposal_status = 'rejectedbyTA'; // TA rejects
-    } elseif (strcasecmp(trim($role), "Secretary") === 0) { //  Case-insensitive check for Secretary
-        $proposal_status = 'rejectedbysecretary'; // Secretary rejects
-   // } elseif (strcasecmp(trim($role), "Head of the qac-ugc Department") === 0) { //  Case-insensitive check for CQA
-       // $proposal_status = 'rejectedbyqachead'; // UGC-HEAD rejectss
-    }elseif (strcasecmp(trim($role), "UGC - Finance Department") === 0) { //  Case-insensitive check for Finance
-        $proposal_status = 'rejectedbyugcfinance'; // UGC-Finance rejects
-    }elseif (strcasecmp(trim($role), "UGC - HR Department") === 0) { //  Case-insensitive check for HR
-        $proposal_status = 'rejectedbyugchr'; // UGC-HR rejects
-    }elseif (strcasecmp(trim($role), "UGC - IDD Department") === 0) { //  Case-insensitive check for IDD
-        $proposal_status = 'rejectedbyugcidd'; // UGC-IDD rejects
-    //}elseif (strcasecmp(trim($role), "UGC - Legal Department") === 0) { //  Case-insensitive check for Legal
-        //$proposal_status = 'rejectedbyugclegal'; // UGC-Legal rejects
-    }elseif (strcasecmp(trim($role), "UGC - Academic Department") === 0) { //  Case-insensitive check for Academic
-        $proposal_status = 'rejectedbyugcacademic'; // UGC-Academic rejects
-    }elseif (strcasecmp(trim($role), "UGC - Admission Department") === 0) { //  Case-insensitive check for Admission
-        $proposal_status = 'rejectedbyugcadmission'; // UGC-Admission rejects
-     }elseif (strcasecmp(trim($role), "Standard Committee") === 0) { //  Case-insensitive check for Standard Committee
-        $proposal_status = 'rejectedbyStandardCommittee'; // Standard Committee rejects
-    } else {
-        die("Access Denied: Unauthorized role.");
+
+    if (empty($proposal_status)) {
+        die("Access Denied: Your role ('" . htmlspecialchars($role) . "') cannot approve this proposal in its current state ('" . htmlspecialchars($current_status) . "').");
     }
+
 } else {
-    echo "<script>alert('Invalid action. Please check the proposal information or try again.'); window.history.back();</script>";
-  
-    
+    // No valid button was clicked.
+    die("<script>alert('Invalid action submitted.'); window.history.back();</script>");
 }
+
+// =========================================================================
 
 
 //echo "<pre>DEBUG: Updated By User ID = " . ($_SESSION['id'] ?? 'NULL') . "</pre>";
