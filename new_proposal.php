@@ -33,17 +33,27 @@ if ($result->num_rows > 0) {
     $_SESSION['university'] = $university;
 }
 
-// Get the proposal type from the URL parameter
-$proposal_type = isset($_GET['type']) ? $_GET['type'] : '';
-//echo "<pre>Proposal Type: $proposal_type</pre>";
+$proposal_type = ''; // Initialize
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['proposal_type'])) {
+// Priority 1: Check if the type is in the URL (when user clicks a direct link)
+if (isset($_GET['type'])) {
+    $proposal_type = $_GET['type'];
+    // Make it "sticky" by saving it to the session.
+    $_SESSION['current_proposal_type'] = $proposal_type;
+}
+// Priority 2: Check if it was submitted via the "Create New" form's hidden input
+elseif (isset($_POST['proposal_type'])) {
     $proposal_type = $_POST['proposal_type'];
+    // Also ensure it's sticky
+    $_SESSION['current_proposal_type'] = $proposal_type;
+}
+// Priority 3: If not in URL or POST, check if we have a "sticky" one in the session
+elseif (isset($_SESSION['current_proposal_type'])) {
+    $proposal_type = $_SESSION['current_proposal_type'];
 }
 
+// Now, determine the prefix based on the retrieved type
 $type_prefix = '';
-//echo "<pre>Proposal Type: $type_prefix</pre>";
-// Set the prefix based on proposal type
 switch($proposal_type) {
     case 'undergraduate':
         $type_prefix = 'UG';
@@ -54,14 +64,8 @@ switch($proposal_type) {
     case 'external':
         $type_prefix = 'EXT';
         break;
-    
-    default:
-        error_log("Invalid proposal type: " . $proposal_type);
-    break;
-
-    
 }
-//echo "<pre>Proposal Type (2): $type_prefix</pre>";
+
 
 
 // Define the upload directory
