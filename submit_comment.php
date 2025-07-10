@@ -2,34 +2,22 @@
 session_start();
 require 'databaseconnection.php'; // Database connection
 
+if (!isset($_SESSION['id'])) {
+    die("Access Denied. You are not logged in.");
+}
 
-// Debug session data (remove after testing)
-//echo "<pre>";
-//print_r($_SESSION);
-//echo "</pre>";
-
-
-
-// Allow roles that include "Dean"
-//if (strpos($_SESSION['role'], 'Dean') === false) {
-   // die("Access Denied. You do not have permission.");
-//}
-
-$role = $_SESSION['role'];
+$role = strtolower(trim($_SESSION['role']));
 $username = $_SESSION['username'];
-$user_id = $_SESSION['id']; // Fixed: Using 'id' 
+$user_id = $_SESSION['id'];
 
-//  Validate that proposal_id exists
 if (!isset($_POST['proposal_id']) || empty($_POST['proposal_id'])) {
     die("Error: Proposal ID is missing.");
 }
 
 $proposal_id = $_POST['proposal_id'];
-$dean_comment = isset($_POST['dean_comment']) ? trim($_POST['dean_comment']) : '';
-$proposal_status = '';
-
-
-$role = strtolower(trim($_SESSION['role'])); // Get user role
+$comment_text = isset($_POST['dean_comment']) ? trim($_POST['dean_comment']) : '';
+$new_proposal_status = ''; // This will be the NEW status for the main proposals table
+$comment_status = ''; // This is the status we will log in the comments table for this specific action
 
 // Check if user is from UGC (including Standard Committee)
 $ugc_roles = [
@@ -44,6 +32,15 @@ $ugc_roles = [
     "standard committee"
 ];
 
+// Define the 5 parallel review departments and their specific approval statuses
+$parallel_review_roles = [
+    "ugc - finance department" => "approvedbyugcfinance",
+    "ugc - hr department" => "approvedbyugchr",
+    "ugc - idd department" => "approvedbyugcidd",
+    "ugc - academic department" => "approvedbyugcacademic",
+    "ugc - admission department" => "approvedbyugcadmission"
+];
+
 // If the user's role is in the UGC list, set the UGC pages for redirection
 if (in_array($role, $ugc_roles)) {
     $approved_page = 'approved_proposals_ugc.php';
@@ -54,44 +51,45 @@ if (in_array($role, $ugc_roles)) {
     $rejected_page = 'rejected_proposals.php';
 }
 
-
-// STEP 1: Handle Director's unique actions first.
+// STEP 1: Handle Director's unique actions
 if (isset($_POST['director_action'])) {
     $action = $_POST['director_action'];
-    $allowed_actions = ['approvedbyqachead','approvedbyqachead_revised', 'rejectedbyqachead', 'resignature_request_from_university'];
+    $allowed_actions = ['approvedbyqachead', 'approvedbyqachead_revised', 'rejectedbyqachead', 'resignature_request_from_university'];
     if (in_array($action, $allowed_actions)) {
-        $proposal_status = $action;
+        $new_proposal_status = $comment_status = $action;
     } else {
         die("Invalid director action.");
     }
-} 
-// STEP 2: Handle standard rejections from any role.
-elseif (isset($_POST['reject'])) {
-    if (stripos($role, "dean") !== false) $proposal_status = 'rejectedbydean';
-    elseif (stripos($role, "cqa director") !== false) $proposal_status = 'rejectedbycqa';
-    elseif (stripos($role, "vice chancellor") !== false) $proposal_status = 'rejectedbyvc';
-    elseif (strcasecmp($role, "ugc - technical assistant") === 0) $proposal_status = 'rejectedbyTA';
-    elseif (strcasecmp($role, "ugc - secretary") === 0) $proposal_status = 'rejectedbysecretary';
-    elseif (strcasecmp($role, "ugc - finance department") === 0) $proposal_status = 'rejectedbyugcfinance';
-    elseif (strcasecmp($role, "ugc - hr department") === 0) $proposal_status = 'rejectedbyugchr';
-    elseif (strcasecmp($role, "ugc - idd department") === 0) $proposal_status = 'rejectedbyugcidd';
-    elseif (strcasecmp($role, "ugc - academic department") === 0) $proposal_status = 'rejectedbyugcacademic';
-    elseif (strcasecmp($role, "ugc - admission department") === 0) $proposal_status = 'rejectedbyugcadmission';
-    elseif (strcasecmp($role, "standard committee") === 0) $proposal_status = 'rejectedbyStandardCommittee';
-    else { die("Access Denied: Unauthorized role for rejection."); }
 }
-
-// STEP 3: Handle all "Approve" clicks, which are context-dependent.
+// STEP 2: Handle standard rejections
+elseif (isset($_POST['reject'])) {
+    // This logic is complex and can be simplified. Using a map is cleaner.
+    $rejection_map = [
+        "dean" => 'rejectedbydean',
+        "cqa director" => 'rejectedbycqa',
+        "vice chancellor" => 'rejectedbyvc',
+        "ugc - technical assistant" => 'rejectedbyTA',
+        "ugc - secretary" => 'rejectedbysecretary',
+        "head of the qac-ugc department" => 'rejectedbyqachead', // Already handled above but good for fallback
+        "ugc - finance department" => 'rejectedbyugcfinance',
+        "ugc - hr department" => 'rejectedbyugchr',
+        "ugc - idd department" => 'rejectedbyugcidd',
+        "ugc - academic department" => 'rejectedbyugcacademic',
+        "ugc - admission department" => 'rejectedbyugcadmission',
+        "standard committee" => 'rejectedbyStandardCommittee'
+    ];
+    $new_proposal_status = $comment_status = $rejection_map[$role] ?? null;
+    if (!$new_proposal_status) {
+         die("Access Denied: Unauthorized role for rejection.");
+    }
+}
+// STEP 3: Handle all "Approve" clicks
 elseif (isset($_POST['approve'])) {
     // Validation for signature and checkbox
-    if (!isset($_POST['recommend']) || $_POST['recommend'] !== 'on') {
-        die("<script>alert('Please mark the checkbox to confirm your recommendation.'); window.history.back();</script>");
-    }
-    if (empty($_POST['signature_image'])) {
-        die("<script>alert('Please provide your digital signature to approve the proposal.'); window.history.back();</script>");
+    if (!isset($_POST['recommend']) || $_POST['recommend'] !== 'on' || empty($_POST['signature_image'])) {
+        die("<script>alert('Please provide your signature and check the check box to approve.'); window.history.back();</script>");
     }
 
-    // Fetch the proposal's CURRENT status and type to make a smart decision
     $stmt_current = $connection->prepare("SELECT status, proposal_type FROM proposals WHERE proposal_id = ?");
     $stmt_current->bind_param("i", $proposal_id);
     $stmt_current->execute();
@@ -100,81 +98,51 @@ elseif (isset($_POST['approve'])) {
     $proposal_type = $proposal_data['proposal_type'];
     $stmt_current->close();
 
-    // Use a switch statement to handle the different workflows based on the current status.
-    switch ($current_status) {
-        // --- Re-Signature Workflow ---
-        case 'resignature_request_from_university':
-            if (stripos($role, "dean") !== false) $proposal_status = 're-signed_dean';
-            break;
-        case 're-signed_dean':
-            if (stripos($role, "cqa director") !== false) $proposal_status = 're-signed_cqa';
-            break;
-        case 're-signed_cqa':
-            if (stripos($role, "vice chancellor") !== false) $proposal_status = 're-signed_vc';
-            break;
-
-        // --- Initial & Revised University Workflow ---
-        case 'submitted':
-            if (stripos($role, "dean") !== false) $proposal_status = 'approvedbydean';
-            break;
-        case 'approvedbydean':
-            if (stripos($role, "cqa director") !== false) $proposal_status = 'approvedbycqa';
-            break;
+    // --- NEW LOGIC FOR PARALLEL REVIEW ---
+    // If the proposal is in the parallel review stage and the user is one of the 5 departments...
+    $parallel_queue_statuses = ['approvedbyqachead', 'approvedbyqachead_revised', 're-signed_vc'];
+    if (in_array($current_status, $parallel_queue_statuses) && array_key_exists($role, $parallel_review_roles)) {
         
-        // --- This case handles the split for Initial vs. Revised proposals ---
-        case 'approvedbycqa':
-            // If it's an initial proposal, it needs VC approval.
-            if ($proposal_type === 'initial_proposal' && stripos($role, "vice chancellor") !== false) {
-                 $proposal_status = 'approvedbyvc';
-            } 
-            // If it's a revised proposal, it needs TA approval (skipping VC).
-            elseif (strpos($proposal_type, 'revised_') === 0 && strcasecmp($role, "ugc - technical assistant") === 0) {
-                 $proposal_status = 'approvedbyTA';
-            }
-            break;
-
-        // --- UGC Intake Workflow ---
-        case 'approvedbyvc': // Can only be an initial proposal
-            if (strcasecmp($role, "ugc - technical assistant") === 0) $proposal_status = 'approvedbyTA';
-            break;
-        case 'approvedbyTA':
-             if (strcasecmp($role, "ugc - secretary") === 0) $proposal_status = 'approvedbysecretary';
-             break;
+        // The comment status is specific to this department.
+        $comment_status = $parallel_review_roles[$role];
         
-        // --- Final Committee Parallel Review ---
-        case 'approvedbyqachead': // From initial QAC approval
-        case 're-signed_vc':      // From re-signature VC approval
-        case 'approvedbyqachead_revised':   // From "no signature needed" revised approval
+        // The MAIN proposal status does NOT change yet. We will check for completion later.
+        $new_proposal_status = null; // Set to null to indicate no change to proposals table yet
 
-            // For parallel reviews, the main proposal 'status' does not change.
-            // We just set a status for the comment itself.
-            if (strcasecmp($role, "ugc - finance department") === 0) $proposal_status = 'approvedbyugcfinance';
-            elseif (strcasecmp($role, "ugc - hr department") === 0) $proposal_status = 'approvedbyugchr';
-            elseif (strcasecmp($role, "ugc - idd department") === 0) $proposal_status = 'approvedbyugcidd';
-            elseif (strcasecmp($role, "ugc - admission department") === 0) $proposal_status = 'approvedbyugcadmission';
-            elseif (strcasecmp($role, "ugc - academic department") === 0) $proposal_status = 'approvedbyugcacademic';
-            break;
-
-        // --- Final Decider ---
-        case 'approvedbyugcacademic':
-            if (strcasecmp($role, "standard committee") === 0) $proposal_status = 'approvedbyStandardCommittee';
-            break;
+    } else {
+        // --- EXISTING STANDARD WORKFLOW LOGIC ---
+        switch ($current_status) {
+            case 'resignature_request_from_university': if (stripos($role, "dean") !== false) $new_proposal_status = 're-signed_dean'; break;
+            case 're-signed_dean': if (stripos($role, "cqa director") !== false) $new_proposal_status = 're-signed_cqa'; break;
+            case 're-signed_cqa': if (stripos($role, "vice chancellor") !== false) $new_proposal_status = 're-signed_vc'; break;
+            case 'submitted': if (stripos($role, "dean") !== false) $new_proposal_status = 'approvedbydean'; break;
+            case 'approvedbydean': if (stripos($role, "cqa director") !== false) $new_proposal_status = 'approvedbycqa'; break;
+            case 'approvedbycqa':
+                if ($proposal_type === 'initial_proposal' && stripos($role, "vice chancellor") !== false) $new_proposal_status = 'approvedbyvc';
+                elseif (strpos($proposal_type, 'revised_') === 0 && strcasecmp($role, "ugc - technical assistant") === 0) $new_proposal_status = 'approvedbyTA';
+                break;
+            case 'approvedbyvc': if (strcasecmp($role, "ugc - technical assistant") === 0) $new_proposal_status = 'approvedbyTA'; break;
+            case 'approvedbyTA': if (strcasecmp($role, "ugc - secretary") === 0) $new_proposal_status = 'approvedbysecretary'; break;
+            
+            // This is the new status for the Standing Committee to see the proposal
+            case 'approvedbyalldepartments': 
+                if (strcasecmp($role, "standard committee") === 0) $new_proposal_status = 'approvedbyStandardCommittee';
+                break;
+        }
+        $comment_status = $new_proposal_status; // In standard flow, comment status matches the new proposal status
     }
 
-    if (empty($proposal_status)) {
+    if (empty($comment_status)) {
         die("Access Denied: Your role ('" . htmlspecialchars($role) . "') cannot approve this proposal in its current state ('" . htmlspecialchars($current_status) . "').");
     }
 
 } else {
-    // No valid button was clicked.
     die("<script>alert('Invalid action submitted.'); window.history.back();</script>");
 }
 
 // =========================================================================
-
-
-//echo "<pre>DEBUG: Updated By User ID = " . ($_SESSION['id'] ?? 'NULL') . "</pre>";
-$updated_by = $_SESSION['id']; // Assign logged-in user ID
+//  DATABASE TRANSACTION
+// =========================================================================
 
  // Fetch previous status before updating
  $stmt = $connection->prepare("SELECT status FROM proposals WHERE proposal_id = ?");
@@ -184,71 +152,107 @@ $updated_by = $_SESSION['id']; // Assign logged-in user ID
  $stmt->fetch();
  $stmt->close();
 
+ 
+//echo "<pre>DEBUG: Updated By User ID = " . ($_SESSION['id'] ?? 'NULL') . "</pre>";
+$updated_by = $_SESSION['id']; // Assign logged-in user ID
+// $status_for_history = $comment_status;
+
+    // If the main status is null (it's a parallel review), use your default string instead.
+    if ($status_for_history === null && $comment_status) {
+    $status_for_history = $comment_status;;
+    }
 
  // Log status change in proposal_history table
  $stmt = $connection->prepare("
      INSERT INTO proposal_status_history (proposal_id, updated_by, previous_status, new_status) 
      VALUES (?, ?, ?, ?)
  ");
- $stmt->bind_param("isss", $proposal_id, $updated_by, $previous_status, $proposal_status);
+ $stmt->bind_param("isss", $proposal_id, $updated_by, $previous_status, $status_for_history);
  $stmt->execute();
  $stmt->close();
 
 //  Start database transaction
 $connection->begin_transaction();
-//require 'email_function.php';
 try {
-
-    // Save the signature image (base64 to image)
-        $signature_data = $_POST['signature_image'];
-        $signature_image = null;
-
-    // Check if base64 data is provided
-    if (!empty($signature_data)) {
-        // Remove the base64 prefix
-        $image_data = base64_decode(str_replace('data:image/png;base64,', '', $signature_data));
-
-        // Save the image to the server
-        $signature_file_name = 'signature_' . time() . '.png';
+    // --- Save Signature ---
+    $signature_image = null;
+    if (!empty($_POST['signature_image'])) {
+        $image_data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $_POST['signature_image']));
+        $signature_file_name = 'signature_' . $user_id . '_' . time() . '.png';
         $signature_file_path = $_SERVER['DOCUMENT_ROOT'] . "/qac_ugc/Proposal_sections/uploads/" . $signature_file_name;
-
-        // Save the image
         file_put_contents($signature_file_path, $image_data);
-
-        // Store the image URL in the database
         $signature_image = "http://localhost/qac_ugc/Proposal_sections/uploads/" . $signature_file_name;
     }
 
-    //  Update proposals table status
-        $updateProposalQuery = "UPDATE proposals SET status = ? WHERE proposal_id = ?";
-        $stmt = $connection->prepare($updateProposalQuery);
-        $stmt->bind_param("si", $proposal_status, $proposal_id);
-        $stmt->execute();
-             
-        
+    // --- Log the Action in `proposal_comments` ---
+    $stmt = $connection->prepare("INSERT INTO proposal_comments (proposal_id, comment, seal_and_sign, proposal_status, id) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param("isssi", $proposal_id, $comment_text, $signature_image, $comment_status, $user_id);
+    $stmt->execute();
+    $stmt->close();
 
-    //  Check if a comment already exists for this proposal
-        $checkCommentQuery = "SELECT comment_id FROM proposal_comments WHERE proposal_id = ?";
-        $stmt = $connection->prepare($checkCommentQuery);
-        $stmt->bind_param("i", $proposal_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $existingComment = $result->fetch_assoc();
+    // //  Check if a comment already exists for this proposal
+    //     $checkCommentQuery = "SELECT comment_id FROM proposal_comments WHERE proposal_id = ?";
+    //     $stmt = $connection->prepare($checkCommentQuery);
+    //     $stmt->bind_param("i", $proposal_id);
+    //     $stmt->execute();
+    //     $result = $stmt->get_result();
+    //     $existingComment = $result->fetch_assoc();
 
     
-        //  If no record exists, insert a new one
-        $insertCommentQuery = "INSERT INTO proposal_comments (proposal_id, comment, seal_and_sign, proposal_status, id) 
-                               VALUES (?, ?, ?, ?, ?)";
-        $stmt = $connection->prepare($insertCommentQuery);
-        $stmt->bind_param("isssi", $proposal_id, $dean_comment, $signature_image, $proposal_status, $user_id);
-        $stmt->execute();
-    
         
+    //     //  If no record exists, insert a new one
+    //     $insertCommentQuery = "INSERT INTO proposal_comments (proposal_id, comment, seal_and_sign, proposal_status, id) 
+    //                            VALUES (?, ?, ?, ?, ?)";
+    //     $stmt = $connection->prepare($insertCommentQuery);
+    //     $stmt->bind_param("isssi", $proposal_id, $comment_text, $signature_image, $new_proposal_status, $user_id);
+	
+	//         //  If no record exists, insert a new one
+    //     $insertCommentQuery = "INSERT INTO proposal_comments (proposal_id, comment, seal_and_sign, proposal_status, id) 
+    //                            VALUES (?, ?, ?, ?, ?)";
+    //     $stmt = $connection->prepare($insertCommentQuery);
+    //     $stmt->bind_param("isssi", $proposal_id, $comment_text, $signature_image, $new_proposal_status, $user_id);
+    //     $stmt->execute();
 
-    //  Commit transaction
+    // --- Update the Main `proposals` Table (if needed) ---
+    if ($new_proposal_status) {
+        $stmt = $connection->prepare("UPDATE proposals SET status = ? WHERE proposal_id = ?");
+        $stmt->bind_param("si", $new_proposal_status, $proposal_id);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    
+
+
+    // --- CHECK FOR PARALLEL REVIEW COMPLETION ---
+    if ($new_proposal_status === null) { // This means a parallel review action just happened
+        $dept_statuses = array_values($parallel_review_roles);
+        $placeholders = implode(',', array_fill(0, count($dept_statuses), '?'));
+        
+        $check_stmt = $connection->prepare(
+            "SELECT COUNT(DISTINCT proposal_status) FROM proposal_comments 
+             WHERE proposal_id = ? AND proposal_status IN ($placeholders)"
+        );
+        $types = "i" . str_repeat('s', count($dept_statuses));
+        $check_stmt->bind_param($types, $proposal_id, ...$dept_statuses);
+        $check_stmt->execute();
+        $count = $check_stmt->get_result()->fetch_row()[0];
+        $check_stmt->close();
+
+        // If all 5 departments have approved, update the main status
+        if ($count >= 5) {
+            $final_status = 'approvedbyalldepartments';
+            $stmt = $connection->prepare("UPDATE proposals SET status = ? WHERE proposal_id = ?");
+            $stmt->bind_param("si", $final_status, $proposal_id);
+            $stmt->execute();
+            $stmt->close();
+        }
+    }
+
+    // Commit transaction
     $connection->commit();
-
-    $final_status = $proposal_status; 
+    
+    $final_status = $new_proposal_status; 
 
 if (strpos($final_status, 'approved') !== false) {
     // This handles ALL approval statuses, including 'approvedbyqachead' and 'approvedbyqachead_revised'.
@@ -266,21 +270,15 @@ if (strpos($final_status, 'approved') !== false) {
     exit();
 }
 
-    
-    } catch (Exception $e) {
-     $connection->rollback();
+} catch (Exception $e) {
+    $connection->rollback();
     die("Error processing request: " . $e->getMessage());
 }
 
+//     // Check if final approval is reached
+// if ($proposal_status == "approvedbyugcacademic") {
 
-
-    // Check if final approval is reached
-if ($proposal_status == "approvedbyugcacademic") {
-
-    // Generate Final PDF (Call a script to create a full PDF)
-    exec("php generate_final_proposal.php $proposal_id");
-    }
-
-
-
+//     // Generate Final PDF (Call a script to create a full PDF)
+//     exec("php generate_final_proposal.php $proposal_id");
+//     }
 ?>

@@ -46,6 +46,15 @@ if ($role === 'ugc - technical assistant') {
     // Define the list of statuses for the UGC-Departments
     $dept_queue_statuses = ['approvedbyqachead', 'approvedbyqachead_revised', 're-signed_vc'];
 
+    // Role-to-status mapping for individual department approvals
+    $dept_approval_status_map = [
+        "ugc - finance department" => "approvedbyugcfinance",
+        "ugc - hr department" => "approvedbyugchr",
+        "ugc - idd department" => "approvedbyugcidd",
+        "ugc - academic department" => "approvedbyugcacademic",
+        "ugc - admission department" => "approvedbyugcadmission",
+    ];
+
     // --- Standard logic for all other UGC roles ---
     $ugc_settings = [
         "ugc - secretary" => ["title" => "UGC - Secretary Dashboard", "status" => "approvedbyTA"],
@@ -55,7 +64,8 @@ if ($role === 'ugc - technical assistant') {
         "ugc - idd department" => ["title" => "UGC - IDD Dashboard", "status" =>  $dept_queue_statuses],
         "ugc - academic department" => ["title" => "Academic Affairs Dashboard", "status" =>  $dept_queue_statuses],
         "ugc - admission department" => ["title" => "UGC - Admission Dashboard", "status" =>  $dept_queue_statuses],
-        "standard committee" => ["title" => "Standard Committee Dashboard", "status" => "approvedbyugcacademic"], // This should likely be 'approvedbyqachead' too
+        // *** KEY CHANGE HERE: Standing Committee now looks for the new status ***
+        "standard committee" => ["title" => "Standard Committee Dashboard", "status" => "approvedbyalldepartments"],
     ];
 
     if (!array_key_exists($role, $ugc_settings)) {
@@ -63,19 +73,52 @@ if ($role === 'ugc - technical assistant') {
     }
     $dashboardTitle = $ugc_settings[$role]['title'];
     $statusFilter = $ugc_settings[$role]['status'];
-    if (is_array($statusFilter)) {
-        // If the filter is an array, build an IN clause
-        $placeholders = implode(',', array_fill(0, count($statusFilter), '?'));
-        $query = "$base_query WHERE p.status IN ($placeholders) ORDER BY p.submitted_at ASC";
-        $stmt = $connection->prepare($query);
-        // Bind each value in the array
-        $stmt->bind_param(str_repeat('s', count($statusFilter)), ...$statusFilter);
-    } else {
-        // If the filter is a single string, use the simple query
-        $query = "$base_query WHERE p.status = ? ORDER BY p.submitted_at ASC";
-        $stmt = $connection->prepare($query);
-        $stmt->bind_param("s", $statusFilter);
-    }
+
+    // if (is_array($statusFilter)) {
+    //     // If the filter is an array, build an IN clause
+    //     $placeholders = implode(',', array_fill(0, count($statusFilter), '?'));
+    //     $query = "$base_query WHERE p.status IN ($placeholders) ORDER BY p.submitted_at ASC";
+    //     $stmt = $connection->prepare($query);
+    //     // Bind each value in the array
+    //     $stmt->bind_param(str_repeat('s', count($statusFilter)), ...$statusFilter);
+    // } else {
+    //     // If the filter is a single string, use the simple query
+    //     $query = "$base_query WHERE p.status = ? ORDER BY p.submitted_at ASC";
+    //     $stmt = $connection->prepare($query);
+    //     $stmt->bind_param("s", $statusFilter);
+    // }
+
+    // --- NEW QUERY LOGIC FOR PARALLEL DEPARTMENTS ---
+if (is_array($statusFilter) && array_key_exists($role, $dept_approval_status_map)) {
+    // This is one of the 5 parallel review departments.
+    // We only show proposals they have NOT yet approved.
+    $my_approval_status = $dept_approval_status_map[$role];
+    $placeholders = implode(',', array_fill(0, count($statusFilter), '?'));
+       $query = "$base_query 
+              WHERE p.status IN ($placeholders) 
+              AND NOT EXISTS (
+                  SELECT 1 FROM proposal_comments pc 
+                  WHERE pc.proposal_id = p.proposal_id AND pc.proposal_status = ?
+              )
+              ORDER BY p.submitted_at ASC";
+
+    $stmt = $connection->prepare($query);
+    // Bind the status filters and the department's own approval status
+    $params = array_merge($statusFilter, [$my_approval_status]);
+    $stmt->bind_param(str_repeat('s', count($params)), ...$params);
+
+} elseif (is_array($statusFilter)) {
+    // Standard array filter for roles that see multiple statuses but aren't in parallel review
+    $placeholders = implode(',', array_fill(0, count($statusFilter), '?'));
+    $query = "$base_query WHERE p.status IN ($placeholders) ORDER BY p.submitted_at ASC";
+    $stmt = $connection->prepare($query);
+    $stmt->bind_param(str_repeat('s', count($statusFilter)), ...$statusFilter);
+} else {
+    // Standard single status filter
+    $query = "$base_query WHERE p.status = ? ORDER BY p.submitted_at ASC";
+    $stmt = $connection->prepare($query);
+    $stmt->bind_param("s", $statusFilter);
+}
     
 }
 
