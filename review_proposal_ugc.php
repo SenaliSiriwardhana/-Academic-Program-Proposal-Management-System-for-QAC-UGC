@@ -328,7 +328,43 @@ function displayTableSection($sectionTitle, $sectionData) {
      displayTableSection("Reviewer Details", $reviewerDetails);
      displayFormSection("Compliance Check", $complianceCheck);
     
+    // Check if the proposal is in the parallel review stage
+$parallel_queue_statuses = ['approvedbyqachead', 'approvedbyqachead_revised', 're-signed_vc', 'approvedbyalldepartments'];
+$is_in_parallel_review = in_array($proposal['status'], $parallel_queue_statuses);
+$department_approvals = [];
+
+if ($is_in_parallel_review) {
+    // Define the departments and their statuses
+    $review_departments = [
+        "UGC - Finance Department"   => "approvedbyugcfinance",
+        "UGC - HR Department"        => "approvedbyugchr",
+        "UGC - IDD Department"       => "approvedbyugcidd",
+        "UGC - Academic Department"  => "approvedbyugcacademic",
+        "UGC - Admission Department" => "approvedbyugcadmission",
+    ];
+
+    // Fetch approvals for these departments from the comments table
+    $dept_statuses_placeholders = implode(',', array_fill(0, count($review_departments), '?'));
+    $dept_approval_query = "SELECT proposal_status FROM proposal_comments WHERE proposal_id = ? AND proposal_status IN ($dept_statuses_placeholders)";
     
+    $stmt_dept = $connection->prepare($dept_approval_query);
+    $params = array_merge([$proposal_id], array_values($review_departments));
+    $types = 'i' . str_repeat('s', count($review_departments));
+    $stmt_dept->bind_param($types, ...$params);
+    $stmt_dept->execute();
+    $result_dept = $stmt_dept->get_result();
+    
+    $approved_statuses = [];
+    while($row = $result_dept->fetch_assoc()) {
+        $approved_statuses[] = $row['proposal_status'];
+    }
+    $stmt_dept->close();
+
+    // Create a simple status map for display
+    foreach ($review_departments as $name => $status) {
+        $department_approvals[$name] = in_array($status, $approved_statuses);
+    }
+}
     ?>
 
     <!-- Previous Approvals Section -->
