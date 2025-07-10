@@ -70,9 +70,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 case 'UGC - IDD Department':
                     header("Location:  ugc_dashboards.php");
                     break;
-                case 'UGC - Legal Department':
-                    header("Location:  ugc_dashboards.php");
-                    break;
                 case 'UGC - Academic Department':
                     header("Location:  ugc_dashboards.php");
                     break;
