@@ -56,7 +56,7 @@ $is_director_qac = ($role === 'head of the qac-ugc department');
 // Fetch previous approvals from proposal_comments table
 $commentQuery = "SELECT id, proposal_status, comment, seal_and_sign, Date
 FROM proposal_comments 
-WHERE proposal_id = ? AND proposal_status IN ('approvedbyqachead','approvedbydean','approvedbyvc','approvedbycqa')
+WHERE proposal_id = ? AND proposal_status IN ('approvedbyqachead','approvedbydean','approvedbyvc','approvedbycqa','approvedbysecretary','approvedbyTA')
 ORDER BY id ASC";
 
 
@@ -383,6 +383,8 @@ if ($is_in_parallel_review) {
                     <?php 
                         if ($comment['proposal_status'] === 'approvedbydean') echo "Dean";
                         elseif ($comment['proposal_status'] === 'approvedbyvc') echo "Vice Chancellor";
+                        elseif ($comment['proposal_status'] === 'approvedbysecretary') echo "Secretary";
+                        elseif ($comment['proposal_status'] === 'approvedbyTA') echo "Technical Assistant";
                         elseif ($comment['proposal_status'] === 'approvedbycqa') echo "CQA Director";
                         elseif ($comment['proposal_status'] === 'approvedbyqachead') echo "Head of the QAC-UGC Department";
                         elseif ($comment['proposal_status'] === 'approvedbyugcfinance') echo "UGC - Finance Department";

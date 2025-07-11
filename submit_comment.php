@@ -2,6 +2,9 @@
 session_start();
 require 'databaseconnection.php'; // Database connection
 
+
+
+
 if (!isset($_SESSION['id'])) {
     die("Access Denied. You are not logged in.");
 }
@@ -213,19 +216,76 @@ try {
     //     $stmt->bind_param("isssi", $proposal_id, $comment_text, $signature_image, $new_proposal_status, $user_id);
     //     $stmt->execute();
 
-    // --- Update the Main `proposals` Table (if needed) ---
+    // // --- Update the Main `proposals` Table (if needed) --- COMMENTED 12.07.2025 
+    // if ($new_proposal_status) {
+    //     $stmt = $connection->prepare("UPDATE proposals SET status = ? WHERE proposal_id = ?");
+    //     $stmt->bind_param("si", $new_proposal_status, $proposal_id);
+    //     $stmt->execute();
+    //     $stmt->close();
+    // }
+    // // COMMENTED 12.07.2025 - CODE BLOCK
+
+    // Define the list of internal UGC department statuses
+    $internal_department_statuses = [
+        'approvedbyugcfinance', 'rejectedbyugcfinance',
+        'approvedbyugchr', 'rejectedbyugchr',
+        'approvedbyugcidd', 'rejectedbyugcidd',
+        'approvedbyugcacademic', 'rejectedbyugcacademic',
+        'approvedbyugcadmission', 'rejectedbyugcadmission',
+        'approvedbyalldepartments' // This is the trigger for the next stage
+    ];
+    
+    // This logic only runs if a main status change is happening
     if ($new_proposal_status) {
-        $stmt = $connection->prepare("UPDATE proposals SET status = ? WHERE proposal_id = ?");
-        $stmt->bind_param("si", $new_proposal_status, $proposal_id);
-        $stmt->execute();
-        $stmt->close();
+        
+        // Check if the new REAL status is an internal department one
+        if (in_array($new_proposal_status, $internal_department_statuses)) {
+            // YES, it's internal.
+            // The real 'status' gets updated, but 'university_visible_status' stays the same as it was before.
+            $stmt_update = $connection->prepare("UPDATE proposals SET status = ?, university_visible_status = ? WHERE proposal_id = ?");
+            $stmt_update->bind_param("ssi", $new_proposal_status, $current_uni_status, $proposal_id);
+
+        } else {
+            // NO, it's a public status (e.g., approvedbydean, approvedbyStandardCommittee).
+            // Both columns are updated to be the same.
+            $stmt_update = $connection->prepare("UPDATE proposals SET status = ?, university_visible_status = ? WHERE proposal_id = ?");
+            $stmt_update->bind_param("ssi", $new_proposal_status, $new_proposal_status, $proposal_id);
+        }
+        
+        $stmt_update->execute();
+        $stmt_update->close();
     }
 
     
 
 
-    // --- CHECK FOR PARALLEL REVIEW COMPLETION ---
-    if ($new_proposal_status === null) { // This means a parallel review action just happened
+    // // --- CHECK FOR PARALLEL REVIEW COMPLETION ---
+    // if ($new_proposal_status === null) { // This means a parallel review action just happened
+    //     $dept_statuses = array_values($parallel_review_roles);
+    //     $placeholders = implode(',', array_fill(0, count($dept_statuses), '?'));
+        
+    //     $check_stmt = $connection->prepare(
+    //         "SELECT COUNT(DISTINCT proposal_status) FROM proposal_comments 
+    //          WHERE proposal_id = ? AND proposal_status IN ($placeholders)"
+    //     );
+    //     $types = "i" . str_repeat('s', count($dept_statuses));
+    //     $check_stmt->bind_param($types, $proposal_id, ...$dept_statuses);
+    //     $check_stmt->execute();
+    //     $count = $check_stmt->get_result()->fetch_row()[0];
+    //     $check_stmt->close();
+
+    //     // If all 5 departments have approved, update the main status
+    //     if ($count >= 5) {
+    //         $final_status = 'approvedbyalldepartments';
+    //         $stmt = $connection->prepare("UPDATE proposals SET status = ? WHERE proposal_id = ?");
+    //         $stmt->bind_param("si", $final_status, $proposal_id);
+    //         $stmt->execute();
+    //         $stmt->close();
+    //     }
+    // }
+
+    // --- HANDLE PARALLEL REVIEW COMPLETION ---
+    if ($new_proposal_status === null) { 
         $dept_statuses = array_values($parallel_review_roles);
         $placeholders = implode(',', array_fill(0, count($dept_statuses), '?'));
         
@@ -239,14 +299,44 @@ try {
         $count = $check_stmt->get_result()->fetch_row()[0];
         $check_stmt->close();
 
-        // If all 5 departments have approved, update the main status
         if ($count >= 5) {
-            $final_status = 'approvedbyalldepartments';
-            $stmt = $connection->prepare("UPDATE proposals SET status = ? WHERE proposal_id = ?");
-            $stmt->bind_param("si", $final_status, $proposal_id);
-            $stmt->execute();
-            $stmt->close();
+            // The 5th department has approved. Update the REAL status to 'approvedbyalldepartments'.
+            // The university_visible_status remains what it was before ($current_uni_status).
+            $final_real_status = 'approvedbyalldepartments';
+            //$stmt_final_update = $connection->prepare("UPDATE proposals SET status = ?, university_visible_status = ? WHERE proposal_id = ?");
+            //$stmt_final_update->bind_param("ssi", $final_real_status, $current_uni_status, $proposal_id);
+            //$stmt_final_update->execute();
+            //$stmt_final_update->close();
         }
+    }
+         // --- Step 3: If there is a new real status, update the proposal ---
+    if ($final_real_status) {
+        
+        // Define the list of statuses that are internal to UGC
+        $internal_ugc_statuses = [
+            'approvedbyugcfinance', 'rejectedbyugcfinance', 'approvedbyugchr', 'rejectedbyugchr',
+            'approvedbyugcidd', 'rejectedbyugcidd', 'approvedbyugcacademic', 'rejectedbyugcacademic',
+            'approvedbyugcadmission', 'rejectedbyugcadmission', 'approvedbyalldepartments'
+        ];
+
+        // Determine the value for 'university_visible_status'
+        $university_status_to_set = $final_real_status; // By default, it's the same as the real status
+
+        if (in_array($final_real_status, $internal_ugc_statuses)) {
+            // IF the new real status is internal, we must preserve the OLD university status.
+            // So, we fetch it from the database before updating.
+            $stmt_get_uni_status = $connection->prepare("SELECT university_visible_status FROM proposals WHERE proposal_id = ?");
+            $stmt_get_uni_status->bind_param("i", $proposal_id);
+            $stmt_get_uni_status->execute();
+            $university_status_to_set = $stmt_get_uni_status->get_result()->fetch_assoc()['university_visible_status'];
+            $stmt_get_uni_status->close();
+        }
+
+        // Now, perform the single, final update with the correct values
+        $stmt_update = $connection->prepare("UPDATE proposals SET status = ?, university_visible_status = ? WHERE proposal_id = ?");
+        $stmt_update->bind_param("ssi", $final_real_status, $university_status_to_set, $proposal_id);
+        $stmt_update->execute();
+        $stmt_update->close();
     }
 
     // Commit transaction
