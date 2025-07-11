@@ -1,4 +1,5 @@
-<!-- Once you see a wrong status for university_visible_status , you cam fix status using this file -->
+<!-- Once you see a wrong status for university_visible_status , you can fix status using this file -->
+
 <?php 
 // require 'databaseconnection.php';
 // echo "<h1>Starting University Status Cleanup (V2)...</h1>";
