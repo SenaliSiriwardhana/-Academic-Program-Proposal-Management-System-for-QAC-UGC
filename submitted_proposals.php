@@ -33,7 +33,6 @@ if ($result->num_rows > 0) {
     $_SESSION['university'] = $university;
 }
 
-
 // Define the upload directory
 $uploadDir = __DIR__ . '/../uploads/';  // Adjust path if necessary
 $uploadUrl = '/qac_ugc/Proposal_sections/uploads/';
@@ -68,7 +67,7 @@ while ($row = $result->fetch_assoc()) {
 
 // Retrieve submitted proposals
 $submittedProposals = [];
-$stmt = $connection->prepare("SELECT p.proposal_id, p.proposal_code, p.status, gi.degree_name_english FROM proposals p join proposal_general_info gi ON p.proposal_id = gi.proposal_id  WHERE university_id = ? AND status NOT IN ('draft', 'fresh') ORDER BY proposal_id ASC");
+$stmt = $connection->prepare("SELECT p.proposal_id, p.proposal_code, p.university_visible_status, p.status, gi.degree_name_english FROM proposals p join proposal_general_info gi ON p.proposal_id = gi.proposal_id  WHERE university_id = ? AND status NOT IN ('draft', 'fresh') ORDER BY proposal_id ASC");
 $stmt->bind_param("i", $university_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -85,6 +84,7 @@ $stmt = $connection->prepare("
     SELECT p.proposal_id, 
            p.proposal_code,
            p.status, 
+           p.university_visible_status,
            gi.degree_name_english,
            c.comment, 
            c.comment_id, 
@@ -121,7 +121,7 @@ $stmt->close();
 $finalapprovedProposals = [];
 //$stmt = $connection->prepare("SELECT proposal_id, status FROM proposals WHERE university_id = ? AND status IN ('approvedbyugcacademic') ORDER BY proposal_id ASC");
 $stmt = $connection->prepare("
-    SELECT p.proposal_id,p.proposal_code, p.status, gi.degree_name_english,
+    SELECT p.proposal_id,p.proposal_code, p.university_visible_status, p.status, gi.degree_name_english,
         COALESCE(pc.comment, 'No Comment') AS latest_comment,
         COALESCE(pc.proposal_status, 'No Status') AS latest_status
     FROM proposals p
@@ -146,44 +146,96 @@ while ($row = $result->fetch_assoc()) {
 $stmt->close();
 
 
+// // =================================================================
+// // MODIFIED CODE BLOCK: Fetch history for ALL proposals on the page
+// // =================================================================
+// $history_by_proposal = [];
+
+// // 1. Combine IDs from all three proposal groups
+// $submitted_ids = array_column($submittedProposals, 'proposal_id');
+// $revised_ids = array_column($revisedProposals, 'proposal_id');
+// $approved_ids = array_column($finalapprovedProposals, 'proposal_id');
+// $all_proposal_ids = array_unique(array_merge($submitted_ids, $revised_ids, $approved_ids));
+
+// if (!empty($all_proposal_ids)) {
+//     // 2. Prepare a single query for all unique IDs
+//     $placeholders = implode(',', array_fill(0, count($all_proposal_ids), '?'));
+//     $types = str_repeat('i', count($all_proposal_ids));
+
+//     $history_query = "
+//         SELECT proposal_id, proposal_status, `Date`, comment
+//         FROM proposal_comments
+//         WHERE proposal_id IN ($placeholders)
+//         ORDER BY proposal_id, `Date` ASC
+//     ";
+
+//     $stmt_history = $connection->prepare($history_query);
+//     // 3. Bind all IDs and execute
+//     $stmt_history->bind_param($types, ...$all_proposal_ids);
+//     $stmt_history->execute();
+//     $history_result = $stmt_history->get_result();
+
+//     // 4. Organize results into the history array, same as before
+//     while ($history_row = $history_result->fetch_assoc()) {
+//         $history_by_proposal[$history_row['proposal_id']][] = $history_row;
+//     }
+//     $stmt_history->close();
+// }
+// // =================================================================
+// // END OF MODIFIED BLOCK
+// // =================================================================
+
 // =================================================================
-// MODIFIED CODE BLOCK: Fetch history for ALL proposals on the page
+// NEW CODE BLOCK: Fetch FILTERED history for ALL proposals on the page
 // =================================================================
 $history_by_proposal = [];
 
-// 1. Combine IDs from all three proposal groups
+// 1. Combine IDs from all proposal groups (no change here)
 $submitted_ids = array_column($submittedProposals, 'proposal_id');
 $revised_ids = array_column($revisedProposals, 'proposal_id');
 $approved_ids = array_column($finalapprovedProposals, 'proposal_id');
 $all_proposal_ids = array_unique(array_merge($submitted_ids, $revised_ids, $approved_ids));
 
 if (!empty($all_proposal_ids)) {
-    // 2. Prepare a single query for all unique IDs
-    $placeholders = implode(',', array_fill(0, count($all_proposal_ids), '?'));
-    $types = str_repeat('i', count($all_proposal_ids));
+    // 2. Define the internal department statuses to HIDE from the university view.
+    $statuses_to_hide = [
+        'approvedbyugcfinance', 'rejectedbyugcfinance',
+        'approvedbyugchr',      'rejectedbyugchr',
+        'approvedbyugcidd',     'rejectedbyugcidd',
+        'approvedbyugcacademic','rejectedbyugcacademic',
+        'approvedbyugcadmission','rejectedbyugcadmission',
+        'approvedbyalldepartments'
+    ];
 
+    // 3. Prepare placeholders for both proposal IDs and the statuses to hide.
+    $id_placeholders = implode(',', array_fill(0, count($all_proposal_ids), '?'));
+    $status_placeholders = implode(',', array_fill(0, count($statuses_to_hide), '?'));
+
+    // 4. Create the new query with the "NOT IN" clause.
     $history_query = "
         SELECT proposal_id, proposal_status, `Date`, comment
         FROM proposal_comments
-        WHERE proposal_id IN ($placeholders)
+        WHERE proposal_id IN ($id_placeholders)
+          AND proposal_status NOT IN ($status_placeholders)
         ORDER BY proposal_id, `Date` ASC
     ";
 
     $stmt_history = $connection->prepare($history_query);
-    // 3. Bind all IDs and execute
-    $stmt_history->bind_param($types, ...$all_proposal_ids);
+    
+    // 5. Combine parameters and bind them to the query.
+    $params_to_bind = array_merge($all_proposal_ids, $statuses_to_hide);
+    $types = str_repeat('i', count($all_proposal_ids)) . str_repeat('s', count($statuses_to_hide));
+    $stmt_history->bind_param($types, ...$params_to_bind);
+
+    // 6. Execute and fetch results (no change here)
     $stmt_history->execute();
     $history_result = $stmt_history->get_result();
 
-    // 4. Organize results into the history array, same as before
     while ($history_row = $history_result->fetch_assoc()) {
         $history_by_proposal[$history_row['proposal_id']][] = $history_row;
     }
     $stmt_history->close();
 }
-// =================================================================
-// END OF MODIFIED BLOCK
-// =================================================================
 
 
 // Fetch university data
@@ -466,7 +518,8 @@ unset($row);
                                     <tr>
                                         <td><?php echo htmlspecialchars($proposal['proposal_code']); ?></td>
                                         <td><?php echo htmlspecialchars($proposal['degree_name_english']); ?></td>
-                                        <td><span class="badge bg-info"><?php echo str_replace("_", " ", htmlspecialchars($proposal['status'])); ?></span></td>
+                                        <!-- <td><span class="badge bg-info"><?php echo str_replace("_", " ", htmlspecialchars($proposal['status'])); ?></span></td> -->
+                                        <td><span class="badge bg-info"><?php echo str_replace("_", " ", htmlspecialchars($proposal['university_visible_status'])); ?></span></td>
                                         <td>
                                             <button type="button" class="btn btn-info btn-sm" 
                                                     data-bs-toggle="modal" 
@@ -611,7 +664,7 @@ unset($row);
     </script>
 
 
-<script>
+    <script>
      // =================================================================
     // NEW CODE BLOCK START: JavaScript for Modal
     // =================================================================
@@ -692,7 +745,8 @@ unset($row);
             modalBody.innerHTML = tableHtml;
         });
     
-</script>
+    </script> 
+
 
 
     <footer>

@@ -49,7 +49,6 @@ if (stripos($normalizedRole, "dean") !== false) {
 
 
 
-
 // Fetch university_id using university name
 $query = "SELECT university_id FROM universities WHERE university_name = ?";
 $stmt = $connection->prepare($query);
@@ -174,7 +173,7 @@ $stmt->close();
 
 // Retrieve submitted proposals
 $submittedProposals = [];
-$stmt = $connection->prepare("SELECT p.proposal_id,p.proposal_code, p.status, gi.degree_name_english FROM proposals p JOIN proposal_general_info gi ON p.proposal_id = gi.proposal_id WHERE p.university_id = ? AND p.status NOT IN ('draft', 'fresh','submitted') ORDER BY p.proposal_id ASC");
+$stmt = $connection->prepare("SELECT p.proposal_id,p.proposal_code, p.university_visible_status, p.university_visible_status, p.status, gi.degree_name_english FROM proposals p JOIN proposal_general_info gi ON p.proposal_id = gi.proposal_id WHERE p.university_id = ? AND p.status NOT IN ('draft', 'fresh','submitted') ORDER BY p.proposal_id ASC");
 $stmt->bind_param("i", $university_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -183,24 +182,77 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
+// // =================================================================
+// // NEW CODE BLOCK START: Fetch history for the "Submitted Proposals" table
+// // =================================================================
+// $history_by_proposal = [];
+// if (!empty($submittedProposals)) {
+//     $proposal_ids = array_column($submittedProposals, 'proposal_id');
+//     $placeholders = implode(',', array_fill(0, count($proposal_ids), '?'));
+//     $types = str_repeat('i', count($proposal_ids));
+
+//     $history_query = "
+//         SELECT proposal_id, proposal_status, `Date`, comment
+//         FROM proposal_comments
+//         WHERE proposal_id IN ($placeholders)
+//         ORDER BY proposal_id, `Date` ASC
+//     ";
+
+//     $stmt_history = $connection->prepare($history_query);
+//     $stmt_history->bind_param($types, ...$proposal_ids);
+//     $stmt_history->execute();
+//     $history_result = $stmt_history->get_result();
+
+//     while ($history_row = $history_result->fetch_assoc()) {
+//         $history_by_proposal[$history_row['proposal_id']][] = $history_row;
+//     }
+//     $stmt_history->close();
+// }
+// // =================================================================
+// // NEW CODE BLOCK END
+// // =================================================================
+
 // =================================================================
-// NEW CODE BLOCK START: Fetch history for the "Submitted Proposals" table
+// NEW CODE BLOCK: Fetch FILTERED history for ALL proposals on the page
 // =================================================================
 $history_by_proposal = [];
-if (!empty($submittedProposals)) {
-    $proposal_ids = array_column($submittedProposals, 'proposal_id');
-    $placeholders = implode(',', array_fill(0, count($proposal_ids), '?'));
-    $types = str_repeat('i', count($proposal_ids));
 
+// 1. Combine IDs from all proposal groups (no change here)
+$submitted_ids = array_column($submittedProposals, 'proposal_id');
+$all_proposal_ids = array_unique(array_merge($submitted_ids));
+
+if (!empty($all_proposal_ids)) {
+    // 2. Define the internal department statuses to HIDE from the university view.
+    $statuses_to_hide = [
+        'approvedbyugcfinance', 'rejectedbyugcfinance',
+        'approvedbyugchr',      'rejectedbyugchr',
+        'approvedbyugcidd',     'rejectedbyugcidd',
+        'approvedbyugcacademic','rejectedbyugcacademic',
+        'approvedbyugcadmission','rejectedbyugcadmission',
+        'approvedbyalldepartments'
+    ];
+
+    // 3. Prepare placeholders for both proposal IDs and the statuses to hide.
+    $id_placeholders = implode(',', array_fill(0, count($all_proposal_ids), '?'));
+    $status_placeholders = implode(',', array_fill(0, count($statuses_to_hide), '?'));
+
+    // 4. Create the new query with the "NOT IN" clause.
     $history_query = "
         SELECT proposal_id, proposal_status, `Date`, comment
         FROM proposal_comments
-        WHERE proposal_id IN ($placeholders)
+        WHERE proposal_id IN ($id_placeholders)
+          AND proposal_status NOT IN ($status_placeholders)
         ORDER BY proposal_id, `Date` ASC
     ";
 
     $stmt_history = $connection->prepare($history_query);
-    $stmt_history->bind_param($types, ...$proposal_ids);
+    
+    // 5. Combine parameters and bind them to the query.
+    $params_to_bind = array_merge($all_proposal_ids, $statuses_to_hide);
+    $types = str_repeat('i', count($all_proposal_ids)) . str_repeat('s', count($statuses_to_hide));
+    $stmt_history->bind_param($types, ...$params_to_bind);
+
+    // 6. Execute and fetch results (no change here)
     $stmt_history->execute();
     $history_result = $stmt_history->get_result();
 
@@ -209,9 +261,6 @@ if (!empty($submittedProposals)) {
     }
     $stmt_history->close();
 }
-// =================================================================
-// NEW CODE BLOCK END
-// =================================================================
 
 ?>
 
@@ -510,7 +559,7 @@ if (!empty($submittedProposals)) {
 <!-- NEW CODE BLOCK END -->
 <!-- ================================================================= -->
 
-<script>
+    <script>
      // =================================================================
     // NEW CODE BLOCK START: JavaScript for Modal
     // =================================================================
@@ -592,6 +641,8 @@ if (!empty($submittedProposals)) {
         });
     
 </script>
+
+
 
 
 </body>
