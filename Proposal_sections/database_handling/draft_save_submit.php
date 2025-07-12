@@ -126,7 +126,7 @@ if ($proposal) {
 
     if ($is_draft_save) {
         // Update status from "Fresh" to "Draft"
-        $stmt = $connection->prepare("UPDATE proposals SET status = 'draft' WHERE proposal_id = ?");
+        $stmt = $connection->prepare("UPDATE proposals SET status = 'draft', university_visible_status = 'draft' WHERE proposal_id = ?");
         $stmt->bind_param("i", $proposal_id);
         if ($stmt->execute()) {
            //echo "<pre>DEBUG: Proposal ID $proposal_id status successfully updated to Draft.</pre>";
@@ -230,7 +230,7 @@ if ($proposal) {
             // Get current timestamp
             $submitted_at = date('Y-m-d H:i:s');
         
-            $stmt = $connection->prepare("UPDATE proposals SET status = 'submitted', proposal_type = ?, submitted_at = ? WHERE proposal_id = ?");
+            $stmt = $connection->prepare("UPDATE proposals SET status = 'submitted', university_visible_status = 'submitted', proposal_type = ?, submitted_at = ? WHERE proposal_id = ?");
             $stmt->bind_param("ssi",$new_proposal_type, $submitted_at, $proposal_id,);
             if ($stmt->execute()) {
            //echo "<pre>DEBUG: Proposal ID $proposal_id status successfully submitted.</pre>";
