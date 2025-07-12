@@ -173,7 +173,7 @@ $stmt->close();
 
 // Retrieve submitted proposals
 $submittedProposals = [];
-$stmt = $connection->prepare("SELECT p.proposal_id,p.proposal_code, p.university_visible_status, p.university_visible_status, p.status, gi.degree_name_english FROM proposals p JOIN proposal_general_info gi ON p.proposal_id = gi.proposal_id WHERE p.university_id = ? AND p.status NOT IN ('draft', 'fresh','submitted') ORDER BY p.proposal_id ASC");
+$stmt = $connection->prepare("SELECT p.proposal_id,p.proposal_code, p.university_visible_status, p.university_visible_status, p.status, gi.degree_name_english FROM proposals p JOIN proposal_general_info gi ON p.proposal_id = gi.proposal_id WHERE p.university_id = ? AND p.status NOT IN ('draft', 'fresh') ORDER BY p.proposal_id ASC");
 $stmt->bind_param("i", $university_id);
 $stmt->execute();
 $result = $stmt->get_result();
