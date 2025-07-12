@@ -114,7 +114,7 @@ if (isset($_POST['create_new_proposal'])) {
     unset($_SESSION['proposal_id']);
     
     //  Insert a new proposal
-    $sql = "INSERT INTO proposals (university_id, created_at, status, created_by) VALUES (?, NOW(), 'fresh', ?)";
+    $sql = "INSERT INTO proposals (university_id, created_at, status, university_visible_status, created_by) VALUES (?, NOW(), 'fresh', 'fresh', ?)";
     $stmt = $connection->prepare($sql);
     $stmt->bind_param("ii", $university_id, $user_id);
 
