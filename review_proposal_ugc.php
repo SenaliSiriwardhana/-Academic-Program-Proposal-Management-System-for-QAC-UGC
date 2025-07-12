@@ -10,6 +10,50 @@ if (!isset($_SESSION['role']) || !isset($_SESSION['username']) || !isset($_SESSI
 $role = strtolower(trim($_SESSION['role']));
 $username = $_SESSION['username']; // Logged-in user's username
 $user_id = $_SESSION['id']; // User ID for tracking approvals
+$first_name = $_SESSION['first_name']; // Getting name for setting TA's status
+
+
+// This logic only applies to Technical Assistants
+if ($role === 'ugc - technical assistant') {
+    
+    // --- MAP USERNAME TO THEIR SPECIFIC ENUM STATUS ---
+    // Maintain this list is a must. Add new TAs here. Use appropriate names ( and also need to add enums to status column in db [proposals])
+    $ta_status_map = [
+        'ATechAssistant' => 'under_review_by_ATechAssistant',
+        'BTechAssistant' => 'under_review_by_BTechAssistant',
+        //'CTechAssistant' => 'under_review_by_CTechAssistant', // Example for another TA
+    ];
+
+    // Check if the current TA is in our map
+    if (array_key_exists($first_name, $ta_status_map)) {
+        
+        if (!isset($_GET['id']) || empty($_GET['id'])) { die("Invalid request."); }
+        $proposal_id = $_GET['id'];
+
+        // Get the specific ENUM status for this user
+        $my_review_status = $ta_status_map[$first_name];
+
+        // Get the current status of the proposal
+        $stmt_check = $connection->prepare("SELECT status FROM proposals WHERE proposal_id = ?");
+        $stmt_check->bind_param("i", $proposal_id);
+        $stmt_check->execute();
+        $current_status = $stmt_check->get_result()->fetch_assoc()['status'];
+        $stmt_check->close();
+        
+        $waiting_statuses = ['approvedbyvc', 'approvedbycqa'];
+
+        // If the proposal is waiting, assign it to this TA by setting their specific status
+        if (in_array($current_status, $waiting_statuses)) {
+            $stmt_update = $connection->prepare(
+                "UPDATE proposals SET status = ?, university_visible_status = ? WHERE proposal_id = ?"
+            );
+            $stmt_update->bind_param("ssi", $my_review_status, $my_review_status, $proposal_id);
+            $stmt_update->execute();
+            $stmt_update->close();
+        }
+    }
+}
+
 
 // Ensure user is from UGC
 $ugc_roles = [
@@ -40,31 +84,130 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 $proposal_id = $_GET['id'];
 
 // Fetch proposal details
-$proposalQuery = "SELECT proposal_id, status, created_at, updated_at, submitted_at, proposal_type FROM proposals WHERE proposal_id = ?";
+$proposalQuery = "SELECT proposal_id, proposal_type, status, created_at, updated_at, submitted_at, proposal_type FROM proposals WHERE proposal_id = ?";
 $stmt = $connection->prepare($proposalQuery);
 $stmt->bind_param("i", $proposal_id);
 $stmt->execute();
 $proposal = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
-// Get the proposal type for button logic
-$proposal_type = $proposal['proposal_type'];
+$proposal_type = strtolower($proposal['proposal_type']);
 
-// Initialize the flag to check if the current user is the Director-QAC
+
+if (strpos($proposal_type, 'revised') === 0) {
+    // Revised proposal — use extended status list
+    $statusList = [
+        'approvedbyStandardCommitte',
+        'approvedbyqachead_revised',
+        'approvedbysecretary',
+        'approvedbyTA',
+        're-signed_dean',
+        're-signed_cqa',
+        're-signed_vc',
+        'resignature_request_from_university',
+        'approvedbyugcfinance',
+        'approvedbyugchr',
+        'approvedbyugcidd',
+        'approvedbyugcacademic',
+        'approvedbyugcadmission',
+    ];
+} else {
+    // Initial proposal — use basic status list
+    $statusList = [
+        'approvedbyStandardCommitte',
+        'approvedbydean',
+        'approvedbycqa',
+        'approvedbyvc',
+        'approvedbyTA',
+        'approvedbysecretary',
+        'approvedbyqachead',
+        'approvedbyugcfinance',
+        'approvedbyugchr',
+        'approvedbyugcidd',
+        'approvedbyugcacademic',
+        'approvedbyugcadmission',
+        
+    ];
+}
+
+// Build IN clause dynamically
+$placeholders = implode(',', array_fill(0, count($statusList), '?'));
+
 $is_director_qac = ($role === 'head of the qac-ugc department');
-
-// Fetch previous approvals from proposal_comments table
-$commentQuery = "SELECT id, proposal_status, comment, seal_and_sign, Date
-FROM proposal_comments 
-WHERE proposal_id = ? AND proposal_status IN ('approvedbyqachead','approvedbydean','approvedbyvc','approvedbycqa','approvedbysecretary','approvedbyTA')
-ORDER BY id ASC";
-
+$commentQuery = "
+SELECT id, proposal_status, comment, seal_and_sign, Date
+FROM (
+    SELECT *,
+           ROW_NUMBER() OVER (
+               PARTITION BY proposal_status 
+               ORDER BY Date DESC, id DESC
+           ) as rn
+    FROM proposal_comments
+    WHERE proposal_id = ?
+      AND proposal_status IN ($placeholders)
+) AS ranked
+WHERE rn = 1
+ORDER BY Date ASC;
+";
 
 $stmt = $connection->prepare($commentQuery);
-$stmt->bind_param("i", $proposal_id);
+
+$params_to_bind = array_merge([$proposal_id], $statusList);
+$types = 'i' . str_repeat('s', count($statusList));
+$stmt->bind_param($types, ...$params_to_bind);
+
 $stmt->execute();
 $result = $stmt->get_result();
 $comments = $result->fetch_all(MYSQLI_ASSOC);
+
+// Determine if revised or initial
+$isRevised = strpos($proposal_type, 'revised') === 0;
+
+// Define orders for each case
+$initialOrder = [
+    'approvedbydean',
+    'approvedbycqa',
+    'approvedbyvc',
+    'approvedbyTA',
+    'approvedbysecretary',
+    'approvedbyqachead',
+    'approvedbyugcfinance',
+    'approvedbyugchr',
+    'approvedbyugcidd',
+    'approvedbyugcacademic',
+    'approvedbyugcadmission',
+    'approvedbyStandardCommitte',
+];
+
+$revisedOrder = [
+    'approvedbyTA',
+    'approvedbysecretary',
+    'resignature_request_from_university',
+    're-signed_dean',
+    're-signed_cqa',
+    're-signed_vc',
+    'approvedbyugcfinance',
+    'approvedbyugchr',
+    'approvedbyugcidd',
+    'approvedbyugcacademic',
+    'approvedbyugcadmission',
+    'approvedbyStandardCommitte',
+];
+// Choose the right order array
+$desiredOrder = $isRevised ? $revisedOrder : $initialOrder;
+
+// Create mapping for sorting
+$orderMap = array_flip($desiredOrder);
+
+// Sort comments based on the chosen order
+usort($comments, function ($a, $b) use ($orderMap) {
+    $orderA = $orderMap[$a['proposal_status']] ?? PHP_INT_MAX;
+    $orderB = $orderMap[$b['proposal_status']] ?? PHP_INT_MAX;
+    return $orderA <=> $orderB;
+});
+
+
+
 
 // ✅ Ensure $comments is always an array (to prevent foreach() errors)
 if (!$comments) {
@@ -381,18 +524,23 @@ if ($is_in_parallel_review) {
             <tr>
                 <td>
                     <?php 
-                        if ($comment['proposal_status'] === 'approvedbydean') echo "Dean";
-                        elseif ($comment['proposal_status'] === 'approvedbyvc') echo "Vice Chancellor";
-                        elseif ($comment['proposal_status'] === 'approvedbysecretary') echo "Secretary";
-                        elseif ($comment['proposal_status'] === 'approvedbyTA') echo "Technical Assistant";
+                         if ($comment['proposal_status'] === 'approvedbydean') echo "Dean";
                         elseif ($comment['proposal_status'] === 'approvedbycqa') echo "CQA Director";
+                        elseif ($comment['proposal_status'] === 'approvedbyvc') echo "Vice Chancellor";
+                        elseif ($comment['proposal_status'] === 'approvedbyTA') echo "Technical Assistant";
+                        elseif ($comment['proposal_status'] === 'approvedbysecretary') echo "Secretary";
                         elseif ($comment['proposal_status'] === 'approvedbyqachead') echo "Head of the QAC-UGC Department";
+                        elseif ($comment['proposal_status'] === 'resignature_request_from_university') echo "Head of the QAC-UGC Department- (Revised Proposal recommended by QAC)";
                         elseif ($comment['proposal_status'] === 'approvedbyugcfinance') echo "UGC - Finance Department";
                         elseif ($comment['proposal_status'] === 'approvedbyugchr') echo "UGC - HR Department";
                         elseif ($comment['proposal_status'] === 'approvedbyugcidd') echo "UGC - IDD Department";
-                        //elseif ($comment['proposal_status'] === 'approvedbyugclegal') echo "UGC - Legal Department";
                         elseif ($comment['proposal_status'] === 'approvedbyugcacademic') echo "UGC - Academic Department";
                         elseif ($comment['proposal_status'] === 'approvedbyugcadmission') echo "UGC - Admission Department";
+                        elseif ($comment['proposal_status'] === 're-signed_dean') echo "Re-signature for final version - Dean";
+                        elseif ($comment['proposal_status'] === 're-signed_cqa') echo "Re-signature for final version - CQA Director";
+                        elseif ($comment['proposal_status'] === 're-signed_vc') echo "Re-signature for final version - VC";
+                        elseif ($comment['proposal_status'] === 'approvedbyugcStandardCommittee') echo "Standard Committee";
+                        
                     ?>
                 </td>
                 <td><?php echo ucfirst(str_replace("approvedby", "Approved by ", $comment['proposal_status'])); ?></td>

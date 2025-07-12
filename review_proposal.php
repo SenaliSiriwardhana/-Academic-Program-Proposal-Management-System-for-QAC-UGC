@@ -32,11 +32,100 @@ $proposalQuery = "SELECT proposal_code,
   submitted_at FROM proposals WHERE proposal_id = ?";
 
 
-// Fetch previous approvals from proposal_comments table
-$commentQuery = "SELECT id, proposal_status, comment, seal_and_sign, Date
-FROM proposal_comments 
-WHERE proposal_id = ? AND proposal_status IN ('approvedbydean', 'approvedbyvc', 'approvedbycqa')
-ORDER BY id ASC";
+$proposal_type = strtolower($proposal['proposal_type']);
+
+
+if (strpos($proposal_type, 'revised') === 0) {
+    // Revised proposal — use extended status list
+    $statusList = [
+        'approvedbyStandardCommitte',
+        'approvedbyqachead_revised',
+        'approvedbysecretary',
+        'approvedbyTA',
+        're-signed_dean',
+        're-signed_cqa',
+        're-signed_vc',
+        'resignature_request_from_university'
+    ];
+} else {
+    // Initial proposal — use basic status list
+    $statusList = [
+        'approvedbyStandardCommitte',
+        'approvedbydean',
+        'approvedbycqa',
+        'approvedbyvc',
+        'approvedbyTA',
+        'approvedbysecretary',
+        'approvedbyqachead'
+        
+    ];
+}
+
+// Build IN clause dynamically
+$placeholders = implode(',', array_fill(0, count($statusList), '?'));
+
+$commentQuery = "
+SELECT id, proposal_status, comment, seal_and_sign, Date
+FROM (
+    SELECT *,
+           ROW_NUMBER() OVER (
+               PARTITION BY proposal_status 
+               ORDER BY Date DESC, id DESC
+           ) as rn
+    FROM proposal_comments
+    WHERE proposal_id = ?
+      AND proposal_status IN ($placeholders)
+) AS ranked
+WHERE rn = 1
+ORDER BY Date ASC;
+";
+
+$stmt = $connection->prepare($commentQuery);
+
+$params_to_bind = array_merge([$proposal_id], $statusList);
+$types = 'i' . str_repeat('s', count($statusList));
+$stmt->bind_param($types, ...$params_to_bind);
+
+$stmt->execute();
+$result = $stmt->get_result();
+$comments = $result->fetch_all(MYSQLI_ASSOC);
+
+// Determine if revised or initial
+$isRevised = strpos($proposal_type, 'revised') === 0;
+
+// Define orders for each case
+$initialOrder = [
+    'approvedbydean',
+    'approvedbycqa',
+    'approvedbyvc',
+    'approvedbyTA',
+    'approvedbysecretary',
+    'approvedbyqachead',
+    'approvedbyStandardCommitte',
+];
+
+$revisedOrder = [
+    'approvedbyTA',
+    'approvedbysecretary',
+    'resignature_request_from_university',
+    're-signed_dean',
+    're-signed_cqa',
+    're-signed_vc',
+    'approvedbyStandardCommitte',
+];
+
+// Choose the right order array
+$desiredOrder = $isRevised ? $revisedOrder : $initialOrder;
+
+// Create mapping for sorting
+$orderMap = array_flip($desiredOrder);
+
+// Sort comments based on the chosen order
+usort($comments, function ($a, $b) use ($orderMap) {
+    $orderA = $orderMap[$a['proposal_status']] ?? PHP_INT_MAX;
+    $orderB = $orderMap[$b['proposal_status']] ?? PHP_INT_MAX;
+    return $orderA <=> $orderB;
+});
 
 
 $stmt = $connection->prepare($commentQuery);
