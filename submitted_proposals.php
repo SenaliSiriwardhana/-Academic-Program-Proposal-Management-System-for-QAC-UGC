@@ -53,18 +53,6 @@ function deleteUploadedFiles($section) {
     }
 }
 
-
-// Retrieve list of draft proposals
-$drafts = [];
-$stmt = $connection->prepare("SELECT proposal_id, proposal_code, status FROM proposals WHERE status = 'submitted' AND university_id = ? ORDER BY proposal_id ASC");
-$stmt->bind_param("i", $university_id); // Bind parameters 
-$stmt->execute();
-$result = $stmt->get_result();
-while ($row = $result->fetch_assoc()) {
-    $drafts[] = $row;
-}
-
-
 // Retrieve submitted proposals
 $submittedProposals = [];
 $stmt = $connection->prepare("SELECT p.proposal_id, p.proposal_code, p.university_visible_status, p.status, gi.degree_name_english FROM proposals p join proposal_general_info gi ON p.proposal_id = gi.proposal_id  WHERE university_id = ? AND status NOT IN ('draft', 'fresh') ORDER BY proposal_id ASC");
