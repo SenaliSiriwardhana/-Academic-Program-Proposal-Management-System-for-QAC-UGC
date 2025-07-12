@@ -25,43 +25,96 @@ if ($result->num_rows > 0) {
     die("<pre>Error: User details not found.</pre>");
 }
 
+
+// (This replaces the entire PHP logic section in approved_proposals_ugc.php)
+
+$role = $_SESSION['role'];
+
+// Define the statuses that mean a proposal is "in the parallel review pool"
+$department_pool_statuses = ['approvedbyqachead', 'approvedbyqachead_revised', 're-signed_vc'];
+
 // Define UGC roles with corresponding dashboard titles & status filters
 $ugc_settings = [
-    "ugc - technical assistant" => ["title" => "UGC - Technical Assistant Dashboard","status" => "approvedbyTA"],
-    "ugc - secretary" => ["title" => "UGC - Secretary Dashboard","status" => "approvedbysecretary"],
-    "head of the qac-ugc department" => ["title" => "Head of QAC-UGC Dashboard", "status" => "approvedbyqachead"],
-    "ugc - finance department" => ["title" => "UGC - Finance Department Dashboard", "status" => "approvedbyugcfinance"],
-    "ugc - hr department" => ["title" => "UGC - Human Resources Dashboard", "status" => "approvedbyugchr"],
-    "ugc - idd department" => ["title" => "UGC - Institutional Development Dashboard", "status" => "approvedbyugcidd"],
-    //"ugc - legal department" => ["title" => "UGC - Legal Affairs Dashboard", "status" => "approvedbyugclegal"],
-    "ugc - academic department" => ["title" => "UGC - Academic Affairs Dashboard", "status" => "approvedbyugcacademic"],
-    "ugc - admission department" => ["title" => "UGC - Admission Department", "status" => "approvedbyugcadmission"],
-    "standard committee" => ["title" => "Standard Committee Dashboard", "status" => "approvedbyStandardCommittee"]
+    "ugc - technical assistant" => ["title" => "Approved by Technical Assistant", "status_list" => ["approvedbyTA"]],
+    "ugc - secretary" => ["title" => "Approved by Secretary", "status_list" => ["approvedbysecretary"]],
+    "head of the qac-ugc department" => ["title" => "Approved by Head of QAC", "status_list" => $department_pool_statuses],
+    "ugc - finance department" => ["title" => "Finance - Approved Proposals", "comment_status" => "approvedbyugcfinance"],
+    "ugc - hr department" => ["title" => "HR - Approved Proposals", "comment_status" => "approvedbyugchr"],
+    "ugc - idd department" => ["title" => "IDD - Approved Proposals", "comment_status" => "approvedbyugcidd"],
+    "ugc - academic department" => ["title" => "Academic - Approved Proposals", "comment_status" => "approvedbyugcacademic"],
+    "ugc - admission department" => ["title" => "Admission - Approved Proposals", "comment_status" => "approvedbyugcadmission"],
+    "standard committee" => ["title" => "Standard Committee - Approved Proposals", "status_list" => ["approvedbyStandardCommittee"]]
 ];
 
-// Validate user role and set dashboard properties
-if (!array_key_exists($_SESSION['role'], $ugc_settings)) {
-    die("<pre>Error: Unauthorized access. Role detected: " . htmlspecialchars($_SESSION['role']) . "</pre>");
+// Validate user role and get settings
+if (!array_key_exists($role, $ugc_settings)) {
+    die("<pre>Error: Unauthorized access. Role detected: " . htmlspecialchars($role) . "</pre>");
 }
 
-$dashboardTitle = $ugc_settings[$_SESSION['role']]['title'];
-$statusFilter = $ugc_settings[$_SESSION['role']]['status'];
+$dashboardTitle = $ugc_settings[$role]['title'];
+$role_settings = $ugc_settings[$role];
 
-// Fetch all rejected proposals for the user's UGC department
-$query = "SELECT p.proposal_id,p.proposal_code, p.submitted_at, p.status, u.first_name, u.last_name, gi.degree_name_english
-          FROM proposals p
-          JOIN users u ON p.created_by = u.id  --  Join users table to get creator's details
-          LEFT JOIN proposal_general_info gi 
-          ON p.proposal_id = gi.proposal_id -- Join with general info to get degree name
-          WHERE p.status = ?
-          ORDER BY p.submitted_at DESC";
+// --- NEW UNIFIED QUERY LOGIC ---
 
-$stmt = $connection->prepare($query);
-$stmt->bind_param("s", $statusFilter); // Use the correct rejection status for the UGC department
-$stmt->execute();
-$result = $stmt->get_result();
-$stmt->close();
+$approved_proposals = []; // Initialize the array
+
+$base_query = "SELECT p.proposal_id, p.proposal_code, p.submitted_at, p.status AS status, 
+                      u.first_name, u.last_name, gi.degree_name_english
+               FROM proposals p
+               JOIN users u ON p.created_by = u.id
+               LEFT JOIN proposal_general_info gi ON p.proposal_id = gi.proposal_id";
+
+// Check if this role uses the 'comment_status' method (for the 5 parallel departments)
+if (isset($role_settings['comment_status'])) {
+    
+    // This is a department user.
+    // Show proposals they approved AND that are still in the department review pool.
+    $comment_status = $role_settings['comment_status'];
+    
+    $placeholders = implode(',', array_fill(0, count($department_pool_statuses), '?'));
+
+    $query = "$base_query
+              WHERE p.status IN ($placeholders) -- Fix for Problem 2
+                AND EXISTS (
+                  SELECT 1 FROM proposal_comments pc
+                  WHERE pc.proposal_id = p.proposal_id AND pc.proposal_status = ?
+              )
+              ORDER BY p.submitted_at DESC";
+              
+    $stmt = $connection->prepare($query);
+    // Bind all the pool statuses, and then the specific comment status
+    $params_to_bind = array_merge($department_pool_statuses, [$comment_status]);
+    $types = str_repeat('s', count($department_pool_statuses)) . 's';
+    $stmt->bind_param($types, ...$params_to_bind);
+
+} 
+// Check if this role uses the 'status_list' method (for everyone else)
+elseif (isset($role_settings['status_list'])) {
+    
+    // This is a standard role (like QAC Head, Secretary, Standard Committee, etc.).
+    $status_list = $role_settings['status_list'];
+    
+    $placeholders = implode(',', array_fill(0, count($status_list), '?'));
+
+    $query = "$base_query
+              WHERE p.status IN ($placeholders) -- Fix for Problem 1
+              ORDER BY p.submitted_at DESC";
+              
+    $stmt = $connection->prepare($query);
+    // Bind all statuses from the list
+    $types = str_repeat('s', count($status_list));
+    $stmt->bind_param($types, ...$status_list);
+}
+
+// Execute the query only if a statement was prepared
+if (isset($stmt)) {
+    $stmt->execute();
+    $result = $stmt->get_result();
+    // The loop to fetch results will be in your HTML part
+}
+
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">

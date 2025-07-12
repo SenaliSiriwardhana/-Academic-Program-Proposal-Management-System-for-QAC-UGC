@@ -28,24 +28,25 @@ if ($result->num_rows > 0) {
 // Define role-based settings
 $role = trim(strtolower($_SESSION['role'])); // Normalize role
 $university = $_SESSION['university'];
+$statusFilter = [];
 
 if (strpos($role, "dean") !== false)  {
     $dashboardTitle = "Dean - Approved Proposals";
-    $statusFilter = "approvedbydean"; // Dean sees proposals approved by them
+    $statusFilter = ['approvedbydean', 're-signed_dean']; // Dean sees proposals approved by them]]
     $dashboardPage = "uni_dashboards.php";
     $approvedPage = "approved_proposals.php";
     $rejectedPage = "rejected_proposals.php";
 
 } elseif (strpos($role, "vice chancellor") !== false || strpos($role, "vc") !== false) {
     $dashboardTitle = "VC - Approved Proposals";
-    $statusFilter = "approvedbyvc"; // VC sees proposals approved by them
+    $statusFilter = ['approvedbyvc', 're-signed_vc']; // VC sees proposals approved by them
     $dashboardPage = "uni_dashboards.php";
     $approvedPage = "approved_proposals.php";
     $rejectedPage = "rejected_proposals.php";
 
 } elseif (strpos($role, "CQA Director") !== false || strpos($role, "cqa") !== false) {
     $dashboardTitle = "CQA Director - Approved Proposals";
-    $statusFilter = "approvedbycqa"; // VC sees proposals approved by Dean
+    $statusFilter = ['approvedbycqa', 're-signed_cqa']; // CQA sees proposals approved by them
     $approvedPage = "approved_proposals.php";
     $rejectedPage = "rejected_proposals.php";
 
@@ -69,21 +70,32 @@ if (!$university_data) {
 $university_id = $university_data['university_id'];
 $_SESSION['university_id'] = $university_id;
 
+$placeholders = implode(',', array_fill(0, count($statusFilter), '?'));
+
 // Fetch proposals based on role
 $query = "SELECT p.proposal_id,p.proposal_code, p.submitted_at, u.first_name, u.last_name, gi.degree_name_english
           FROM proposals p
           JOIN users u ON p.created_by = u.id
           LEFT JOIN proposal_general_info gi 
           ON p.proposal_id = gi.proposal_id -- Join with general info to get degree name
-          WHERE p.status = ? 
+          WHERE p.status IN ($placeholders)  
           AND u.university_id = ? 
           ORDER BY p.submitted_at DESC";
 
+// 3. Prepare the parameters for binding.
+// The array of statuses needs to be combined with the university_id.
+$params_to_bind = array_merge($statusFilter, [$university_id]);
+
+// 4. Define the data types for each parameter. 's' for each status string, 'i' for the integer university_id.
+$types = str_repeat('s', count($statusFilter)) . 'i';
+
+// 5. Prepare, bind, and execute the statement.
 $stmt = $connection->prepare($query);
-$stmt->bind_param("si", $statusFilter, $university_id);
+$stmt->bind_param($types, ...$params_to_bind);
 $stmt->execute();
 $result = $stmt->get_result();
-$stmt->close();
+
+
 ?>
 
 <!DOCTYPE html>
