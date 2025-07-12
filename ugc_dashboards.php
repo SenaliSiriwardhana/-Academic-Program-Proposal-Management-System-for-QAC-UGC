@@ -29,7 +29,7 @@ $role = $_SESSION['role'];
 // Retrieve submitted proposals
 $pendingProposals = [];
 
-$base_query = "SELECT p.proposal_id,p.proposal_code,p.proposal_type, p.submitted_at, u.first_name, u.last_name, u.university, 
+$base_query = "SELECT p.proposal_id,p.proposal_code,p.proposal_type,p.status, p.submitted_at, u.first_name, u.last_name, u.university, 
 gi.degree_name_english FROM proposals p JOIN users u ON p.created_by = u.id LEFT JOIN proposal_general_info gi 
 ON p.proposal_id = gi.proposal_id";
 
@@ -37,7 +37,7 @@ ON p.proposal_id = gi.proposal_id";
 if ($role === 'ugc - technical assistant') {
     $dashboardTitle = "UGC - Technical Assistant Dashboard";
     // TA sees: 1) Initial proposals approved by VC. 2) Revised proposals approved by CQA.
-    $query = "$base_query WHERE (p.status = 'approvedbyvc') OR (p.status = 'approvedbycqa' AND p.proposal_type LIKE 'revised%') ORDER BY p.submitted_at ASC";
+    $query = "$base_query WHERE (p.status = 'approvedbyvc') OR (p.status = 'approvedbycqa' AND p.proposal_type LIKE 'revised%') OR (p.status LIKE 'under_review_by_%') ORDER BY p.submitted_at ASC";
     $stmt = $connection->prepare($query);
     
 } else {
@@ -143,21 +143,72 @@ while ($row = $result->fetch_assoc()) {
 $stmt->close();
 
 
-$history_by_proposal = [];
-if (!empty($submittedProposals)) {
-    $proposal_ids = array_column($submittedProposals, 'proposal_id');
-    $placeholders = implode(',', array_fill(0, count($proposal_ids), '?'));
-    $types = str_repeat('i', count($proposal_ids));
+// $history_by_proposal = [];
+// if (!empty($submittedProposals)) {
+//     $proposal_ids = array_column($submittedProposals, 'proposal_id');
+//     $placeholders = implode(',', array_fill(0, count($proposal_ids), '?'));
+//     $types = str_repeat('i', count($proposal_ids));
 
+//     $history_query = "
+//         SELECT proposal_id, proposal_status, `Date`, comment
+//         FROM proposal_comments
+//         WHERE proposal_id IN ($placeholders)
+//         ORDER BY proposal_id, `Date` ASC
+//     ";
+
+//     $stmt_history = $connection->prepare($history_query);
+//     $stmt_history->bind_param($types, ...$proposal_ids);
+//     $stmt_history->execute();
+//     $history_result = $stmt_history->get_result();
+
+//     while ($history_row = $history_result->fetch_assoc()) {
+//         $history_by_proposal[$history_row['proposal_id']][] = $history_row;
+//     }
+//     $stmt_history->close();
+// }
+
+// (This replaces the history-fetching block in ugc_dashboards.php)
+
+// =================================================================
+// MODIFIED CODE BLOCK: Fetch history for UGC view (hiding uni rejections)
+// =================================================================
+$history_by_proposal = [];
+
+// 1. Combine IDs from all proposal groups shown on the UGC page
+// Important: We need IDs from BOTH pending and submitted tables for a complete view
+$pending_ids = array_column($pendingProposals, 'proposal_id');
+$submitted_ids = array_column($submittedProposals, 'proposal_id');
+$all_proposal_ids = array_unique(array_merge($pending_ids, $submitted_ids));
+
+if (!empty($all_proposal_ids)) {
+    // 2. Define the university rejection statuses to HIDE from the UGC view.
+    $statuses_to_hide = [
+        'rejectedbydean',
+        'rejectedbyvc',
+        'rejectedbycqa'
+    ];
+    
+    // 3. Prepare placeholders for the query
+    $id_placeholders = implode(',', array_fill(0, count($all_proposal_ids), '?'));
+    $status_placeholders = implode(',', array_fill(0, count($statuses_to_hide), '?'));
+
+    // 4. The new query with the "NOT IN" clause to filter out the unwanted statuses.
     $history_query = "
         SELECT proposal_id, proposal_status, `Date`, comment
         FROM proposal_comments
-        WHERE proposal_id IN ($placeholders)
+        WHERE proposal_id IN ($id_placeholders)
+          AND proposal_status NOT IN ($status_placeholders)
         ORDER BY proposal_id, `Date` ASC
     ";
 
     $stmt_history = $connection->prepare($history_query);
-    $stmt_history->bind_param($types, ...$proposal_ids);
+    
+    // 5. Combine parameters and bind them to the query
+    $params_to_bind = array_merge($all_proposal_ids, $statuses_to_hide);
+    $types = str_repeat('i', count($all_proposal_ids)) . str_repeat('s', count($statuses_to_hide));
+    $stmt_history->bind_param($types, ...$params_to_bind);
+
+    // 6. Execute and fetch the results
     $stmt_history->execute();
     $history_result = $stmt_history->get_result();
 
@@ -166,6 +217,9 @@ if (!empty($submittedProposals)) {
     }
     $stmt_history->close();
 }
+// =================================================================
+// END OF MODIFIED BLOCK
+// =================================================================
 
 
 ?>
@@ -391,6 +445,7 @@ if (!empty($submittedProposals)) {
                 <tr>
                     <th>Proposal Code</th>
                     <th>Proposal Type</th>
+                    <th>Proposal Status</th>
                     <th>Degree Name </th>
                     <th>Submitted Date</th>
                     <th>Submitted By</th>
@@ -401,11 +456,32 @@ if (!empty($submittedProposals)) {
                     <tr>
                         <td><?php echo $pproposal['proposal_code']; ?></td>
                         <td><?php echo $pproposal['proposal_type']; ?></td>
+                         <td>
+                            <?php
+                                // 1. Get the status and determine the badge color
+                                $status_lower = strtolower($pproposal['status']);
+                                $badge_class = 'bg-primary'; // Default blue for pending items
+
+                                if (strpos($status_lower, 'under_review_by_ATechAssistant') !== false) {
+                                    $badge_class = 'bg-warning text-dark'; // Yellow for in-progress
+                                }
+                                
+                                // 2. Format the text for display
+                                $display_text = ucwords(str_replace('_', ' ', $status_lower));
+                            ?>
+                            <span class="badge <?php echo $badge_class; ?>">
+                                <?php echo $display_text; ?>
+                            </span>
+                        </td>
+        
+
                         <td><?php echo $pproposal['degree_name_english']; ?></td>
                         <td><?php echo $pproposal['submitted_at']; ?></td>
                         <td><?php echo $pproposal['first_name'] . " " . $pproposal['last_name']; ?></td>
                         <td><?php echo $pproposal['university']?> </td>
-                        <td><a href="review_proposal_ugc.php?id=<?php echo $pproposal['proposal_id']; ?>" class="btn btn-primary">Review</a></td>
+                        <td>
+                            <a href="review_proposal_ugc.php?id=<?php echo $pproposal['proposal_id']; ?>" class="btn btn-primary">Review</a>
+                        </td>
                     </tr>
                 <?php } ?>
             </table>
@@ -459,7 +535,7 @@ if (!empty($submittedProposals)) {
                                 <td><?php echo htmlspecialchars($proposal['university']); ?></td>
                                 <td>
                                     <!-- NEW "View Proposal" BUTTON -->
-                                    <a href="view_proposal.php?id=<?php echo $proposal['proposal_id']; ?>" class="btn btn-primary btn-sm">
+                                    <a href="view_proposal_ugc.php?id=<?php echo $proposal['proposal_id']; ?>" class="btn btn-primary btn-sm">
                                         <i class="fas fa-eye"></i> View Proposal
                                     </a>
                                 </td>

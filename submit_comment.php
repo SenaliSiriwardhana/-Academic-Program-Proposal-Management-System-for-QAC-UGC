@@ -131,6 +131,13 @@ elseif (isset($_POST['approve'])) {
             case 'approvedbyalldepartments': 
                 if (strcasecmp($role, "standard committee") === 0) $new_proposal_status = 'approvedbyStandardCommittee';
                 break;
+
+            default:
+                // Check if the status is one of the "under review by TA" types
+                if (strpos($current_status, 'under_review_by_') === 0 && strcasecmp($role, "ugc - technical assistant") === 0) {
+                    $new_proposal_status = 'approvedbyTA';
+                }
+                break;
         }
         $comment_status = $new_proposal_status; // In standard flow, comment status matches the new proposal status
     }
