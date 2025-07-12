@@ -73,7 +73,12 @@ if (strpos($proposal_type, 'revised') === 0) {
         're-signed_dean',
         're-signed_cqa',
         're-signed_vc',
-        'resignature_request_from_university'
+        'resignature_request_from_university',
+        'approvedbyugcfinance',
+        'approvedbyugchr',
+        'approvedbyugcidd',
+        'approvedbyugcacademic',
+        'approvedbyugcadmission',
     ];
 } else {
     // Initial proposal — use basic status list
@@ -84,7 +89,12 @@ if (strpos($proposal_type, 'revised') === 0) {
         'approvedbyvc',
         'approvedbyTA',
         'approvedbysecretary',
-        'approvedbyqachead'
+        'approvedbyqachead',
+        'approvedbyugcfinance',
+        'approvedbyugchr',
+        'approvedbyugcidd',
+        'approvedbyugcacademic',
+        'approvedbyugcadmission',
         
     ];
 }
@@ -129,6 +139,11 @@ $initialOrder = [
     'approvedbyTA',
     'approvedbysecretary',
     'approvedbyqachead',
+    'approvedbyugcfinance',
+    'approvedbyugchr',
+    'approvedbyugcidd',
+    'approvedbyugcacademic',
+    'approvedbyugcadmission',
     'approvedbyStandardCommitte',
 ];
 
@@ -139,6 +154,11 @@ $revisedOrder = [
     're-signed_dean',
     're-signed_cqa',
     're-signed_vc',
+    'approvedbyugcfinance',
+    'approvedbyugchr',
+    'approvedbyugcidd',
+    'approvedbyugcacademic',
+    'approvedbyugcadmission',
     'approvedbyStandardCommitte',
 ];
 
