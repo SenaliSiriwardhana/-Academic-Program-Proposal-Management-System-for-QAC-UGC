@@ -11,10 +11,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $last_name = htmlspecialchars(trim($_POST['last_name']));
     $email = htmlspecialchars(trim($_POST['email']));
     $university = htmlspecialchars(trim($_POST['university']));
+    $faculty_of = isset($_POST['faculty_of']) 
+    ? strtolower(htmlspecialchars(trim($_POST['faculty_of']))) 
+    : null;
     $role = htmlspecialchars(trim($_POST['role']));
     $username = htmlspecialchars(trim($_POST['username']));
     $password = htmlspecialchars(trim($_POST['password']));
     $confirm_password = htmlspecialchars(trim($_POST['confirm_password']));
+
+
+
 
     // Validate passwords
     if ($password !== $confirm_password) {
@@ -41,10 +47,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Check if a restricted role already exists for the university
         $restricted_roles = [
-            "Program Coordinator of the university",
-            "Dean/Rector/Director of the university",
-            "CQA Director of the university"
+            
+            "CQA Director of the university",
+            "Vice Chancellor of the university"
         ];
+
+         $faculty_restricted_roles = [
+            "Dean/Rector/Director of the university",
+            "Program Coordinator of the university"
+         ];
 
         if (in_array($role, $restricted_roles)) {
             $stmt = $connection->prepare("SELECT COUNT(*) FROM users WHERE university_id = ? AND role = ?");
@@ -61,6 +72,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         }
 
+            if (in_array($role, $faculty_restricted_roles)) {
+                if (!$faculty_of) {
+                    $message = "Please provide the faculty for the Dean.";
+                    $message_type = 'error';
+                    goto end_form;
+            }
+
+            $stmt = $connection->prepare("
+                SELECT COUNT(*) 
+                FROM users 
+                WHERE university_id = ? AND role = ? AND faculty_of = ?
+                ");
+                $stmt->bind_param("iss", $university_id, $role, $faculty_of);
+                $stmt->execute();
+                $stmt->bind_result($role_count);
+                $stmt->fetch();
+                $stmt->close();
+
+                if ($role_count > 0) {
+                    $message = "A $role is already registered for the faculty '$faculty_of' at this university.";
+                    $message_type = 'error';
+                    goto end_form;
+                }
+        }   
+
+
         // Check if email or username already exists
         $stmt = $connection->prepare("SELECT COUNT(*) FROM users WHERE email = ? OR username = ?");
         $stmt->bind_param("ss", $email, $username);
@@ -75,10 +112,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             // Insert the new user with university_id
             $stmt = $connection->prepare("
-                INSERT INTO users (first_name, last_name, email, university, university_id, role, username, password) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ");
-            $stmt->bind_param("ssssisss", $first_name, $last_name, $email, $university, $university_id, $role, $username, $hashed_password);
+                INSERT INTO users (first_name, last_name, email, university, faculty_of, university_id, role, username, password) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ");
+                $stmt->bind_param(
+                    "sssssisss",
+                    $first_name,
+                    $last_name,
+                    $email,
+                    $university,
+                    $faculty_of,
+                    $university_id,
+                    $role,
+                    $username,
+                    $hashed_password
+                );
+
 
             if ($stmt->execute()) {
                 $message = 'Sign-up successful.';
@@ -173,6 +222,11 @@ $connection->close();
                         </select>
 
                     </div>
+
+                    <div class="mb-3" id="faculty-field" style="display: none;">
+                        <label for="faculty_of" class="form-label">Faculty (for Dean)</label>
+                        <input type="text" class="form-control" id="faculty_of" name="faculty_of" placeholder="Enter Faculty Name">
+                    </div>
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
                         <input type="text" class="form-control" id="username" name="username" required>
@@ -195,36 +249,49 @@ $connection->close();
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const roleSelect = document.getElementById("role");
-        const universitySelect = document.getElementById("university");
+document.addEventListener("DOMContentLoaded", function () {
+    const roleSelect = document.getElementById("role");
+    const universitySelect = document.getElementById("university");
+    const facultyField = document.getElementById("faculty-field");
 
-    
-        const ugcRoles = [
-            "Head of the QAC-UGC Department",
-            "UGC - Finance Department",
-            "UGC - HR Department",
-            "UGC - IDD Department",
-            "UGC - Academic Department",
-            "UGC - Admission Department",
-            "UGC - Secretary",
-            "UGC - Technical Assistant",
-            "Standard Committee"
+    const ugcRoles = [
+        "Head of the QAC-UGC Department",
+        "UGC - Finance Department",
+        "UGC - HR Department",
+        "UGC - IDD Department",
+        "UGC - Academic Department",
+        "UGC - Admission Department",
+        "UGC - Secretary",
+        "UGC - Technical Assistant",
+        "Standard Committee"
+    ];
 
-        ];
+    function handleRoleChange() {
+        const role = roleSelect.value;
 
-        roleSelect.addEventListener("change", function () {
-        if (ugcRoles.includes(this.value)) {
+        if (ugcRoles.includes(role)) {
             universitySelect.value = "QAC-UGC";
             universitySelect.setAttribute("disabled", true);
+            facultyField.style.display = "none";
         } else {
-            universitySelect.value = "";
             universitySelect.removeAttribute("disabled");
+
+            if (role === "Dean/Rector/Director of the university" || role === "Program Coordinator of the university" ) {
+                facultyField.style.display = "block";
+            } else {
+                facultyField.style.display = "none";
+            }
         }
-    });
+    }
+
+    roleSelect.addEventListener("change", handleRoleChange);
+    universitySelect.addEventListener("change", handleRoleChange);
+    handleRoleChange(); // initialize on page load
 });
 </script>
+
 
 </body>
 </html>
