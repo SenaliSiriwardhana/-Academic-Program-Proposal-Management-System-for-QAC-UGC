@@ -134,6 +134,7 @@ if (strpos($proposal_type, 'revised') === 0) {
 $placeholders = implode(',', array_fill(0, count($statusList), '?'));
 
 $is_director_qac = ($role === 'head of the qac-ugc department');
+
 $commentQuery = "
 SELECT id, proposal_status, comment, seal_and_sign, Date
 FROM (
@@ -597,6 +598,32 @@ if ($is_in_parallel_review) {
 
         <div class="d-flex gap-2 align-items-center">
 
+            <?php
+           
+
+            $departmentApprovalMap = [
+                'ugc - finance department'   => 'approvedbyugcfinance',
+                'ugc - hr department'        => 'approvedbyugchr',
+                'ugc - idd department'       => 'approvedbyugcidd',
+                'ugc - academic department'  => 'approvedbyugcacademic',
+                'ugc - admission department' => 'approvedbyugcadmission',
+            ];
+
+            $is_department_reviewer = array_key_exists($role, $departmentApprovalMap);
+            $department_approval_value = $departmentApprovalMap[$role] ?? null;
+
+             $UGCSecretaryApprovalMap = [
+                'ugc - finance department'   => 'approvedbyugcfinance',
+                'ugc - hr department'        => 'approvedbyugchr',
+                'ugc - idd department'       => 'approvedbyugcidd',
+                'ugc - academic department'  => 'approvedbyugcacademic',
+                'ugc - admission department' => 'approvedbyugcadmission',
+            ];
+
+            $is_department_reviewer = array_key_exists($role, $departmentApprovalMap);
+            $department_approval_value = $departmentApprovalMap[$role] ?? null;
+            ?>
+
             <?php if ($is_director_qac): ?>
             <!-- Special buttons for the Director-QAC -->
             <button type="submit" name="director_action" value="rejectedbyqachead" class="btn btn-danger">Request Revision</button>
@@ -611,8 +638,19 @@ if ($is_in_parallel_review) {
 
             <?php else: ?>
 
-            <button type="submit" name="approve" class="btn btn-success">Approve</button>
-            <button type="submit" name="reject" class="btn btn-danger">Reject</button>
+            <!-- <button type="submit" name="approve" class="btn btn-success">Approve</button>
+            <button type="submit" name="reject" class="btn btn-danger">Reject</button> -->
+
+            <!-- All other users -->
+
+            <button type="submit" name="approve" class="btn btn-success">
+                <?php echo $is_department_reviewer ? 'Mark as Reviewed' : 'Approve'; ?>
+            </button>
+
+            <?php if (!$is_department_reviewer): ?>
+                <button type="submit" name="reject" class="btn btn-danger">Reject</button>
+            <?php endif; ?>
+        
 
              <?php endif; ?>
             
