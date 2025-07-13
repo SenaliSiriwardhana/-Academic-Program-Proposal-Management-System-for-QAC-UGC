@@ -26,10 +26,17 @@ $proposal_id = $_GET['id'];
 
 // Fetch all proposal details from different sections
 $proposalQuery = "SELECT proposal_code,
-  status,
+  university_visible_status,
   created_at,
   updated_at ,
+  proposal_type,
   submitted_at FROM proposals WHERE proposal_id = ?";
+  
+$stmt = $connection->prepare($proposalQuery);
+$stmt->bind_param("i", $proposal_id);
+$stmt->execute();
+$proposal = $stmt->get_result()->fetch_assoc();
+$stmt->close();
 
 
 $proposal_type = strtolower($proposal['proposal_type']);
@@ -128,11 +135,7 @@ usort($comments, function ($a, $b) use ($orderMap) {
 });
 
 
-$stmt = $connection->prepare($commentQuery);
-$stmt->bind_param("i", $proposal_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$comments = $result->fetch_all(MYSQLI_ASSOC);
+
 
 // ✅ Ensure $comments is always an array (to prevent foreach() errors)
 if (!$comments) {
@@ -374,8 +377,15 @@ function displayTableSection($sectionTitle, $sectionData) {
 
     <h3 class = "text-center text-primary">Proposal Details</h3>
     <table class="table table-bordered">
+        <?php
+        $customLabels = [
+        'university_visible_status' => 'Status'
+        ];
+        ?>
+
         <?php foreach ($proposal as $key => $value) { ?>
-            <tr><th><?php echo ucfirst(str_replace('_', ' ', $key)); ?></th><td><?php echo htmlspecialchars($value); ?></td></tr>
+           <?php $label = $customLabels[$key] ?? ucfirst(str_replace('_', ' ', $key)); ?>
+            <tr><th><?php echo $label; ?></th><td><?php echo htmlspecialchars($value); ?></td></tr>
         <?php } ?>
     </table>
 
