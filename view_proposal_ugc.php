@@ -473,6 +473,7 @@ function displayTableSection($sectionTitle, $sectionData) {
                         elseif ($comment['proposal_status'] === 'approvedbyTA') echo "Technical Assistant";
                         elseif ($comment['proposal_status'] === 'approvedbysecretary') echo "Secretary";
                         elseif ($comment['proposal_status'] === 'approvedbyqachead') echo "Head of the QAC-UGC Department";
+                        elseif ($comment['proposal_status'] === 'approvedbyqachead_revised') echo "Head of the QAC-UGC Department - (Revised Proposal recommendation)";
                         elseif ($comment['proposal_status'] === 'resignature_request_from_university') echo "Head of the QAC-UGC Department- (Revised Proposal recommended by QAC)";
                         elseif ($comment['proposal_status'] === 'approvedbyugcfinance') echo "UGC - Finance Department";
                         elseif ($comment['proposal_status'] === 'approvedbyugchr') echo "UGC - HR Department";
