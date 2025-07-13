@@ -2,6 +2,8 @@
 session_start();
 include 'databaseconnection.php';
 
+// PROGRAM COORDINATOR - DASHBOARD
+
 // Check if the user is logged in
 if (!isset($_SESSION['username'])) {
     header('Location: login.php');
@@ -34,7 +36,7 @@ if ($result->num_rows > 0) {
 }
 
 
-// 2. DYNAMICALLY CREATE THE CORRECT SQL FILTER BASED ON THE USER'S ROLE
+// DYNAMICALLY CREATE THE CORRECT SQL FILTER BASED ON THE USER'S ROLE
 $proposal_filter_sql    = ""; // This will hold the final SQL condition
 $proposal_filter_params = []; // This will hold the values for the '?' placeholders
 $proposal_filter_types  = ""; // This will hold the data types (e.g., 'i' for integer)
