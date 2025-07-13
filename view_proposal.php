@@ -52,7 +52,7 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 $proposal_id = $_GET['id'];
 
 // Fetch proposal details
-$proposalQuery = "SELECT proposal_code, proposal_type, status, created_at, updated_at, submitted_at FROM proposals WHERE proposal_id = ?";
+$proposalQuery = "SELECT proposal_code, proposal_type, university_visible_status, created_at, updated_at, submitted_at FROM proposals WHERE proposal_id = ?";
 $stmt = $connection->prepare($proposalQuery);
 $stmt->bind_param("i", $proposal_id);
 $stmt->execute();
@@ -454,11 +454,6 @@ function displayTableSection($sectionTitle, $sectionData) {
                         elseif ($comment['proposal_status'] === 'approvedbysecretary') echo "Secretary";
                         elseif ($comment['proposal_status'] === 'approvedbyqachead') echo "Head of the QAC-UGC Department";
                         elseif ($comment['proposal_status'] === 'resignature_request_from_university') echo "Head of the QAC-UGC Department- (Revised Proposal recommended by QAC)";
-                        elseif ($comment['proposal_status'] === 'approvedbyugcfinance') echo "UGC - Finance Department";
-                        elseif ($comment['proposal_status'] === 'approvedbyugchr') echo "UGC - HR Department";
-                        elseif ($comment['proposal_status'] === 'approvedbyugcidd') echo "UGC - IDD Department";
-                        elseif ($comment['proposal_status'] === 'approvedbyugcacademic') echo "UGC - Academic Department";
-                        elseif ($comment['proposal_status'] === 'approvedbyugcadmission') echo "UGC - Admission Department";
                         elseif ($comment['proposal_status'] === 're-signed_dean') echo "Re-signature for final version - Dean";
                         elseif ($comment['proposal_status'] === 're-signed_cqa') echo "Re-signature for final version - CQA Director";
                         elseif ($comment['proposal_status'] === 're-signed_vc') echo "Re-signature for final version - VC";
