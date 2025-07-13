@@ -1,8 +1,10 @@
 <?php
 session_start();
-//echo "<pre>DEBUG: SESSION DATA:\n";
-//print_r($_SESSION);
-//echo "</pre>";
+// echo "<pre>DEBUG: SESSION DATA:\n";
+// print_r($_SESSION);
+// echo "</pre>";
+
+
 
 require 'databaseconnection.php'; // Database connection
 
@@ -14,7 +16,7 @@ if (!isset($_SESSION['username'])) {
 
 // Retrieve logged-in user's details
 $username = $_SESSION['username'];
-$query = "SELECT first_name, last_name, role, university FROM users WHERE username = ?";
+$query = "SELECT first_name, last_name, role, faculty_of, university FROM users WHERE username = ?";
 $stmt = $connection->prepare($query);
 $stmt->bind_param("s", $username);
 $stmt->execute();
@@ -25,6 +27,7 @@ if ($result->num_rows > 0) {
     $user = $result->fetch_assoc();
     $_SESSION['full_name'] = $user['first_name'] . ' ' . $user['last_name'];
     $_SESSION['role'] = str_replace(" of the university", "", $user['role']); // Normalize role
+    $_SESSION['faculty_of'] = $user['faculty_of'];
     $_SESSION['university'] = $user['university']; // Ensure university is set
 } else {
     die("<pre>Error: User details not found.</pre>");
@@ -33,6 +36,10 @@ if ($result->num_rows > 0) {
 // Define role-based settings
 //$role = $_SESSION['role'];
 $university = $_SESSION['university'];
+
+$user_faculty = $_SESSION['faculty_of'] ?? null;
+//echo "DEBUG: Faculty from session = $user_faculty";
+
 
 $role = trim(strtolower($_SESSION['role'])); // Normalize role
 
@@ -70,7 +77,7 @@ $_SESSION['university_id'] = $university_id;
 // Fetch pending proposals that match the required status
 $pendingProposals = [];
 $base_query="
-    SELECT p.proposal_id, p.proposal_code, p.proposal_type, p.submitted_at, u.first_name, u.last_name, u.email, gi.degree_name_english
+    SELECT p.proposal_id, p.proposal_code, p.proposal_type, p.submitted_at, u.first_name, u.last_name, u.faculty_of, u.email, gi.degree_name_english
     FROM proposals p
     JOIN users u ON p.created_by = u.id
     LEFT JOIN proposal_general_info gi 
@@ -86,12 +93,30 @@ $types = "";
 
 if (strpos($normalizedRole, "dean") !== false) {
     $dashboardTitle = "Dean Dashboard";
-    // Dean sees ALL proposals with status 'submitted' OR those needing re-signature.
-    $where_clause = "WHERE u.university_id = ? AND p.status IN ('submitted', 'approvedbyqachead_revised', 'resignature_request_from_university')";
-    $params = [$university_id];
-    $types = "i";
+   
+
+    if (!empty($user_faculty)) {
+        $where_clause = "
+            WHERE u.university_id = ? 
+              AND u.faculty_of = ?
+              AND p.status IN ('submitted', 'approvedbyqachead_revised', 'resignature_request_from_university')
+        ";
+        $params = [$university_id, $user_faculty];
+        $types = "is"; // i = university_id, s = faculty string
+    } else {
+        // If dean has no faculty set, they see nothing
+        $where_clause = "WHERE 1 = 0";
+        $params = [];
+        $types = "";
+    }
+
     $approvedPage = "approved_proposals.php";
     $rejectedPage = "rejected_proposals.php";
+
+
+// echo "<pre>DEBUG WHERE CLAUSE:\n$where_clause\n";
+// print_r($params);
+// echo "</pre>";
 
 }elseif (strpos($role, "vice chancellor") !== false || strpos($role, "vc") !== false) {
     $dashboardTitle = "VC Dashboard";
@@ -173,8 +198,23 @@ $stmt->close();
 
 // Retrieve submitted proposals
 $submittedProposals = [];
+if (strpos(strtolower($role), 'dean') !== false && !empty($user_faculty)) {
+    // Dean-specific query filtered by faculty
+    $stmt = $connection->prepare("
+        SELECT p.proposal_id, p.proposal_code, p.university_visible_status, p.status, gi.degree_name_english
+        FROM proposals p
+        JOIN proposal_general_info gi ON p.proposal_id = gi.proposal_id
+        JOIN users u ON p.created_by = u.id
+        WHERE p.university_id = ? 
+          AND u.faculty_of = ?
+          AND p.status NOT IN ('draft', 'fresh')
+        ORDER BY p.proposal_id ASC
+    ");
+    $stmt->bind_param("is", $university_id, $user_faculty);
+}else{
 $stmt = $connection->prepare("SELECT p.proposal_id,p.proposal_code, p.university_visible_status, p.university_visible_status, p.status, gi.degree_name_english FROM proposals p JOIN proposal_general_info gi ON p.proposal_id = gi.proposal_id WHERE p.university_id = ? AND p.status NOT IN ('draft', 'fresh') ORDER BY p.proposal_id ASC");
 $stmt->bind_param("i", $university_id);
+}
 $stmt->execute();
 $result = $stmt->get_result();
 while ($row = $result->fetch_assoc()) {
@@ -482,7 +522,7 @@ if (!empty($all_proposal_ids)) {
                     </thead>
                     <tbody>
                         <?php if (empty($submittedProposals)): ?>
-                            <tr><td colspan="4" class="text-center">No other processed proposals to display.</td></tr>
+                            <tr><td colspan="4" class="text-center">No processed proposals to display.</td></tr>
                         <?php else: foreach ($submittedProposals as $proposal): ?>
                             <?php
                                 // Determine badge color based on status
