@@ -33,6 +33,24 @@ if ($result->num_rows > 0) {
     $_SESSION['university'] = $university;
 }
 
+
+// 2. DYNAMICALLY CREATE THE CORRECT SQL FILTER BASED ON THE USER'S ROLE
+$proposal_filter_sql    = ""; // This will hold the final SQL condition
+$proposal_filter_params = []; // This will hold the values for the '?' placeholders
+$proposal_filter_types  = ""; // This will hold the data types (e.g., 'i' for integer)
+
+
+// --- SCENARIO 1: The user is a Program Coordinator ---
+if ($Role === "Program Coordinator") {
+    // A PC sees ONLY the proposals they created.
+    // The filter will be: AND p.created_by = [their_own_id]
+    
+    $proposal_filter_sql = " AND p.created_by = ?";
+    $proposal_filter_params[] = $user_id; // The parameter is the logged-in PC's ID
+    $proposal_filter_types = "i";
+
+} 
+
 // Define the upload directory
 $uploadDir = __DIR__ . '/../uploads/';  // Adjust path if necessary
 $uploadUrl = '/qac_ugc/Proposal_sections/uploads/';
@@ -53,10 +71,35 @@ function deleteUploadedFiles($section) {
     }
 }
 
-// Retrieve submitted proposals
+// // Retrieve submitted proposals
+// $submittedProposals = [];
+// $stmt = $connection->prepare("SELECT p.proposal_id, p.created_by, p.proposal_code, p.university_visible_status, p.status, gi.degree_name_english FROM proposals p join proposal_general_info gi ON p.proposal_id = gi.proposal_id  WHERE university_id = ? AND status NOT IN ('draft', 'fresh') ORDER BY proposal_id ASC");
+// $stmt->bind_param("i", $created_by);
+// $stmt->execute();
+// $result = $stmt->get_result();
+// while ($row = $result->fetch_assoc()) {
+//     $submittedProposals[] = $row;
+// }
+// $stmt->close();
+
+// Combine the base university_id parameter with the dynamic role-based parameters
+$base_params = [$university_id];
+$final_params = array_merge($base_params, $proposal_filter_params);
+$final_types = "i" . $proposal_filter_types;
+
+
+// --- Retrieve submitted proposals ---
 $submittedProposals = [];
-$stmt = $connection->prepare("SELECT p.proposal_id, p.proposal_code, p.university_visible_status, p.status, gi.degree_name_english FROM proposals p join proposal_general_info gi ON p.proposal_id = gi.proposal_id  WHERE university_id = ? AND status NOT IN ('draft', 'fresh') ORDER BY proposal_id ASC");
-$stmt->bind_param("i", $university_id);
+$submitted_query = "
+    SELECT p.proposal_id, p.proposal_code, p.university_visible_status, p.status, gi.degree_name_english 
+    FROM proposals p 
+    JOIN proposal_general_info gi ON p.proposal_id = gi.proposal_id  
+    WHERE p.university_id = ? AND p.status NOT IN ('draft', 'fresh') 
+    {$proposal_filter_sql}  -- The filter for PC or Dean is added here!
+    ORDER BY p.proposal_id ASC";
+
+$stmt = $connection->prepare($submitted_query);
+$stmt->bind_param($final_types, ...$final_params); // Bind all parameters
 $stmt->execute();
 $result = $stmt->get_result();
 while ($row = $result->fetch_assoc()) {
@@ -66,9 +109,47 @@ $stmt->close();
 
 
 
-// Retrieve revised/rejected proposals
+// // Retrieve revised/rejected proposals
+// $revisedProposals = [];
+// $stmt = $connection->prepare("
+//     SELECT p.proposal_id, 
+//            p.proposal_code,
+//            p.status, 
+//            p.university_visible_status,
+//            gi.degree_name_english,
+//            c.comment, 
+//            c.comment_id, 
+//            c.seal_and_sign, 
+//            c.proposal_status, 
+//            c.Date
+//     FROM proposals p
+//     LEFT JOIN proposal_comments c 
+//         ON p.proposal_id = c.proposal_id 
+//         AND c.comment_id = ( 
+//             SELECT MAX(comment_id) 
+//             FROM proposal_comments 
+//             WHERE proposal_id = p.proposal_id
+//         ) --  Select only the latest comment
+//     LEFT JOIN proposal_general_info gi 
+//     ON p.proposal_id = gi.proposal_id
+//     WHERE p.university_id = ? 
+//       AND p.status LIKE 'rejectedby%' 
+//     ORDER BY p.proposal_id ASC
+// ");
+
+// $stmt->bind_param("i", $university_id);
+// $stmt->execute();
+// $result = $stmt->get_result();
+
+// $revisedProposals = [];
+// while ($row = $result->fetch_assoc()) {
+//     $revisedProposals[] = $row;
+// }
+// $stmt->close();
+
+// --- Retrieve REVISED/REJECTED proposals ---
 $revisedProposals = [];
-$stmt = $connection->prepare("
+$revised_query = "
     SELECT p.proposal_id, 
            p.proposal_code,
            p.status, 
@@ -82,23 +163,17 @@ $stmt = $connection->prepare("
     FROM proposals p
     LEFT JOIN proposal_comments c 
         ON p.proposal_id = c.proposal_id 
-        AND c.comment_id = ( 
-            SELECT MAX(comment_id) 
-            FROM proposal_comments 
-            WHERE proposal_id = p.proposal_id
-        ) --  Select only the latest comment
+        AND c.comment_id = (SELECT MAX(comment_id) FROM proposal_comments WHERE proposal_id = p.proposal_id)
     LEFT JOIN proposal_general_info gi 
     ON p.proposal_id = gi.proposal_id
-    WHERE p.university_id = ? 
-      AND p.status LIKE 'rejectedby%' 
-    ORDER BY p.proposal_id ASC
-");
+    WHERE p.university_id = ? AND p.status LIKE 'rejectedby%' 
+    {$proposal_filter_sql}
+    ORDER BY p.proposal_id ASC";
 
-$stmt->bind_param("i", $university_id);
+$stmt = $connection->prepare($revised_query);
+$stmt->bind_param($final_types, ...$final_params); // Use the same final parameters
 $stmt->execute();
 $result = $stmt->get_result();
-
-$revisedProposals = [];
 while ($row = $result->fetch_assoc()) {
     $revisedProposals[] = $row;
 }
@@ -108,7 +183,7 @@ $stmt->close();
 // Retrieve final approved proposals
 $finalapprovedProposals = [];
 //$stmt = $connection->prepare("SELECT proposal_id, status FROM proposals WHERE university_id = ? AND status IN ('approvedbyugcacademic') ORDER BY proposal_id ASC");
-$stmt = $connection->prepare("
+$approved_query = "
     SELECT p.proposal_id,p.proposal_code, p.university_visible_status, p.status, gi.degree_name_english,
         COALESCE(pc.comment, 'No Comment') AS latest_comment,
         COALESCE(pc.proposal_status, 'No Status') AS latest_status
@@ -123,9 +198,11 @@ $stmt = $connection->prepare("
     ON p.proposal_id = gi.proposal_id
     WHERE p.university_id = ? 
     AND p.university_visible_status IN ('approvedbyqachead','approvedbyqachead_revised','re-signed_vc')
+    {$proposal_filter_sql}
     ORDER BY p.proposal_id ASC
-");
-$stmt->bind_param("i", $university_id);
+";
+$stmt = $connection->prepare($approved_query);
+$stmt->bind_param($final_types, ...$final_params); // Use the same final parameters
 $stmt->execute();
 $result = $stmt->get_result();
 while ($row = $result->fetch_assoc()) {
