@@ -122,7 +122,7 @@ $stmt = $connection->prepare("
     LEFT JOIN proposal_general_info gi 
     ON p.proposal_id = gi.proposal_id
     WHERE p.university_id = ? 
-    AND p.status = 'approvedbyugcacademic'
+    AND p.university_visible_status IN ('approvedbyqachead','approvedbyqachead_revised','re-signed_vc')
     ORDER BY p.proposal_id ASC
 ");
 $stmt->bind_param("i", $university_id);
