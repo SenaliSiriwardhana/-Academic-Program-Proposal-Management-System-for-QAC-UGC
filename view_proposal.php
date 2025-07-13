@@ -407,8 +407,15 @@ function displayTableSection($sectionTitle, $sectionData) {
 
     <h3 class = "text-center text-primary">Application for Approval of New Undergraduate Degree Programme (Internal)</h3>
     <table class="table table-bordered">
+        <?php
+        $customLabels = [
+        'university_visible_status' => 'Status'
+        ];
+        ?>
+
         <?php foreach ($proposal as $key => $value) { ?>
-            <tr><th><?php echo ucfirst(str_replace('_', ' ', $key)); ?></th><td><?php echo htmlspecialchars($value); ?></td></tr>
+           <?php $label = $customLabels[$key] ?? ucfirst(str_replace('_', ' ', $key)); ?>
+            <tr><th><?php echo $label; ?></th><td><?php echo htmlspecialchars($value); ?></td></tr>
         <?php } ?>
     </table>
 
