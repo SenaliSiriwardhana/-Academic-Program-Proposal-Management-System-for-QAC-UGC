@@ -29,7 +29,7 @@ $role = $_SESSION['role'];
 // Retrieve submitted proposals
 $pendingProposals = [];
 
-$base_query = "SELECT p.proposal_id,p.proposal_code,p.proposal_type,p.status, p.submitted_at, u.first_name, u.last_name, u.university, 
+$base_query = "SELECT p.proposal_id,p.proposal_code,p.proposal_type,p.status, p.submitted_at, u.first_name, u.last_name, u.university, u.faculty_of, 
 gi.degree_name_english FROM proposals p JOIN users u ON p.created_by = u.id LEFT JOIN proposal_general_info gi 
 ON p.proposal_id = gi.proposal_id";
 
@@ -133,7 +133,7 @@ $stmt->close();
 
 // Retrieve submitted proposals
 $submittedProposals = [];
-$stmt = $connection->prepare("SELECT p.proposal_id,p.proposal_code, p.proposal_type, p.status, u.university, gi.degree_name_english FROM proposals p join users u on p.created_by=u.id LEFT JOIN proposal_general_info gi 
+$stmt = $connection->prepare("SELECT p.proposal_id,p.proposal_code, p.proposal_type, p.status, u.university,gi.degree_name_english FROM proposals p join users u on p.created_by=u.id LEFT JOIN proposal_general_info gi 
     ON p.proposal_id = gi.proposal_id WHERE p.status NOT IN ('draft', 'fresh','submitted','approvedbydean','rejectedbydean','approvedbyvc','rejectedbyvc','rejectedbycqa') ORDER BY proposal_id ASC");
 $stmt->execute();
 $result = $stmt->get_result();
@@ -449,6 +449,7 @@ if (!empty($all_proposal_ids)) {
                     <th>Degree Name </th>
                     <th>Submitted Date</th>
                     <th>Submitted By</th>
+                    <th>Faculty</th>
                     <th>University </th>
                     <th>Action</th>
                 </tr>
@@ -478,6 +479,7 @@ if (!empty($all_proposal_ids)) {
                         <td><?php echo $pproposal['degree_name_english']; ?></td>
                         <td><?php echo $pproposal['submitted_at']; ?></td>
                         <td><?php echo $pproposal['first_name'] . " " . $pproposal['last_name']; ?></td>
+                        <td><?php echo $pproposal['faculty_of']?> </td>
                         <td><?php echo $pproposal['university']?> </td>
                         <td>
                             <a href="review_proposal_ugc.php?id=<?php echo $pproposal['proposal_id']; ?>" class="btn btn-primary">Review</a>
