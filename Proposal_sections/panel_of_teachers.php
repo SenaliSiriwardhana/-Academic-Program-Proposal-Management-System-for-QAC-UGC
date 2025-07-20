@@ -1,6 +1,6 @@
 <?php
 session_start();
-
+include 'form_field_helper.php';
 
 // Retrieve saved data (if available)
 $panelOfTeachers = $_SESSION['panel_of_teachers'] ?? [];
@@ -56,7 +56,14 @@ $panelOfTeachers = $_SESSION['panel_of_teachers'] ?? [];
             <form action="save_data.php" method="POST">
             <input type="hidden" name="form_type" value="panel_of_teachers"> 
                 <p class="mt-4">Provide details about the teaching hours and resource persons involved in the programme.</p>
-
+                <?php
+                    $table_identifier = 'table.panel_of_teachers';
+                    // Use the correct function for the component
+                    render_component_feedback($table_identifier);
+                ?>
+    
+                <!-- Use the correct function for the group -->
+                <fieldset <?php echo get_group_lock_attr($table_identifier); ?>>
                 <table class="table table-bordered text-center" id="panelTable">
                     <thead class="table-light">
                         <tr>

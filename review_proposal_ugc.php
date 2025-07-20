@@ -1,6 +1,7 @@
 <?php
 session_start();
 require 'databaseconnection.php'; // Database connection
+require 'summary_sheet_generator.php'; // Include our helper
 
 // Ensure the user is logged in and has a valid UGC role
 if (!isset($_SESSION['role']) || !isset($_SESSION['username']) || !isset($_SESSION['id'])) {
@@ -393,6 +394,52 @@ function calculateTotalCredits($sectionData) {
 }
 
 
+// --- 2. NEW LOGIC TO BE ADDED ---
+
+// Get proposal status (you already have this)
+$proposal_status = $proposal['status'];
+
+// Define who can SEE the summary sheet
+$ugc_roles_list = ["ugc - technical assistant", "ugc - secretary", "head of the qac-ugc department", "ugc - finance department", "ugc - hr department", "ugc - idd department", "ugc - academic department", "ugc - admission department", "standard committee"];
+$is_ugc_user = in_array($role, $ugc_roles_list);
+
+// University can see it only after a UGC decision has been made
+$post_ugc_review_statuses = ['rejectedbyTA', 'rejectedbysecretary', 'rejectedbyqachead', 'approvedbyqachead', 'approvedbyqachead_revised','request_signature_from_university'];
+$is_uni_user_with_view_rights = !$is_ugc_user && in_array($proposal_status, $post_ugc_review_statuses);
+
+// Final decision on visibility
+$show_summary_sheet = $is_ugc_user; // For now, let's assume only UGC users see it. You can add '|| $is_uni_user_with_view_rights' if they also use this page.
+
+// Define who can EDIT the summary sheet
+$can_edit_summary = in_array($role, ["ugc - technical assistant", "head of the qac-ugc department", "ugc - secretary"]);
+
+// Fetch summary data ONLY if the sheet is being shown
+$summary_data = [];
+if ($show_summary_sheet) {
+    $summaryQuery = "SELECT section_identifier, compliance_status, comment FROM proposal_summary_sheet WHERE proposal_id = ?";
+    $stmt_summary = $connection->prepare($summaryQuery);
+    $stmt_summary->bind_param("i", $proposal_id);
+    $stmt_summary->execute();
+    $result_summary = $stmt_summary->get_result();
+    while ($row = $result_summary->fetch_assoc()) {
+        $summary_data[$row['section_identifier']] = [
+            'status' => $row['compliance_status'],
+            'comment' => $row['comment']
+        ];
+    }
+    $stmt_summary->close();
+}
+
+// Check if user is department reviewer (you already have this)
+$departmentApprovalMap = [
+    'ugc - finance department'   => 'approvedbyugcfinance',
+    'ugc - hr department'        => 'approvedbyugchr',
+    'ugc - idd department'       => 'approvedbyugcidd',
+    'ugc - academic department'  => 'approvedbyugcacademic',
+    'ugc - admission department' => 'approvedbyugcadmission',
+];
+$is_department_reviewer = array_key_exists($role, $departmentApprovalMap);
+
 
 
 // Function to display form-based sections in a single row with file upload handling
@@ -444,9 +491,21 @@ function displayTableSection($sectionTitle, $sectionData) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proposal Details</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .summary-pane {
+    position: sticky;
+    top: 20px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+}
+    </style>
 </head>
 <body class="container mt-4 bg-light">
-
+    <form action="submit_comment.php" method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="proposal_id" value="<?php echo $proposal_id; ?>">
+    <div class="row">
+    <!-- LEFT SIDE: Proposal and All Content -->
+    <div class="col-md-6">
     <h3 class = "text-center text-primary">Proposal Details</h3>
     <table class="table table-bordered">
         <?php foreach ($proposal as $key => $value) { ?>
@@ -510,6 +569,14 @@ if ($is_in_parallel_review) {
     }
 }
     ?>
+</div>
+
+
+ <!-- RIGHT SIDE: Compliance Summary -->
+    <div class="col-md-6 summary-pane">
+        <?php require 'render_summary_pane.php'; ?>
+    </div>
+</div> <!-- End of ROW -->
 
     <!-- Previous Approvals Section -->
     <h4 class="mt-4 text-primary">Approvals</h4>
@@ -566,8 +633,8 @@ if ($is_in_parallel_review) {
 
     <!-- Comment Section -->
     <h4 class="mt-4 text-primary">Comments</h4>
-    <form action="submit_comment.php" method="POST" enctype="multipart/form-data">
-        <input type="hidden" name="proposal_id" value="<?php echo $proposal_id; ?>">
+    <!-- <form action="submit_comment.php" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="proposal_id" value="<?php echo $proposal_id; ?>"> -->
         <textarea name="dean_comment" class="form-control mb-3" rows="4" placeholder="Enter your comments here..."></textarea>
         
         <!-- Checkbox for confirmation -->
@@ -629,11 +696,11 @@ if ($is_in_parallel_review) {
             <button type="submit" name="director_action" value="rejectedbyqachead" class="btn btn-danger">Request Revision</button>
             
             <?php if ($proposal_type === 'initial_proposal'): ?>
-                <button type="submit" name="director_action" value="approvedbyqachead" class="btn btn-success">Approve</button>
+                <button type="submit" name="director_action" value="approvedbyqachead" class="btn btn-success btn-approve">Approve</button>
             
                 <?php else: // It's a revised proposal ?>
                 <!--<button type="submit" name="director_action" value="approvedbyqachead_revised" class="btn btn-primary" onclick="handleRevisedRecommendation()">Recommend Revised Proposal</button>-->
-                <button type="button" class="btn btn-primary" onclick="handleRevisedRecommendation()">Recommend Revised Proposal</button>
+                <button type="button" class="btn btn-primary btn-approve" onclick="handleRevisedRecommendation()">Recommend Revised Proposal</button>
                 <?php endif; ?>
 
             <?php else: ?>
@@ -643,7 +710,7 @@ if ($is_in_parallel_review) {
 
             <!-- All other users -->
 
-            <button type="submit" name="approve" class="btn btn-success">
+            <button type="submit" name="approve" class="btn btn-success btn-approve">
                 <?php echo $is_department_reviewer ? 'Mark as Reviewed' : 'Approve'; ?>
             </button>
 
@@ -656,7 +723,7 @@ if ($is_in_parallel_review) {
             
         </div>
 
-       <script>
+    <script>
     // Initialize Signature Pad
     var canvas = document.getElementById('signature-pad');
     var signaturePad = new SignaturePad(canvas);
@@ -677,6 +744,7 @@ if ($is_in_parallel_review) {
             return; // Stop the function
         }
         // --- END OF VALIDATION ---
+        
 
         // If validation passes, then show the pop-up box
         const needsResignature = confirm("Does this revised proposal require re-signatures from the university (Dean, CQA, VC)?\n\n- Click 'OK' for YES.\n- Click 'Cancel' for NO.");
@@ -789,6 +857,66 @@ if ($is_in_parallel_review) {
         // the code above is skipped and the form submits without validation.
     });
 </script>
+
+<!-- NEW CODE START: SCRIPT FOR APPROVAL BUTTON VALIDATION -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // This script only runs if a user who can edit the summary is on the page.
+    const summaryPane = document.querySelector('.summary-pane');
+    const approveButtons = document.querySelectorAll('.btn-approve');
+    
+    // If the summary pane or approve buttons don't exist, exit the script.
+    if (!summaryPane || approveButtons.length === 0) {
+        return;
+    }
+
+    const totalItemsInput = document.getElementById('total_review_items');
+    // If the hidden input for total items doesn't exist, something is wrong, so we also exit.
+    if (!totalItemsInput) {
+        return;
+    }
+    const totalItems = parseInt(totalItemsInput.value, 10);
+
+    function checkSummaryCompletion() {
+        // If there are no items to review, the buttons should be enabled by default.
+        if (totalItems === 0) {
+            approveButtons.forEach(btn => btn.disabled = false);
+            return;
+        }
+
+        // Count all the radio buttons that have been checked inside the summary pane.
+        const checkedRadios = summaryPane.querySelectorAll('.review-controls .form-check-input[type="radio"]:checked').length;
+        
+        // The review is complete if the number of checked radios equals the total number of items.
+        const isComplete = (checkedRadios >= totalItems);
+
+        // Loop through all approve buttons and enable/disable them.
+        approveButtons.forEach(btn => {
+            if (isComplete) {
+                btn.disabled = false;
+                btn.title = 'Ready to approve.';
+                btn.classList.remove('disabled'); // Bootstrap visual cue
+            } else {
+                btn.disabled = true;
+                btn.title = 'Please review all items in the summary sheet to enable this action.';
+                btn.classList.add('disabled'); // Bootstrap visual cue
+            }
+        });
+    }
+
+    // Add a single event listener to the summary pane to efficiently catch all radio button changes.
+    summaryPane.addEventListener('change', function(event) {
+        // We only care about changes to our radio buttons.
+        if (event.target.matches('.review-controls .form-check-input[type="radio"]')) {
+            checkSummaryCompletion();
+        }
+    });
+
+    // Run the check once when the page first loads to set the initial state of the buttons.
+    checkSummaryCompletion();
+});
+</script>
+<!-- NEW CODE END -->
 
 
 

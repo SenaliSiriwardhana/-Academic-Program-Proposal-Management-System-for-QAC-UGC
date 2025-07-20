@@ -1,6 +1,6 @@
 <?php
 session_start();
-
+include 'form_field_helper.php';
 
 // Retrieve saved data (if available)
 $assessmentRules = $_SESSION['assessment_rules'] ?? [
@@ -62,42 +62,156 @@ $assessmentRules = $_SESSION['assessment_rules'] ?? [
 
                 <div class="mb-3">
                     <label for="formativeSummative" class="form-label"><b>Formative and Summative Examinations in the Program</b></label>
-                    <textarea class="form-control" id="formativeSummative" name="formative_summative" rows="4" placeholder="Describe the formative and summative examinations conducted in the program." required><?php echo htmlspecialchars($assessmentRules['formative_summative']); ?></textarea>
+                    <textarea class="form-control" id="formativeSummative" name="formative_summative" rows="4" placeholder="Describe the formative and summative examinations conducted in the program." required
+                   
+                    <?php 
+                            
+                            
+                            $identifier = 'program_assessment_rules_and_precodures.formative_summative';
+                            $description = $assessmentRules['formative_summative'] ?? '';
+                            
+                            
+                            echo get_lock_status_attr($identifier); 
+                            ?>
+                    ><?php echo htmlspecialchars($description); ?></textarea>
+
+                    <?php 
+                        // 3. Render the feedback message below the textarea
+                        render_field_feedback($identifier); 
+                    ?>
                 </div>
 
                 <div class="mb-3">
                     <label for="gradingScheme" class="form-label"><b>Scheme of Grading (Grades/Grade Points/Marks Ranges)</b></label>
-                    <textarea class="form-control" id="gradingScheme" name="grading_scheme" rows="4" placeholder="Provide details about the grading scheme including grade points, marks ranges, etc." required><?php echo htmlspecialchars($assessmentRules['grading_scheme']); ?></textarea>
+                    <textarea class="form-control" id="gradingScheme" name="grading_scheme" rows="4" placeholder="Provide details about the grading scheme including grade points, marks ranges, etc." required
+                    <?php 
+                           
+                            $identifier = 'program_assessment_rules_and_precodures.grading_scheme';
+                            $description = $assessmentRules['grading_scheme'] ?? '';
+                            
+                           
+                            echo get_lock_status_attr($identifier); 
+                            ?>
+                    ><?php echo htmlspecialchars($description); ?></textarea>
+
+                    <?php 
+                        
+                        render_field_feedback($identifier); 
+                    ?>
                 </div>
 
                 <div class="mb-3">
                     <label for="gpaCalculation" class="form-label"><b>Calculation of Grade Point Average (GPA)</b></label>
-                    <textarea class="form-control" id="gpaCalculation" name="gpa_calculation" rows="4" placeholder="Explain the method of calculating the GPA." required><?php echo htmlspecialchars($assessmentRules['gpa_calculation']); ?></textarea>
+                    <textarea class="form-control" id="gpaCalculation" name="gpa_calculation" rows="4" placeholder="Explain the method of calculating the GPA." required
+                    <?php 
+                           
+                            $identifier = 'program_assessment_rules_and_precodures.gpa_calculation';
+                            $description = $assessmentRules['gpa_calculation'] ?? '';
+                            
+                           
+                            echo get_lock_status_attr($identifier); 
+                            ?>
+                    ><?php echo htmlspecialchars($description); ?></textarea>
+
+                    <?php 
+                        
+                        render_field_feedback($identifier); 
+                    ?>
                 </div>
 
                 <div class="mb-3">
                     <label for="semesterContribution" class="form-label"><b>Contribution by Each Semester to Final GPA</b></label>
-                    <textarea class="form-control" id="semesterContribution" name="semester_contribution" rows="4" placeholder="Explain the contribution of each semester to the final GPA." required><?php echo htmlspecialchars($assessmentRules['semester_contribution']); ?></textarea>
+                    <textarea class="form-control" id="semesterContribution" name="semester_contribution" rows="4" placeholder="Explain the contribution of each semester to the final GPA." required
+                    <?php 
+                           
+                            $identifier = 'program_assessment_rules_and_precodures.semester_contribution';
+                            $description = $assessmentRules['semester_contribution'] ?? '';
+                            
+                           
+                            echo get_lock_status_attr($identifier); 
+                            ?>
+                    ><?php echo htmlspecialchars($description); ?></textarea>
+
+                    <?php 
+                        
+                        render_field_feedback($identifier); 
+                    ?>
                 </div>
 
                 <div class="mb-3">
                     <label for="inplantTraining" class="form-label"><b>Contribution by In-Plant Training, etc. to Final GPA</b></label>
-                    <textarea class="form-control" id="inplantTraining" name="inplant_training" rows="4" placeholder="Explain how in-plant training contributes to the final GPA." required><?php echo htmlspecialchars($assessmentRules['inplant_training']); ?></textarea>
+                    <textarea class="form-control" id="inplantTraining" name="inplant_training" rows="4" placeholder="Explain how in-plant training contributes to the final GPA." required
+                    <?php 
+                           
+                            $identifier = 'program_assessment_rules_and_precodures.inplant_training';
+                            $description = $assessmentRules['inplant_training'] ?? '';
+                            
+                           
+                            echo get_lock_status_attr($identifier); 
+                            ?>
+                    ><?php echo htmlspecialchars($description); ?></textarea>
+
+                    <?php 
+                        
+                        render_field_feedback($identifier); 
+                    ?>
                 </div>
 
                 <div class="mb-3">
                     <label for="repeatExams" class="form-label"><b>Repeat Examinations</b></label>
-                    <textarea class="form-control" id="repeatExams" name="repeat_exams" rows="4" placeholder="Describe the rules and procedures for repeat examinations." required><?php echo htmlspecialchars($assessmentRules['repeat_exams']); ?></textarea>
+                    <textarea class="form-control" id="repeatExams" name="repeat_exams" rows="4" placeholder="Describe the rules and procedures for repeat examinations." required
+                    <?php 
+                           
+                            $identifier = 'program_assessment_rules_and_precodures.repeat_exams';
+                            $description = $assessmentRules['repeat_exams'] ?? '';
+                            
+                           
+                            echo get_lock_status_attr($identifier); 
+                            ?>
+                    ><?php echo htmlspecialchars($description); ?></textarea>
+
+                    <?php 
+                        
+                        render_field_feedback($identifier); 
+                    ?>
                 </div>
 
                 <div class="mb-3">
                     <label for="degreeRequirements" class="form-label"><b>Requirements for Award of the Degree</b></label>
-                    <textarea class="form-control" id="degreeRequirements" name="degree_requirements" rows="4" placeholder="Outline the requirements for students to be awarded the degree." required><?php echo htmlspecialchars($assessmentRules['degree_requirements']); ?></textarea>
+                    <textarea class="form-control" id="degreeRequirements" name="degree_requirements" rows="4" placeholder="Outline the requirements for students to be awarded the degree." required
+                    <?php 
+                           
+                            $identifier = 'program_assessment_rules_and_precodures.degree_requirements';
+                            $description = $assessmentRules['degree_requirements'] ?? '';
+                            
+                           
+                            echo get_lock_status_attr($identifier); 
+                            ?>
+                    ><?php echo htmlspecialchars($description); ?></textarea>
+
+                    <?php 
+                        
+                        render_field_feedback($identifier); 
+                    ?>
                 </div>
 
                 <div class="mb-3">
                     <label for="classRequirements" class="form-label"><b>Requirements for Award of Classes</b></label>
-                    <textarea class="form-control" id="classRequirements" name="class_requirements" rows="4" placeholder="Specify the requirements for the award of classes (e.g., First Class, Second Class, etc.)." required><?php echo htmlspecialchars($assessmentRules['class_requirements']); ?></textarea>
+                    <textarea class="form-control" id="classRequirements" name="class_requirements" rows="4" placeholder="Specify the requirements for the award of classes (e.g., First Class, Second Class, etc.)." required
+                    <?php 
+                           
+                            $identifier = 'program_assessment_rules_and_precodures.inplant_training';
+                            $description = $assessmentRules['inplant_training'] ?? '';
+                            
+                           
+                            echo get_lock_status_attr($identifier); 
+                            ?>
+                    ><?php echo htmlspecialchars($description); ?></textarea>
+
+                    <?php 
+                        
+                        render_field_feedback($identifier); 
+                    ?>
                 </div>
 
                 <div class="text-end mt-4">

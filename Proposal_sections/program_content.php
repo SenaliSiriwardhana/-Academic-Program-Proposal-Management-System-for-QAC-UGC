@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-//include 'database_handling/program_content_db.php';
+include 'form_field_helper.php';
 // Retrieve saved data (if available)
 $programContent = $_SESSION['program_content'] ?? [];
 
@@ -51,6 +51,15 @@ $programContent = $_SESSION['program_content'] ?? [];
             <form action="save_data.php" method="POST">
                 <input type="hidden" name="form_type" value="program_content">
                 <p>Fill in the details of each module in the program. Use the "Add Row" button to include multiple modules.</p>
+
+                <?php
+                    $table_identifier = 'table.program_content';
+                    // Use the correct function for the component
+                    render_component_feedback($table_identifier);
+                ?>
+    
+                <!-- Use the correct function for the group -->
+                <fieldset <?php echo get_group_lock_attr($table_identifier); ?>>
                 <table class="table table-bordered" id="moduleTable">
                     <thead class="table-primary">
                         <tr>

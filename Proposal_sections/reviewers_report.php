@@ -1,6 +1,6 @@
 <?php
 session_start();
-//include 'database_handling/reviewers_report_db.php';
+include 'form_field_helper.php';
 
 // Retrieve saved data (if available)
 $reviewersReport = $_SESSION['reviewers_report'] ?? [];
@@ -55,6 +55,14 @@ $reviewersReport = $_SESSION['reviewers_report'] ?? [];
             <form action="save_data.php" method="POST">
             <input type="hidden" name="form_type" value="reviewers_report">
                 <h5 class="mt-4">Review Aspects and Recommendation</h5>
+                <?php
+                    $table_identifier = 'table.reviewers_report';
+                    // Use the correct function for the component
+                    render_component_feedback($table_identifier);
+                ?>
+    
+                <!-- Use the correct function for the group -->
+                <fieldset <?php echo get_group_lock_attr($table_identifier); ?>>
                 <table class="table table-bordered text-center">
                     <thead class="table-light">
                         <tr>
@@ -139,8 +147,17 @@ $reviewersReport = $_SESSION['reviewers_report'] ?? [];
                         </tr>
                     </tbody>
                 </table>
+        </fieldset>
 
                 <h5 class="mt-5">Reviewer Details</h5>
+                <?php
+                    $table_identifier = 'table.reviewer_details';
+                    // Use the correct function for the component
+                    render_component_feedback($table_identifier);
+                ?>
+    
+                <!-- Use the correct function for the group -->
+                <fieldset <?php echo get_group_lock_attr($table_identifier); ?>>
                 <table class="table table-bordered text-center">
                     <thead class="table-light">
                         <tr>
@@ -177,6 +194,7 @@ $reviewersReport = $_SESSION['reviewers_report'] ?? [];
                         </tr>
                     </tbody>
                 </table>
+        </fieldset>
 
                 <div class="text-end">
                 <a href="<?php echo isset($_SESSION['is_editing']) ? '/qac_ugc/new_proposal_section.php?proposal_id='.$_SESSION['editing_proposal_id'].'&edit=true' :  '/qac_ugc/new_proposal_section.php' ?>"; class="btn btn-secondary">Back</a>

@@ -1,7 +1,9 @@
 <?php
 session_start();
 include 'university_name_fetch.php';
-//include 'database_handling/program_entity_db.php';
+include 'form_field_helper.php';
+
+
 // Retrieve saved data (if available)
 $programEntity = $_SESSION['program_entity'] ?? [
     'university' => '',
@@ -100,20 +102,35 @@ $programEntity = $_SESSION['program_entity'] ?? [
                 <!-- University Information -->
                 <div class="mb-3">
                     <label for="university" class="form-label">2.1 University</label>
-                    <input type="text" class="form-control" id="university" name="university" placeholder="Enter the university name" value="<?php echo htmlspecialchars($university); ?>" readonly> 
+                    <input type="text" class="form-control" id="university" name="university" placeholder="Enter the university name" value="<?php echo htmlspecialchars($university); ?>" readonly
+                    <?php echo get_lock_status_attr('program_entity.university'); ?>>
+                    <?php render_field_feedback('program_entity.university'); ?>
                 </div>
                 <div class="mb-3">
                     <label for="faculty" class="form-label">2.2 Faculty/Institute</label>
-                    <input type="text" class="form-control" id="faculty" name="faculty" placeholder="Enter the faculty or institute" value="<?php echo htmlspecialchars($programEntity['faculty']); ?>" required>
+                    <input type="text" class="form-control" id="faculty" name="faculty" placeholder="Enter the faculty or institute" value="<?php echo htmlspecialchars($programEntity['faculty']); ?>" required
+                    <?php echo get_lock_status_attr('program_entity.faculty'); ?>>
+                    <?php render_field_feedback('program_entity.faculty'); ?>
                 </div>
                 <div class="mb-3">
                     <label for="department" class="form-label">2.3 Department (s) (if allpicable)</label>
-                    <input type="text" class="form-control" id="department" name="department" placeholder="Enter the department (if applicable)"value="<?php echo htmlspecialchars($programEntity['department']); ?>">
+                    <input type="text" class="form-control" id="department" name="department" placeholder="Enter the department (if applicable)"value="<?php echo htmlspecialchars($programEntity['department']); ?>"
+                    <?php echo get_lock_status_attr('program_entity.department'); ?>>
+                    <?php render_field_feedback('program_entity.department'); ?>
                 </div>
 
                 <!-- Mandate Availability -->
                 <div class="mb-3">
                     <label for="mandateAvailability" class="form-label">2.4 Mandate Availability</label>
+                    <?php
+                    $table_identifier = 'table.mandate_availability';
+                    // Use the correct function for the component
+                    render_component_feedback($table_identifier);
+                ?>
+    
+                <!-- Use the correct function for the group -->
+                <fieldset <?php echo get_group_lock_attr($table_identifier); ?>>
+                    
                     <table>
                         <thead>
                             <tr>

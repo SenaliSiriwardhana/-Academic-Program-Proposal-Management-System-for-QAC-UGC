@@ -2,6 +2,9 @@
 session_start();
 require 'databaseconnection.php'; // Database connection
 
+// echo "<pre>";
+// print_r($_POST['summary'] ?? 'summary not set');
+// exit();
 
 
 
@@ -21,6 +24,11 @@ $proposal_id = $_POST['proposal_id'];
 $comment_text = isset($_POST['dean_comment']) ? trim($_POST['dean_comment']) : '';
 $new_proposal_status = ''; // This will be the NEW status for the main proposals table
 $comment_status = ''; // This is the status we will log in the comments table for this specific action
+
+
+// START: NEW LOGIC - DEFINE WHO CAN EDIT THE SUMMARY
+$can_edit_summary = in_array($role, ["ugc - technical assistant", "ugc - secretary", "head of the qac-ugc department"]);
+// END: NEW LOGIC
 
 // Check if user is from UGC (including Standard Committee)
 $ugc_roles = [
@@ -88,6 +96,33 @@ elseif (isset($_POST['reject'])) {
 }
 // STEP 3: Handle all "Approve" clicks
 elseif (isset($_POST['approve'])) {
+
+    // --- NEW CODE START: VALIDATION FOR SUMMARY SHEET COMPLETENESS ---
+    // This check only applies to users who can edit the summary (TA, Secretary, QAC Head).
+    $can_edit_summary = in_array($role, ["ugc - technical assistant", "ugc - secretary", "head of the qac-ugc department"]);
+
+    if ($can_edit_summary) {
+        // Get the total number of items that should have been reviewed from the hidden input.
+        $total_review_items = isset($_POST['total_review_items']) ? (int)$_POST['total_review_items'] : 0;
+
+        // Count how many items were actually submitted with a 'compliance' or 'non_compliance' status.
+        $reviewed_items_count = 0;
+        if (isset($_POST['summary']) && is_array($_POST['summary'])) {
+            foreach ($_POST['summary'] as $item) {
+                if (isset($item['status']) && in_array($item['status'], ['compliance', 'non_compliance'])) {
+                    $reviewed_items_count++;
+                }
+            }
+        }
+
+        // If the counts don't match, the review is incomplete. Block the approval.
+        // We only block if there were items to review in the first place.
+        if ($total_review_items > 0 && $reviewed_items_count < $total_review_items) {
+            die("<script>alert('Approval Failed: You must review all items in the Summary Sheet (mark as Compliance or Non-compliance) before approving.'); window.history.back();</script>");
+        }
+    }
+    // --- NEW CODE END ---
+    
     // Validation for signature and checkbox
     if (!isset($_POST['recommend']) || $_POST['recommend'] !== 'on' || empty($_POST['signature_image'])) {
         die("<script>alert('Please provide your signature and check the check box to approve.'); window.history.back();</script>");
@@ -165,7 +200,7 @@ elseif (isset($_POST['approve'])) {
  
 //echo "<pre>DEBUG: Updated By User ID = " . ($_SESSION['id'] ?? 'NULL') . "</pre>";
 $updated_by = $_SESSION['id']; // Assign logged-in user ID
-// $status_for_history = $comment_status;
+//$status_for_history = $comment_status;
 
     // If the main status is null (it's a parallel review), use your default string instead.
     if ($status_for_history === null && $comment_status) {
@@ -184,6 +219,54 @@ $updated_by = $_SESSION['id']; // Assign logged-in user ID
 //  Start database transaction
 $connection->begin_transaction();
 try {
+      // --- NEW CODE BLOCK START: Save Summary Sheet Data ---
+    $can_edit_summary = in_array($role, ["ugc - technical assistant", "ugc - secretary", "head of the qac-ugc department"]);
+
+
+       
+    // This runs for any valid action (approve/reject) by an authorized user.
+    if ($can_edit_summary && isset($_POST['summary']) && is_array($_POST['summary'])) {
+
+       
+        
+        //Step 1: Delete all old summary records for this proposal to ensure a fresh save.
+         $stmt_delete = $connection->prepare("DELETE FROM proposal_summary_sheet WHERE proposal_id = ?");
+         $stmt_delete->bind_param("i", $proposal_id);
+         $stmt_delete->execute();
+         $stmt_delete->close();
+
+       
+
+        // Step 2: Prepare a single insert statement for efficiency.
+        $stmt_insert = $connection->prepare(
+            "INSERT INTO proposal_summary_sheet (proposal_id, section_identifier, compliance_status, comment, last_updated_by)
+            VALUES (?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE 
+                compliance_status = VALUES(compliance_status),
+                comment = VALUES(comment),
+                last_updated_by = VALUES(last_updated_by)"
+        );
+
+
+        // Step 3: Loop through the submitted summary data and insert each item.
+        foreach ($_POST['summary'] as $identifier => $data) {
+            $status = $data['status'] ?? 'not_reviewed';
+            $item_comment = $data['comment'] ?? '';
+
+            // Only save items that have been reviewed (have a status).
+            if ($status !== 'not_reviewed') {
+                $id_var = $identifier;
+                $status_var = $status;
+                $comment_var = $item_comment;
+                $stmt_insert->bind_param("isssi", $proposal_id, $id_var, $status_var, $comment_var, $user_id);
+                $stmt_insert->execute();
+            }
+        }
+        $stmt_insert->close();
+    }
+    // --- NEW CODE BLOCK END ---
+
+
     // --- Save Signature ---
     $signature_image = null;
     if (!empty($_POST['signature_image'])) {
@@ -306,6 +389,8 @@ try {
         $count = $check_stmt->get_result()->fetch_row()[0];
         $check_stmt->close();
 
+        //$final_real_status = $internal_department_statuses;
+
         if ($count >= 5) {
             // The 5th department has approved. Update the REAL status to 'approvedbyalldepartments'.
             // The university_visible_status remains what it was before ($current_uni_status).
@@ -346,9 +431,14 @@ try {
         $stmt_update->close();
     }
 
+   
+
+
     // Commit transaction
     $connection->commit();
     
+
+
     $final_status = $new_proposal_status; 
 
 if (strpos($final_status, 'approved') !== false) {

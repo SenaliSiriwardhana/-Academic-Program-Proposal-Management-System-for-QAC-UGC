@@ -47,12 +47,6 @@ if (!$proposal) {
 
 // Find rejected count 
 $rejected_statuses = [
-    'rejectedbyugcfinance', 
-    'rejectedbyugchr',
-    'rejectedbyugcidd',
-    //'rejectedbyugclegal',
-    'rejectedbyugcacademic',
-    'rejectedbyugcadmission',
     'rejectedbyqachead',
     'rejectedbyTA',
     'rejectedbysecretary',

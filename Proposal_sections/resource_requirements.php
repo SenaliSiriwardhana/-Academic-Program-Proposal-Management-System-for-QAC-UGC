@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+include 'form_field_helper.php';
+
 
 // Retrieve saved data (if available)
 $resourceRequirements = $_SESSION['resource_requirements'] ?? [];
@@ -49,6 +51,14 @@ $resourceRequirements = $_SESSION['resource_requirements'] ?? [];
                 
                 <!-- Physical Resources -->
                 <h5 class="mt-4">Physical Resources</h5>
+                <?php
+                    $table_identifier = 'table.physical_resources';
+                    // Use the correct function for the component
+                    render_component_feedback($table_identifier);
+                ?>
+    
+                <!-- Use the correct function for the group -->
+                <fieldset <?php echo get_group_lock_attr($table_identifier); ?>>
                 <table class="table table-bordered text-center">
                     <thead class="table-light">
                         <tr>
@@ -82,9 +92,17 @@ $resourceRequirements = $_SESSION['resource_requirements'] ?? [];
                         <?php } ?>
                     </tbody>
                 </table>
-                
+            </fieldset>
                 <!-- Financial Resources -->
                 <h5 class="mt-5">Financial Resources</h5>
+                <?php
+                    $table_identifier = 'table.financial_resources';
+                    // Use the correct function for the component
+                    render_component_feedback($table_identifier);
+                ?>
+    
+                <!-- Use the correct function for the group -->
+                <fieldset <?php echo get_group_lock_attr($table_identifier); ?>>
                 <table class="table table-bordered text-center">
                     <thead class="table-light">
                         <tr>
@@ -114,9 +132,18 @@ $resourceRequirements = $_SESSION['resource_requirements'] ?? [];
                         <?php } ?>
                     </tbody>
                 </table>
+            </fieldset>
                 
                 <!-- Staff Resources -->
                 <h5 class="mt-5">Staff Resources</h5>
+                <?php
+                    $table_identifier = 'table.human_resources';
+                    // Use the correct function for the component
+                    render_component_feedback($table_identifier);
+                ?>
+    
+                <!-- Use the correct function for the group -->
+                <fieldset <?php echo get_group_lock_attr($table_identifier); ?>>
                 <table class="table table-bordered text-center">
                     <thead class="table-light">
                         <tr>
@@ -146,7 +173,9 @@ $resourceRequirements = $_SESSION['resource_requirements'] ?? [];
                         <?php } ?>
                     </tbody>
                 </table>
-                <div class="text-end">
+            </fieldset>
+            
+                <div class="text-end mt-4">
                     <a href="<?php echo isset($_SESSION['is_editing']) ? '/qac_ugc/new_proposal_section.php?proposal_id='.$_SESSION['editing_proposal_id'].'&edit=true' :  '/qac_ugc/new_proposal_section.php' ?>"; class="btn btn-secondary">Back</a>
                     <button type="submit" class="btn btn-success">Save</button>
                     <button type="button" class="btn btn-danger clearButton" data-section="resource_requirements">Clear All Data</button>

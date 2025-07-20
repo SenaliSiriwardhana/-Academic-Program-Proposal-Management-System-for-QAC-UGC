@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-//include 'database_handling/program_structure_db.php';
+include 'form_field_helper.php';
 // Retrieve saved data (if available)
 $programStructure = $_SESSION['program_structure'] ?? [];
 
@@ -67,6 +67,14 @@ $programStructure = $_SESSION['program_structure'] ?? [];
 
             <form action="save_data.php" method="POST">
                 <input type="hidden" name="form_type" value="program_structure">
+                <?php
+                    $table_identifier = 'table.program_structure';
+                    // Use the correct function for the component
+                    render_component_feedback($table_identifier);
+                ?>
+    
+                <!-- Use the correct function for the group -->
+                <fieldset <?php echo get_group_lock_attr($table_identifier); ?>>
                 <table id="programStructureTable">
                     <thead>
                         <tr>
@@ -139,7 +147,7 @@ $programStructure = $_SESSION['program_structure'] ?? [];
                 <label for="totalModuleCredits" class="form-label"><strong>Total Module Credits:</strong></label>
                 <input type="text" id="totalModuleCredits" class="form-control" readonly value="0">
                 </div>
-
+                </fieldset>           
 
                 <div class="form-footer text-end mt-4">
                     <a href="<?php echo isset($_SESSION['is_editing']) ? '/qac_ugc/new_proposal_section.php?proposal_id='.$_SESSION['editing_proposal_id'].'&edit=true' :  '/qac_ugc/new_proposal_section.php' ?>"; class="btn btn-secondary">Back</a>

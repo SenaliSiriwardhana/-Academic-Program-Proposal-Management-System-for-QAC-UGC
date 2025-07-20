@@ -1,6 +1,7 @@
 <?php
 session_start();
 //include 'database_handling/general_info_db.php';
+include 'form_field_helper.php';
 
 // Retrieve saved data (if available)
 $generalInfo = $_SESSION['general_info'] ?? [
@@ -73,36 +74,52 @@ $generalInfo = $_SESSION['general_info'] ?? [
                 <!-- Degree Name in Multiple Languages -->
                 <div class="mb-3">
                     <label for="degreeNameEnglish" class="form-label">1.1 Name of Degree Programme (English)</label>
-                    <input type="text" class="form-control" id="degreeNameEnglish" name="degree_name_english" value="<?php echo htmlspecialchars($generalInfo['degree_name_english']); ?>" placeholder="Enter the degree name in English" required>
+                    <input type="text" class="form-control" id="degreeNameEnglish" name="degree_name_english" value="<?php echo htmlspecialchars($generalInfo['degree_name_english']); ?>" placeholder="Enter the degree name in English" required
+                    <?php echo get_lock_status_attr('general_information.degree_name_english'); ?>>
+                    <?php render_field_feedback('general_information.degree_name_english'); ?>
                 </div>
                 <div class="mb-3">
                     <label for="degreeNameSinhala" class="form-label">1.2 Name of Degree Programme (Sinhala)</label>
-                    <input type="text" class="form-control" id="degreeNameSinhala" name="degree_name_sinhala" value="<?php echo htmlspecialchars($generalInfo['degree_name_sinhala']); ?>" placeholder="Enter the degree name in Sinhala" required>
+                    <input type="text" class="form-control" id="degreeNameSinhala" name="degree_name_sinhala" value="<?php echo htmlspecialchars($generalInfo['degree_name_sinhala']); ?>" placeholder="Enter the degree name in Sinhala" required
+                    <?php echo get_lock_status_attr('general_information.degree_name_sinhala'); ?>>
+                    <?php render_field_feedback('general_information.degree_name_sinhala'); ?>
                 </div>
                 <div class="mb-3">
                     <label for="degreeNameTamil" class="form-label">1.3 Name of Degree Programme (Tamil)</label>
-                    <input type="text" class="form-control" id="degreeNameTamil" name="degree_name_tamil" value="<?php echo htmlspecialchars($generalInfo['degree_name_tamil']); ?>" placeholder="Enter the degree name in Tamil" required>
+                    <input type="text" class="form-control" id="degreeNameTamil" name="degree_name_tamil" value="<?php echo htmlspecialchars($generalInfo['degree_name_tamil']); ?>" placeholder="Enter the degree name in Tamil" required
+                    <?php echo get_lock_status_attr('general_information.degree_name_tamil'); ?>>
+                    <?php render_field_feedback('general_information.degree_name_tamil'); ?>
                 </div>
 
                 <!-- Name of the qualification in Multiple Languages -->
                 <div class="mb-3">
                     <label for="qualificationNameEnglish" class="form-label">1.4 Enter the name of qualification in accordance with SLQF 2015 in English</label>
-                    <input type="text" class="form-control" id="qualificationNameEnglish" name="qualification_name_english" value="<?php echo htmlspecialchars($generalInfo['qualification_name_english']); ?>" placeholder="Enter the name of qualification in accordance with SLQF 2015 in English" required>
+                    <input type="text" class="form-control" id="qualificationNameEnglish" name="qualification_name_english" value="<?php echo htmlspecialchars($generalInfo['qualification_name_english']); ?>" placeholder="Enter the name of qualification in accordance with SLQF 2015 in English" required
+                    <?php echo get_lock_status_attr('general_information.qualification_name_english'); ?>>
+                    <?php render_field_feedback('general_information.qualification_name_english'); ?>
                 </div>
                 <div class="mb-3">
                     <label for="qualificationNameSinhala" class="form-label">1.5 Enter the name of qualification in accordance with SLQF 2015 in Sinhala]</label>
-                    <input type="text" class="form-control" id="qualificationNameSinhala" name="qualification_name_sinhala" value="<?php echo htmlspecialchars($generalInfo['qualification_name_sinhala']); ?>" placeholder="Enter the name of qualification in accordance with SLQF 2015 in Sinhala" required>
+                    <input type="text" class="form-control" id="qualificationNameSinhala" name="qualification_name_sinhala" value="<?php echo htmlspecialchars($generalInfo['qualification_name_sinhala']); ?>" placeholder="Enter the name of qualification in accordance with SLQF 2015 in Sinhala" required
+                    <?php echo get_lock_status_attr('general_information.qualification_name_sinhala'); ?>>
+                    <?php render_field_feedback('general_information.qualification_name_sinhala'); ?>
                 </div>
                 <div class="mb-3">
                     <label for="qualificationNameTamil" class="form-label">1.6 Enter the name of qualification in accordance with SLQF 2015 in Tamil</label>
-                    <input type="text" class="form-control" id="qualificationNameTamil" name="qualification_name_tamil" value="<?php echo htmlspecialchars($generalInfo['qualification_name_tamil']); ?>" placeholder="Enter the name of qualification in accordance with SLQF 2015 in Tamil" required>
+                    <input type="text" class="form-control" id="qualificationNameTamil" name="qualification_name_tamil" value="<?php echo htmlspecialchars($generalInfo['qualification_name_tamil']); ?>" placeholder="Enter the name of qualification in accordance with SLQF 2015 in Tamil" required
+                    <?php echo get_lock_status_attr('general_information.qualification_name_tamil'); ?>>
+                    <?php render_field_feedback('general_information.qualification_name_tamil'); ?>
                 </div>
 
                 <!-- Abbreviated Qualification -->
                 <div class="mb-3">
                     <label for="abbreviatedQualificationEnglish" class="form-label">1.7 Abbreviated Qualification (English)</label>
-                    <input type="text" class="form-control" id="abbreviatedQualificationEnglish" name="abbreviated_qualification_english" value="<?php echo htmlspecialchars($generalInfo['abbreviated_qualification']); ?>" placeholder="E.g., BSc, BA" required>
+                    <input type="text" class="form-control" id="abbreviatedQualificationEnglish" name="abbreviated_qualification_english" value="<?php echo htmlspecialchars($generalInfo['abbreviated_qualification']); ?>" placeholder="E.g., BSc, BA" required
+                    <?php echo get_lock_status_attr('general_information.abbreviated_qualification'); ?>>
+                    <?php render_field_feedback('general_information.abbreviated_qualification'); ?>
                 </div>
+
+                
 
                 <!-- Navigation Buttons -->
                 <div class="form-footer">

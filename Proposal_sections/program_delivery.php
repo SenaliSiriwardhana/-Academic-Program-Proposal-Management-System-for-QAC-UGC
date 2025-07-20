@@ -1,6 +1,7 @@
 <?php
 session_start();
-//include 'database_handling/program_delivery_db.php';
+
+include 'form_field_helper.php';
 
 // Retrieve saved data (if available)
 $programDelivery = $_SESSION['program_delivery'] ?? ['program_delivery_description' => ''];
@@ -53,7 +54,22 @@ $programDelivery = $_SESSION['program_delivery'] ?? ['program_delivery_descripti
                 <p>Please describe in detail the teaching-learning methods, resources, and activities for delivering the program.</p>
 
                 <div class="mb-3">
-                   <textarea class="form-control" id="programDeliveryDescription" name="program_delivery_description" rows="8" placeholder="Describe the teaching-learning methods and resources available for program delivery (e.g., teaching strategies, blended learning opportunities, and facilities)." required><?php echo htmlspecialchars($programDelivery['program_delivery_description']); ?></textarea>
+                   <textarea class="form-control" id="programDeliveryDescription" name="program_delivery_description" rows="8" placeholder="Describe the teaching-learning methods and resources available for program delivery (e.g., teaching strategies, blended learning opportunities, and facilities)." required
+                   <?php 
+                          // --- THIS IS THE FIX ---
+                          // 1. Define the correct identifier for this textarea
+                          $identifier = 'program_delivery_and_learner_support_system.program_delivery_description';
+                          $description = $programDelivery['program_delivery_description'] ?? '';
+                          
+                          // 2. Call the simple helper function to get the 'readonly' attribute
+                          echo get_lock_status_attr($identifier); 
+                          ?>
+                ><?php echo htmlspecialchars($description); ?></textarea>
+
+                <?php 
+                    // 3. Render the feedback message below the textarea
+                    render_field_feedback($identifier); 
+                ?>
                 </div>
 
                 <div class="text-end mt-4">

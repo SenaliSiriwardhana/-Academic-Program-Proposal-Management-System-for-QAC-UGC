@@ -3,6 +3,50 @@ session_start();
 
 require 'databaseconnection.php';
 
+// INITIALIZE ALL VARIABLES
+// This prevents "undefined variable" errors in all cases.
+
+$proposal_status = '';
+$show_revision_summary = false;
+$summary_data_for_view = [];
+$_SESSION['is_draft_revision_mode'] = false; // Default to not being a revision
+
+// --- MASTER FUNCTION is for summary sheet locking feature for selected draft versions---
+function isDraftRevisionMode($proposal_id, $current_status, $connection) {
+    // RULE 1: If the current status is an explicit rejection, it's a revision.
+    $rejection_statuses = ['rejectedbyqachead', 'rejectedbyTA', 'rejectedbysecretary'];
+    if (in_array($current_status, $rejection_statuses)) {
+        return true;
+    }
+
+    // RULE 2: If the current status is 'draft', we must check its history.
+    if ($current_status === 'draft') {
+        // Find the most recent, non-draft status for this proposal in its history.
+        $stmt = $connection->prepare(
+            "SELECT new_status 
+             FROM proposal_status_history 
+             WHERE proposal_id = ? 
+             ORDER BY updated_at DESC 
+             LIMIT 1"
+        );
+        $stmt->bind_param("i", $proposal_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($row = $result->fetch_assoc()) {
+            $last_meaningful_status = $row['new_status'];
+            // If the last real action was a rejection, then this draft is a revision.
+            if (in_array($last_meaningful_status, $rejection_statuses)) {
+                return true;
+            }
+        }
+    }
+
+    // If neither of the above conditions are met, it's not a revision.
+    return false;
+}
+
+
 $isEditing = isset($_GET['edit']) ||  false;
 $initialFetch = isset($_GET['initial']);
 
@@ -41,11 +85,40 @@ function deleteUploadedFiles($section) {
 }
 
 
-if($isEditing && isset($_GET['proposal_id'])) {
+
+// --- MODIFICATION START ---
+// This block handles session setup for editing vs. new proposals.
+if ($isEditing) {
+    // We are editing an existing proposal.
     $_SESSION['proposal_id'] = $_GET['proposal_id'];
     $_SESSION['is_editing'] = 1;
     $_SESSION['editing_proposal_id'] = $_GET['proposal_id'];
 
+    if ($initialFetch) {
+        // ... your code to unset and delete files for a fresh edit ...
+        unset($_SESSION['summary_data']); // Also clear old summary data on initial fetch
+    }
+} else {
+    // THIS IS FOR A NEW PROPOSAL. CLEAR EVERYTHING.
+    unset($_SESSION['is_editing']);
+    unset($_SESSION['editing_proposal_id']);
+    // CRUCIAL FIX: Clear the summary data from any previous session.
+    unset($_SESSION['summary_data']); 
+    
+    // Also clear other proposal section data if it exists
+    // $sections = ['general_info', 'program_entity', ...];
+    // foreach ($sections as $section) { unset($_SESSION[$section]); }
+}
+// --- MODIFICATION END ---
+
+//COMMENTED FOR WARNING - START
+
+
+
+if($isEditing && isset($_GET['proposal_id'])) {
+    $_SESSION['proposal_id'] = $_GET['proposal_id'];
+    $_SESSION['is_editing'] = 1;
+    $_SESSION['editing_proposal_id'] = $_GET['proposal_id'];
 
     if($initialFetch) {
         $sections = [
@@ -69,10 +142,92 @@ if($isEditing && isset($_GET['proposal_id'])) {
         unset($_SESSION['editing_proposal_id']);
 };
 
+
+
+
+
+
 // Check if editing an existing proposal
 if (isset($_GET['proposal_id']) && $isEditing && $initialFetch) {
     $proposal_id = $_GET['proposal_id'];
     $_SESSION['proposal_id'] = $proposal_id;
+
+// // Fetch FULL QAC Summary Sheet Data ---
+
+// $summary_data_for_view = []; // Use this variable name consistently
+// $proposal_status = '';
+
+// if ($isEditing && isset($_SESSION['proposal_id'])) {
+//     $proposal_id = $_SESSION['proposal_id'];
+
+//     // Fetch the proposal's current status
+//     $stmt = $connection->prepare("SELECT status FROM proposals WHERE proposal_id = ?");
+//     $stmt->bind_param("i", $proposal_id);
+//     $stmt->execute();
+//     $result = $stmt->get_result();
+//     if ($proposal_row = $result->fetch_assoc()) {
+//         $proposal_status = $proposal_row['status'];
+//     }
+//     $stmt->close();
+// }
+// }
+
+// 1. Fetch the current status (this is needed for the master function)
+    $stmt = $connection->prepare("SELECT status FROM proposals WHERE proposal_id = ?");
+    $stmt->bind_param("i", $proposal_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($proposal_row = $result->fetch_assoc()) {
+        $proposal_status = $proposal_row['status'];
+    } else {
+        $proposal_status = ''; // Default if not found
+    }
+    $stmt->close();
+    
+    // 2. Use the master function to determine the mode and set the session flag
+    $_SESSION['is_draft_revision_mode'] = isDraftRevisionMode($proposal_id, $proposal_status, $connection);
+
+    // 3. If in revision mode, fetch the summary data and prepare view variables
+    if ($_SESSION['is_draft_revision_mode']) {
+        $show_revision_summary = true;
+        
+        $summaryQuery = "SELECT section_identifier, compliance_status, comment FROM proposal_summary_sheet WHERE proposal_id = ?";
+        $stmt_summary = $connection->prepare($summaryQuery);
+        $stmt_summary->bind_param("i", $proposal_id);
+        $stmt_summary->execute();
+        $result_summary = $stmt_summary->get_result();
+        while ($row = $result_summary->fetch_assoc()) {
+            $summary_data_for_view[$row['section_identifier']] = [
+                'status' => $row['compliance_status'],
+                'comment' => $row['comment']
+            ];
+        }
+        $stmt_summary->close();
+        $_SESSION['summary_data'] = $summary_data_for_view;
+    }
+}
+
+//COMMENTED FOR WARNING - END 
+
+    // If status requires revision, fetch the full summary sheet
+        if (in_array($proposal_status, ['rejectedbyqachead', 'rejectedbyTA', 'rejectedbysecretary'])) {
+        $show_revision_summary = true;
+        
+        $summaryQuery = "SELECT section_identifier, compliance_status, comment FROM proposal_summary_sheet WHERE proposal_id = ?";
+        $stmt_summary = $connection->prepare($summaryQuery);
+        $stmt_summary->bind_param("i", $proposal_id);
+        $stmt_summary->execute();
+        $result_summary = $stmt_summary->get_result();
+        while ($row = $result_summary->fetch_assoc()) {
+            $summary_data_for_view[$row['section_identifier']] = [
+                'status' => $row['compliance_status'],
+                'comment' => $row['comment']
+            ];
+        }
+        $stmt_summary->close();
+        $_SESSION['summary_data'] = $summary_data_for_view;
+    }
+    
 
     // Fetch proposal data from database
     $stmt = $connection->prepare("SELECT status FROM proposals WHERE proposal_id = ?");
@@ -142,31 +297,6 @@ if (isset($_GET['proposal_id']) && $isEditing && $initialFetch) {
         }
         }
 
-        // if ($section === 'panel_of_teachers') {
-        //     $_SESSION[$section] = [];
-        
-        //     // Clear existing session data to prevent duplication
-        //     if (!isset($_SESSION[$section]) || empty($_SESSION[$section])) {
-        //         while ($row = $result->fetch_assoc()) {
-        //             // Check if this teacher already exists in session to prevent duplicates
-        //             $exists = false;
-        //             foreach ($_SESSION[$section] as $existingRow) {
-        //                 if ($existingRow['teacher_id'] === $row['teacher_id']) { // Change 'teacher_id' based on your table schema
-        //                     $exists = true;
-        //                     break;
-        //                 }
-        //             }
-        
-        //             if (!$exists) {
-        //                 $_SESSION[$section][] = $row;
-        //             }
-        //         }
-        //     }
-        
-        //     if (count($_SESSION[$section]) > 0) {
-        //         $_SESSION['status_' . $section] = 'Completed';
-        //     }
-        // }
         
     }
 
@@ -208,7 +338,7 @@ if (isset($_GET['proposal_id']) && $isEditing && $initialFetch) {
                 $_SESSION['program_entity']["ref_{$key}"] = $row['reference_no'];
                 $_SESSION['program_entity']["date_{$key}"] = $row['date_of_approval'];
                 //$_SESSION['program_entity']["evidence_{$key}"] = '/qac_ugc/' . $row['evidence'];
-                  // === THIS IS THE FIX ===
+                 
                     $db_path = $row['evidence'];
                     $base_prefix = '/qac_ugc/';
                     
@@ -383,7 +513,8 @@ if (isset($_GET['proposal_id']) && $isEditing && $initialFetch) {
             $reviewer_count++;
         }
         $stmt->close();
-}
+    
+
 
 // Retrieve the status of the General Information section
 $statusGeneralInfo = $_SESSION['status_general_info'] ?? 'Not Started';
@@ -429,6 +560,116 @@ $badgeClass10 = $statusreviewersReport === 'Completed' ? 'bg-success' : 'bg-seco
 $statusComplianceCheck = $_SESSION['status_compliance_check'] ?? 'Not Started';
 $badgeClass11 = $statusComplianceCheck === 'Completed' ? 'bg-success' : 'bg-secondary';
 
+//Handle block compliance fields from Edit. 
+function is_section_Compliance($section_name) {
+    // Read the full summary data that was fetched and stored in the session
+    $summary_data = $_SESSION['summary_data'] ?? [];
+    
+    // If there is no summary data (e.g., this is not a revision), no sections should be locked.
+    if (empty($summary_data)) {
+        return false;
+    }
+
+    // This map correctly defines all section types, including hybrid/multi-part ones as arrays.
+    $section_identifier_map = [
+        'general_info'          => 'general_information.',
+        'program_entity'        => ['program_entity.', 'table.mandate_availability'], 
+        'degree_details'        => ['degree_details.','table.program_grades'],
+        'program_structure'     => 'table.program_structure',
+        'program_content'       => 'table.program_content',
+        'program_delivery'      => 'program_delivery_and_learner_support_system.',
+        'assessment_rules'      => 'program_assessment_rules_and_precodures.',
+        'resource_requirements' => ['table.human_resources', 'table.physical_resources', 'table.financial_resources'],
+        'panel_of_teachers'     => 'table.panel_of_teachers',
+        'reviewers_report'      => ['table.reviewers_report','table.reviewer_details'],
+        'compliance_check'      => 'compliance_check.'
+    ];
+
+    if (!isset($section_identifier_map[$section_name])) {
+        return false; // Section not in our map, default to unlocked.
+    }
+
+    $identifiers_for_section = $section_identifier_map[$section_name];
+
+    // The rule: A section is considered UNLOCKED if any of its parts are 'non_compliance'.
+    // It is LOCKED by default during a revision unless a non-compliance is found.
+
+    // To simplify the loop, we always treat the identifiers as an array.
+    if (!is_array($identifiers_for_section)) {
+        $identifiers_for_section = [$identifiers_for_section];
+    }
+
+    // Loop through each identifier/prefix that defines this section (e.g., ['program_entity.', 'table.mandate_availability'])
+    foreach ($identifiers_for_section as $identifier_prefix) {
+        
+        // Loop through the actual review data from the summary sheet
+        foreach ($summary_data as $review_identifier => $details) {
+            
+            // Check if the reviewed item belongs to the current part of the section we're checking
+            if (strpos($review_identifier, $identifier_prefix) === 0) {
+                
+                // Check the 'status' key within the $details array.
+                if (isset($details['status']) && $details['status'] === 'non_compliance') {
+                    // We found a non-compliant item. This whole section is NOT compliant. UNLOCK IT.
+                    return false; 
+                }
+            }
+        }
+    }
+
+    // If we finished checking all parts of this section and never found a 'non_compliance' status,
+    // it means the section is considered compliant. LOCK IT.
+    return true;
+}
+
+// ... after all your other PHP logic ...
+
+// --- REPLACEMENT BLOCK: HANDLES BUTTON AND MODAL DATA ---
+$show_summary_button = false; // Default to hiding the button
+$summary_data_for_view = [];  // Default to empty data for the modal
+
+if ($isEditing && isset($_SESSION['proposal_id'])) {
+    $proposal_id_for_logic = $_SESSION['proposal_id'];
+    $current_status_for_logic = '';
+
+    // A quick, separate query just for this page's display logic
+    $stmt_logic = $connection->prepare("SELECT status FROM proposals WHERE proposal_id = ?");
+    $stmt_logic->bind_param("i", $proposal_id_for_logic);
+    $stmt_logic->execute();
+    $result_logic = $stmt_logic->get_result();
+    if ($row_logic = $result_logic->fetch_assoc()) {
+        $current_status_for_logic = $row_logic['status'];
+    }
+    $stmt_logic->close();
+    
+    // Use the master function to decide if we are in revision mode
+    $is_revision = isDraftRevisionMode($proposal_id_for_logic, $current_status_for_logic, $connection);
+
+    if ($is_revision) {
+        // If it's a revision, we need to do TWO things:
+        
+        // 1. Set the flag to show the button.
+        $show_summary_button = true;
+
+        // 2. Fetch the summary data for the modal.
+        // This ensures the data is always available on every "Back" button visit.
+        $summaryQuery = "SELECT section_identifier, compliance_status, comment FROM proposal_summary_sheet WHERE proposal_id = ?";
+        $stmt_summary = $connection->prepare($summaryQuery);
+        $stmt_summary->bind_param("i", $proposal_id_for_logic);
+        $stmt_summary->execute();
+        $result_summary = $stmt_summary->get_result();
+        while ($row = $result_summary->fetch_assoc()) {
+            $summary_data_for_view[$row['section_identifier']] = [
+                'status' => $row['compliance_status'],
+                'comment' => $row['comment']
+            ];
+        }
+        $stmt_summary->close();
+    }
+}
+// --- END OF REPLACEMENT BLOCK ---
+
+
 ?>
 
 <!DOCTYPE html> 
@@ -463,7 +704,35 @@ $badgeClass11 = $statusComplianceCheck === 'Completed' ? 'bg-success' : 'bg-seco
             display: <?php echo $isEditing ? 'none' : 'inline-block' ?>;
         }
 
-         footer {
+        .section-list .badge {
+            visibility: <?php echo $isEditing ? 'hidden' : 'visible' ?>;
+            display: inline-block;
+        }
+
+        .status-label {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+
+        .status-label.compliance {
+            color: #155724;
+            background-color: #d4edda;
+        }
+
+        .status-label.non-compliance {
+            color: #721c24;
+            background-color: #f8d7da;
+        }
+
+        .status-label.other {
+            color: #383d41;
+            background-color: #e2e3e5;
+        }
+
+        footer {
             margin-top: 20px;
             font-size: 14px;
             text-align: center;
@@ -475,7 +744,22 @@ $badgeClass11 = $statusComplianceCheck === 'Completed' ? 'bg-success' : 'bg-seco
 </head>
 <body>
     <div class="container mt-5">
-        <!--<pre><?php echo print_r($_SESSION); ?></pre>-->
+
+               <?php
+        // Use the flag that is now reliably set in all scenarios.
+        if ($show_summary_button):
+        ?>
+            <!-- View Summary Sheet Button -->
+            <div class="d-flex justify-content-end mb-3">
+                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#summarySheetModal">
+                    📄 View Summary Sheet
+                </button>
+            </div>
+        <?php 
+        endif; 
+        ?>
+
+        
         <h3><?php echo $isEditing ? 'Edit Proposal: #' : 'New Proposal: #'; echo $_SESSION['proposal_id'] ?></h3>
         <p>Please complete all sections before submitting the proposal.</p>
             <ul class="section-list">
@@ -484,80 +768,125 @@ $badgeClass11 = $statusComplianceCheck === 'Completed' ? 'bg-success' : 'bg-seco
                 <span>
                     
                     <span class="badge <?php echo $badgeClass1; ?>"><?php echo $statusGeneralInfo; ?></span>
-                    <a href="Proposal_sections/general_info.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                    <!-- <?php if ($isEditing && is_section_Compliance('general_info', $summary_data_for_view)): ?>
+                        <button class="btn btn-success btn-sm btn-section" disabled>Compliance</button>
+                    <?php else: ?> -->
+                        <a href="Proposal_sections/general_info.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                    <!-- <?php endif; ?> -->
                 </span>
             </li>
             <li>
                 <span>2. Program Offering Entity</span>
                 <span>
                     <span class="badge <?php echo $badgeClass2; ?>"><?php echo $statusprogramentity; ?></span>
-                    <a href="Proposal_sections/program_entity.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                    <?php if ($isEditing && is_section_Compliance('program_entity', $summary_data_for_view)): ?>
+                        <button class="btn btn-success btn-sm btn-section" disabled>Compliance</button>
+                    <?php else: ?>
+                        <a href="Proposal_sections/program_entity.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                     <?php endif; ?>
                 </span>
             </li>
             <li>
                 <span>3. Details of the Degree Program</span>
                 <span>
                     <span class="badge <?php echo $badgeClass3; ?>"><?php echo $statusdegreeDetails; ?></span>
-                    <a href="Proposal_sections/degree_details.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                     <?php if ($isEditing && is_section_Compliance('degree_details', $summary_data_for_view)): ?>
+                        <button class="btn btn-success btn-sm btn-section" disabled>Compliance</button>
+                    <?php else: ?>
+                        <a href="Proposal_sections/degree_details.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                    <?php endif; ?>
                 </span>
             </li>
             <li>
                 <span>4. Program Structure</span>
                 <span>
                 <span class="badge <?php echo $badgeClass4; ?>"><?php echo $statusprogramStructure; ?></span>
-                    <a href="Proposal_sections/program_structure.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                <?php if ($isEditing && is_section_Compliance('program_structure', $summary_data_for_view)): ?>
+                        <button class="btn btn-success btn-sm btn-section" disabled>Compliance</button>
+                    <?php else: ?>
+                        <a href="Proposal_sections/program_structure.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                     <?php endif; ?>
                 </span>
             </li>
             <li>
                 <span>5. Program Content</span>
                 <span>
                     <span class="badge <?php echo $badgeClass5; ?>"><?php echo $statusprogramContent; ?></span>
-                    <a href="Proposal_sections/program_content.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                    <?php if ($isEditing && is_section_Compliance('program_content', $summary_data_for_view)): ?>
+                        <button class="btn btn-success btn-sm btn-section" disabled>Compliance</button>
+                    <?php else: ?>
+                        <a href="Proposal_sections/program_content.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                     <?php endif; ?>
                 </span>
             </li>
             <li>
                 <span>6. Program Delivery and Learner Support System</span>
                 <span>
                     <span class="badge <?php echo $badgeClass6; ?>"><?php echo $statusprogramDelivery; ?></span>
-                    <a href="Proposal_sections/program_delivery.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                    <?php if ($isEditing && is_section_Compliance('program_delivery', $summary_data_for_view)): ?>
+                        <button class="btn btn-success btn-sm btn-section" disabled>Compliance</button>
+                    <?php else: ?>
+                        <a href="Proposal_sections/program_delivery.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                     <?php endif; ?>
                 </span>
             </li>
             <li>
                 <span>7. Program Assessment Procedure/Rules</span>
                 <span>
                     <span class="badge <?php echo $badgeClass7; ?>"><?php echo $statusAssessmentRules; ?></span>
-                    <a href="Proposal_sections/assessment_rules.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                    <?php if ($isEditing && is_section_Compliance('assessment_rules', $summary_data_for_view)): ?>
+                        <button class="btn btn-success btn-sm btn-section" disabled>Compliance</button>
+                    <?php else: ?>
+                        <a href="Proposal_sections/assessment_rules.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                     <?php endif; ?>
                 </span>
             </li>
             <li>
                 <span>8. Resource Requirements</span>
                 <span>
                     <span class="badge <?php echo $badgeClass8; ?>"><?php echo $statusresourceRequirements; ?></span>
-                    <a href="Proposal_sections/resource_requirements.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                     <?php if ($isEditing && is_section_Compliance('resource_requirements', $summary_data_for_view)): ?>
+                        <button class="btn btn-success btn-sm btn-section" disabled>Compliance</button>
+                    <?php else: ?>
+                        <a href="Proposal_sections/resource_requirements.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                     <?php endif; ?>
                 </span>
             </li>
             <li>
                 <span>9. Panel of Teachers</span>
                 <span>
                     <span class="badge <?php echo $badgeClass9; ?>"><?php echo $statuspanelofTeachers; ?></span>
-                    <a href="Proposal_sections/panel_of_teachers.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                    <?php if ($isEditing && is_section_Compliance('panel_of_teachers', $summary_data_for_view)): ?>
+                        <button class="btn btn-success btn-sm btn-section" disabled>Compliance</button>
+                    <?php else: ?>
+                        <a href="Proposal_sections/panel_of_teachers.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                     <?php endif; ?>
                 </span>
             </li>
             <li>
                 <span>10. Reviewers Report</span>
                 <span>
                     <span class="badge <?php echo $badgeClass10; ?>"><?php echo $statusreviewersReport; ?></span>
-                    <a href="Proposal_sections/reviewers_report.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                    <?php if ($isEditing && is_section_Compliance('reviewers_report', $summary_data_for_view)): ?>
+                        <button class="btn btn-success btn-sm btn-section" disabled>Compliance</button>
+                    <?php else: ?>
+                        <a href="Proposal_sections/reviewers_report.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                     <?php endif; ?>
                 </span>
             </li>
             <li>
                 <span>11. Compliance Check </span>
                 <span>
                 <span class="badge <?php echo $badgeClass11; ?>"><?php echo $statusComplianceCheck; ?></span>
-                    <a href="Proposal_sections/compliance_check.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                <?php if ($isEditing && is_section_Compliance('compliance_check', $summary_data_for_view)): ?>
+                        <button class="btn btn-success btn-sm btn-section" disabled>Compliance</button>
+                    <?php else: ?>
+                        <a href="Proposal_sections/compliance_check.php" class="btn btn-primary btn-sm btn-section">Fill</a>
+                     <?php endif; ?>
                 </span>
             </li>
         </ul>
+
         <div class="d-flex gap-2 align-items-center">
             <form action="/qac_ugc/Proposal_sections/database_handling/draft_save_submit.php" method="post">
                 <button class="btn btn-success" id="submitProposal" name="submitProposal" disabled>Submit Proposal</button>
@@ -592,7 +921,115 @@ $badgeClass11 = $statusComplianceCheck === 'Completed' ? 'bg-success' : 'bg-seco
 
  <footer>
         Copyright © 2024 University Grants Commission. Developed by UGC.
-    </footer>
+</footer>
+
+
+<!-- Summary Sheet Modal -->
+<div class="modal fade" id="summarySheetModal" tabindex="-1" aria-labelledby="summarySheetModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+       
+        <h5 class="modal-title" id="summarySheetModalLabel">QAC Summary Sheet - Proposal: #<?php echo htmlspecialchars($_SESSION['proposal_id'] ?? 'N/A'); ?></h5>
+        <div>
+            <!-- The Download button comes first -->
+            <a href="generate_summary_pdf.php?id=<?php echo htmlspecialchars($_SESSION['proposal_id'] ?? ''); ?>" 
+               class="btn btn-success me-2" 
+               target="_blank">
+               <i class="bi bi-download"></i> Download 
+            </a>
+
+            <!-- The standard close button comes last -->
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+      </div>
+       
+      <div class="modal-body">
+
+        <?php if (!empty($summary_data_for_view)): ?>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Section</th>
+                        <th>Status</th>
+                        <th>Comment</th>
+                    </tr>
+                </thead>
+                
+                <!-- <tbody>
+                <?php 
+                    // Use the summary data stored in the session for consistency
+                    $summary_data_modal = $_SESSION['summary_data'] ?? [];
+                    foreach ($summary_data_modal as $identifier => $details): 
+                ?>
+                    <?php 
+                        // Get status and comment from the details array
+                        $status = $details['status'] ?? 'not_reviewed';
+                        $statusClass = strtolower(str_replace('_', '-', $status));
+                    ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($identifier); ?></td>
+                        <td>
+                            <span class="status-label <?php echo htmlspecialchars($statusClass); ?>">
+                                <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $status))); ?>
+                            </span>
+                        </td>
+                        <td>
+                            <?php $comment = $details['comment'] ?? ''; ?>
+                            <?php if (!empty($comment)): ?>
+                                <br><small class="text-muted"><em>Comment: <?php echo htmlspecialchars($comment); ?></em></small>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody> -->
+                            <tbody>
+                    <?php 
+                    // Read directly from the variable populated at the top of the page.
+                    if (!empty($summary_data_for_view)):
+                        foreach ($summary_data_for_view as $identifier => $details): 
+                    ?>
+                        <?php 
+                            $status = $details['status'] ?? 'not_reviewed';
+                            $comment = $details['comment'] ?? '';
+                            $statusClass = strtolower(str_replace('_', '-', $status));
+                        ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($identifier); ?></td>
+                            <td>
+                                <span class="status-label <?php echo htmlspecialchars($statusClass); ?>">
+                                    <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $status))); ?>
+                                </span>
+                            </td>
+                            <td>
+                                <?php echo htmlspecialchars($comment); ?>
+                            </td>
+                        </tr>
+                    <?php 
+                        endforeach;
+                    else:
+                    ?>
+                        <tr>
+                            <td colspan="3">No summary data available.</td>
+                        </tr>
+                    <?php
+                    endif;
+                    ?>
+                </tbody>
+            </table>
+        <?php else: ?>
+            <p>No summary sheet data available.</p>
+        <?php endif; ?>
+
+      </div>
+      <div class="modal-footer">
+        
+       
+    </div>
+  </div>
+</div>
 
 </body>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </html>
