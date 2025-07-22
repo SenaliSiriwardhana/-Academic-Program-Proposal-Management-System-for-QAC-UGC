@@ -14,7 +14,7 @@ $_SESSION['is_draft_revision_mode'] = false; // Default to not being a revision
 // --- MASTER FUNCTION is for summary sheet locking feature for selected draft versions---
 function isDraftRevisionMode($proposal_id, $current_status, $connection) {
     // RULE 1: If the current status is an explicit rejection, it's a revision.
-    $rejection_statuses = ['rejectedbyqachead', 'rejectedbyTA', 'rejectedbysecretary'];
+    $rejection_statuses = ['rejectedbyqachead', 'rejectedbyTA', 'rejectedbysecretary','rejectedbyStandardCommittee'];
     if (in_array($current_status, $rejection_statuses)) {
         return true;
     }
@@ -768,11 +768,11 @@ if ($isEditing && isset($_SESSION['proposal_id'])) {
                 <span>
                     
                     <span class="badge <?php echo $badgeClass1; ?>"><?php echo $statusGeneralInfo; ?></span>
-                    <!-- <?php if ($isEditing && is_section_Compliance('general_info', $summary_data_for_view)): ?>
+                     <?php if ($isEditing && is_section_Compliance('general_info', $summary_data_for_view)): ?>
                         <button class="btn btn-success btn-sm btn-section" disabled>Compliance</button>
-                    <?php else: ?> -->
+                    <?php else: ?> 
                         <a href="Proposal_sections/general_info.php" class="btn btn-primary btn-sm btn-section">Fill</a>
-                    <!-- <?php endif; ?> -->
+                     <?php endif; ?> 
                 </span>
             </li>
             <li>

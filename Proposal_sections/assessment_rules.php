@@ -200,8 +200,8 @@ $assessmentRules = $_SESSION['assessment_rules'] ?? [
                     <textarea class="form-control" id="classRequirements" name="class_requirements" rows="4" placeholder="Specify the requirements for the award of classes (e.g., First Class, Second Class, etc.)." required
                     <?php 
                            
-                            $identifier = 'program_assessment_rules_and_precodures.inplant_training';
-                            $description = $assessmentRules['inplant_training'] ?? '';
+                            $identifier = 'program_assessment_rules_and_precodures.class_requirements';
+                            $description = $assessmentRules['class_requirements'] ?? '';
                             
                            
                             echo get_lock_status_attr($identifier); 

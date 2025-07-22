@@ -53,7 +53,7 @@
                         $total_review_items++;//New
                         echo "<div class='col-12'>";
                         $identifier = "table.{$section_prefix}";
-                        renderReviewControls($identifier, $summary_data, $can_edit_summary);
+                        renderReviewControls($identifier, $summary_data, $can_edit_summary,$proposal);
                         echo "</div>";
                     } else { // type is 'form'
                         foreach ($details['data'][0] as $key => $value) {
@@ -61,7 +61,7 @@
                             echo "<div class='col-md-6 mb-3'>";
                             $identifier = "{$section_prefix}.{$key}";
                             echo "<label class='form-label fw-bold'>" . ucfirst(str_replace('_', ' ', $key)) . "</label>";
-                            renderReviewControls($identifier, $summary_data, $can_edit_summary);
+                            renderReviewControls($identifier, $summary_data, $can_edit_summary,$proposal);
                             echo "</div>";
                         }
                     }

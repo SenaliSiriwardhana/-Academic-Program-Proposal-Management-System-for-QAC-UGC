@@ -290,8 +290,6 @@ $stmt->bind_param("i", $proposal_id);
 $stmt->execute();
 $proposal = $stmt->get_result()->fetch_assoc();
 
-// --- ADD THIS FINAL, CORRECTED BLOCK ---
-
 // 1. Initialize the data array.
 $summary_data = [];
 

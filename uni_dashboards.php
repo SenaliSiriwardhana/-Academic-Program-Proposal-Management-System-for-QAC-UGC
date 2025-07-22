@@ -77,7 +77,7 @@ $_SESSION['university_id'] = $university_id;
 // Fetch pending proposals that match the required status
 $pendingProposals = [];
 $base_query="
-    SELECT p.proposal_id, p.proposal_code, p.proposal_type, p.submitted_at, u.first_name, u.last_name, u.faculty_of, u.email, gi.degree_name_english
+    SELECT p.proposal_id, p.proposal_code, p.status, p.university_visible_status, p.proposal_type, p.submitted_at, u.first_name, u.last_name, u.faculty_of, u.email, gi.degree_name_english
     FROM proposals p
     JOIN users u ON p.created_by = u.id
     LEFT JOIN proposal_general_info gi 
@@ -212,7 +212,7 @@ if (strpos(strtolower($role), 'dean') !== false && !empty($user_faculty)) {
     ");
     $stmt->bind_param("is", $university_id, $user_faculty);
 }else{
-$stmt = $connection->prepare("SELECT p.proposal_id,p.proposal_code, p.university_visible_status, p.university_visible_status, p.status, gi.degree_name_english FROM proposals p JOIN proposal_general_info gi ON p.proposal_id = gi.proposal_id WHERE p.university_id = ? AND p.status NOT IN ('draft', 'fresh') ORDER BY p.proposal_id ASC");
+$stmt = $connection->prepare("SELECT p.proposal_id, p.proposal_code, p.university_visible_status, p.status, gi.degree_name_english FROM proposals p JOIN proposal_general_info gi ON p.proposal_id = gi.proposal_id WHERE p.university_id = ? AND p.status NOT IN ('draft', 'fresh') ORDER BY p.proposal_id ASC");
 $stmt->bind_param("i", $university_id);
 }
 $stmt->execute();
@@ -495,7 +495,29 @@ if (!empty($all_proposal_ids)) {
                         <td><?php echo $proposal['degree_name_english']; ?></td>
                         <td><?php echo $proposal['submitted_at']; ?></td>
                         <td><?php echo $proposal['first_name'] . " " . $proposal['last_name']; ?></td>
-                        <td><a href="review_proposal.php?id=<?php echo $proposal['proposal_id']; ?>" class="btn btn-primary">Review</a></td>
+                        <!-- <td><a href="review_proposal.php?id=<?php echo $proposal['proposal_id']; ?>" class="btn btn-primary">Review</a></td> -->
+                         <td>
+                            <?php
+                            // These are the statuses where the button should say "Re-Sign"
+                            $resign_statuses = ['resignature_request_from_university', 're-signed_dean', 're-signed_cqa'];
+                            
+                            // Get the current status for this specific proposal
+                            $current_proposal_status = $proposal['university_visible_status'] ?? '';
+
+                            // Set default button text and color
+                            $button_text = 'Review';
+                            $button_class = 'btn-primary';
+
+                            // If the status is in our list, change the text and color
+                            if (in_array($current_proposal_status, $resign_statuses)) {
+                                $button_text = 'Sign Final Version';
+                                $button_class = 'btn-warning'; // Yellow/Orange stands out
+                            }
+                            ?>
+                            <a href="review_proposal.php?id=<?php echo $proposal['proposal_id']; ?>" class="btn <?php echo $button_class; ?>">
+                                <?php echo $button_text; ?>
+                            </a>
+                        </td>              
                     </tr>
                 <?php } ?>
             </table>
@@ -536,7 +558,7 @@ if (!empty($all_proposal_ids)) {
                                 <td><?php echo htmlspecialchars($proposal['degree_name_english']); ?></td>
                                 <td>
                                     <span class="badge <?php echo $badge_class; ?>">
-                                        <?php echo str_replace("_", " ", htmlspecialchars($proposal['status'])); ?>
+                                        <?php echo str_replace("_", " ", htmlspecialchars($proposal['university_visible_status'])); ?>
                                     </span>
                                 </td>
                                 <td>

@@ -268,6 +268,79 @@ $stmt->bind_param("i", $proposal_id);
 $stmt->execute();
 $proposal = $stmt->get_result()->fetch_assoc();
 
+// --- START OF DEEP DEBUGGING BLOCK ---
+// Force PHP to display all errors
+// ini_set('display_errors', 1);
+// ini_set('display_startup_errors', 1);
+// error_reporting(E_ALL);
+
+// echo "<h3>--- DEBUGGING OUTPUT ---</h3>";
+
+// 1. Initialize the data array.
+$summary_data = [];
+
+// 2. Check the HISTORY table
+$qac_head_statuses = ['approvedbyqachead', 'rejectedbyqachead', 'approvedbyqachead_revised', 'resignature_request_from_university'];
+$placeholders = implode(',', array_fill(0, count($qac_head_statuses), '?'));
+
+// echo "<b>Step 1:</b> Checking for Proposal ID: <b>" . htmlspecialchars($proposal_id) . "</b><br>";
+// echo "<b>Step 2:</b> Using these statuses: " . htmlspecialchars(implode(', ', $qac_head_statuses)) . "<br>";
+
+$history_check_query = "SELECT 1 FROM proposal_status_history WHERE proposal_id = ? AND new_status IN ($placeholders) LIMIT 1";
+// echo "<b>Step 3:</b> Preparing Query: <code>" . htmlspecialchars($history_check_query) . "</code><br>";
+
+$stmt_history = $connection->prepare($history_check_query);
+
+if ($stmt_history === false) {
+    die("<b>FATAL ERROR:</b> The database query preparation failed. Error: " . htmlspecialchars($connection->error));
+}
+
+// echo "<b>Step 4:</b> Query prepared successfully.<br>";
+
+$params = array_merge([$proposal_id], $qac_head_statuses);
+$types = 'i' . str_repeat('s', count($qac_head_statuses));
+$stmt_history->bind_param($types, ...$params);
+$stmt_history->execute();
+
+if ($stmt_history->error) {
+    die("<b>FATAL ERROR:</b> The database query execution failed. Error: " . htmlspecialchars($stmt_history->error));
+}
+
+// echo "<b>Step 5:</b> Query executed successfully.<br>";
+
+$result_history = $stmt_history->get_result();
+
+// This is the most important check
+if ($result_history === false) {
+    die("<b>FATAL ERROR:</b> Failed to get result set from the database. This is often caused by an unclosed statement from a previous query.");
+}
+
+// echo "<b>Step 6:</b> Got result set successfully.<br>";
+// echo "<b>Step 7:</b> Number of rows found in proposal_status_history: <b>" . $result_history->num_rows . "</b><br>";
+
+// 3. If a history record was found, fetch summary data.
+if ($result_history->num_rows > 0) {
+    // echo "<b>Step 8:</b> History record found! Now fetching data from proposal_summary_sheet.<br>";
+    $summaryQuery = "SELECT section_identifier, compliance_status, comment FROM proposal_summary_sheet WHERE proposal_id = ?";
+    $stmt_summary = $connection->prepare($summaryQuery);
+    $stmt_summary->bind_param("i", $proposal_id);
+    $stmt_summary->execute();
+    $result_summary = $stmt_summary->get_result();
+    while ($row = $result_summary->fetch_assoc()) {
+        $summary_data[] = $row;
+    }
+    $stmt_summary->close();
+    // echo "<b>Step 9:</b> Finished fetching summary data. Number of summary rows: <b>" . count($summary_data) . "</b><br>";
+} else {
+    // echo "<b>Step 8:</b> No history record found. The summary sheet will NOT be displayed.<br>";
+}
+
+$stmt_history->close();
+
+// echo "<b>Step 10:</b> Debugging finished. Resuming page load.<br><hr>";
+// --- END OF DEEP DEBUGGING BLOCK ---
+
+
 // Fetch all other sections
 function fetchData($connection, $query, $proposal_id) {
     $stmt = $connection->prepare($query);
@@ -372,10 +445,18 @@ function displayTableSection($sectionTitle, $sectionData) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proposal Details</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+    <style>
+        .status-compliance { color: #155724; background-color: #d4edda; font-weight: bold; }
+        .status-non-compliance { color: #721c24; background-color: #f8d7da; font-weight: bold; }
+    </style>
+    
 </head>
 <body class="container mt-4 bg-light">
 
-    <h3 class = "text-center text-primary">Proposal Details</h3>
+
+
+    <h3 class = "text-center text-primary">Application for Approval of New Undergraduate Degree Programme (Internal)</h3>
     <table class="table table-bordered">
         <?php
         $customLabels = [
@@ -388,6 +469,31 @@ function displayTableSection($sectionTitle, $sectionData) {
             <tr><th><?php echo $label; ?></th><td><?php echo htmlspecialchars($value); ?></td></tr>
         <?php } ?>
     </table>
+
+   <!-- MODIFIED ACCORDION BLOCK TO DISPLAY THE SUMMARY SHEET -->
+<?php if (!empty($summary_data)): ?>
+<div class="accordion mt-4 no-print" id="summarySheetAccordion"> <!-- Added no-print class -->
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingOne">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                <strong>View QAC-UGC Review Summary Sheet</strong>
+            </button>
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#summarySheetAccordion">
+            <div class="accordion-body">
+                <?php 
+                    // Include the reusable table file.
+                    // The $summary_data variable is already defined on this page.
+                    include '_summary_sheet_table.php'; 
+                ?>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+<!-- END OF MODIFIED BLOCK -->
+
+ 
 
     <?php 
      displayFormSection("General Information", $generalInfo);
@@ -448,6 +554,7 @@ function displayTableSection($sectionTitle, $sectionData) {
 
     <!-- Include the Signature Pad Library -->
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    
 
     <!-- Comment Section -->
     <h4 class="mt-4 text-primary">Comments</h4>
@@ -551,6 +658,8 @@ function displayTableSection($sectionTitle, $sectionData) {
                 // The form will submit normally without checking the signature.
             });
         </script>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>

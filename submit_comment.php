@@ -27,7 +27,7 @@ $comment_status = ''; // This is the status we will log in the comments table fo
 
 
 // START: NEW LOGIC - DEFINE WHO CAN EDIT THE SUMMARY
-$can_edit_summary = in_array($role, ["ugc - technical assistant", "ugc - secretary", "head of the qac-ugc department"]);
+$can_edit_summary = in_array($role, ["ugc - technical assistant", "ugc - secretary", "head of the qac-ugc department","sStandard committee"]);
 // END: NEW LOGIC
 
 // Check if user is from UGC (including Standard Committee)
@@ -99,7 +99,7 @@ elseif (isset($_POST['approve'])) {
 
     // --- NEW CODE START: VALIDATION FOR SUMMARY SHEET COMPLETENESS ---
     // This check only applies to users who can edit the summary (TA, Secretary, QAC Head).
-    $can_edit_summary = in_array($role, ["ugc - technical assistant", "ugc - secretary", "head of the qac-ugc department"]);
+    $can_edit_summary = in_array($role, ["ugc - technical assistant", "ugc - secretary", "head of the qac-ugc department","standard committee"]);
 
     if ($can_edit_summary) {
         // Get the total number of items that should have been reviewed from the hidden input.
@@ -220,7 +220,7 @@ $updated_by = $_SESSION['id']; // Assign logged-in user ID
 $connection->begin_transaction();
 try {
       // --- NEW CODE BLOCK START: Save Summary Sheet Data ---
-    $can_edit_summary = in_array($role, ["ugc - technical assistant", "ugc - secretary", "head of the qac-ugc department"]);
+    $can_edit_summary = in_array($role, ["ugc - technical assistant", "ugc - secretary", "head of the qac-ugc department","standard committee"]);
 
 
        

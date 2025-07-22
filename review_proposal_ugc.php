@@ -411,7 +411,7 @@ $is_uni_user_with_view_rights = !$is_ugc_user && in_array($proposal_status, $pos
 $show_summary_sheet = $is_ugc_user; // For now, let's assume only UGC users see it. You can add '|| $is_uni_user_with_view_rights' if they also use this page.
 
 // Define who can EDIT the summary sheet
-$can_edit_summary = in_array($role, ["ugc - technical assistant", "head of the qac-ugc department", "ugc - secretary"]);
+$can_edit_summary = in_array($role, ["ugc - technical assistant", "head of the qac-ugc department", "ugc - secretary", "standard committee"]);
 
 // Fetch summary data ONLY if the sheet is being shown
 $summary_data = [];
