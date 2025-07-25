@@ -79,6 +79,9 @@ if (strpos($proposal_type, 'revised') === 0) {
         'approvedbyugcidd',
         'approvedbyugcacademic',
         'approvedbyugcadmission',
+	'approvedbydean',
+        'approvedbycqa',
+        'approvedbyvc'
     ];
 } else {
     // Initial proposal — use basic status list
@@ -148,6 +151,9 @@ $initialOrder = [
 ];
 
 $revisedOrder = [
+    'approvedbydean',
+    'approvedbycqa',
+    'approvedbyvc',
     'approvedbyTA',
     'approvedbysecretary',
     'resignature_request_from_university',

@@ -73,7 +73,10 @@ if (strpos($proposal_type, 'revised') === 0) {
         're-signed_dean',
         're-signed_cqa',
         're-signed_vc',
-        'resignature_request_from_university'
+        'resignature_request_from_university',
+        'approvedbydean',
+        'approvedbycqa',
+        'approvedbyvc',
     ];
 } else {
     // Initial proposal — use basic status list
@@ -133,6 +136,9 @@ $initialOrder = [
 ];
 
 $revisedOrder = [
+    'approvedbydean',
+    'approvedbycqa',
+    'approvedbyvc',
     'approvedbyTA',
     'approvedbysecretary',
     'resignature_request_from_university',
@@ -523,6 +529,7 @@ function displayTableSection($sectionTitle, $sectionData) {
                         elseif ($comment['proposal_status'] === 'approvedbyTA') echo "Technical Assistant";
                         elseif ($comment['proposal_status'] === 'approvedbysecretary') echo "Secretary";
                         elseif ($comment['proposal_status'] === 'approvedbyqachead') echo "Head of the QAC-UGC Department";
+                        elseif ($comment['proposal_status'] === 'approvedbyqachead_revised') echo "Head of the QAC-UGC Department (Revision Recommendation)";
                         elseif ($comment['proposal_status'] === 'resignature_request_from_university') echo "Head of the QAC-UGC Department- (Revised Proposal recommended by QAC)";
                         elseif ($comment['proposal_status'] === 're-signed_dean') echo "Re-signature for final version - Dean";
                         elseif ($comment['proposal_status'] === 're-signed_cqa') echo "Re-signature for final version - CQA Director";

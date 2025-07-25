@@ -52,7 +52,10 @@ if (strpos($proposal_type, 'revised') === 0) {
         're-signed_dean',
         're-signed_cqa',
         're-signed_vc',
-        'resignature_request_from_university'
+        'resignature_request_from_university',
+        'approvedbydean',
+        'approvedbycqa',
+        'approvedbyvc',
     ];
 } else {
     // Initial proposal — use basic status list
@@ -112,6 +115,9 @@ $initialOrder = [
 ];
 
 $revisedOrder = [
+    'approvedbydean',
+    'approvedbycqa',
+    'approvedbyvc',
     'approvedbyTA',
     'approvedbysecretary',
     'resignature_request_from_university',
@@ -529,10 +535,27 @@ function displayTableSection($sectionTitle, $sectionData) {
         <?php foreach ($comments as $comment) { ?>
             <tr>
                 <td>
-                    <?php 
-                        if ($comment['proposal_status'] === 'approvedbydean') echo "Dean";
-                        elseif ($comment['proposal_status'] === 'approvedbyvc') echo "Vice Chancellor";
-                        elseif ($comment['proposal_status'] === 'approvedbycqa') echo "CQA Director";
+                    <?php
+                        $status = $comment['proposal_status'];
+                        $reviewer = "Unknown"; // Default value
+
+                        if (strpos($status, 'dean') !== false) {
+                            $reviewer = "Dean";
+                        } elseif (strpos($status, 'vc') !== false) {
+                            $reviewer = "Vice Chancellor";
+                        } elseif (strpos($status, 'cqa') !== false) {
+                            $reviewer = "CQA Director";
+                        } elseif (strpos($status, 'TA') !== false) {
+                            $reviewer = "UGC - Technical Assistant";
+                        } elseif (strpos($status, 'secretary') !== false) {
+                            $reviewer = "UGC - Secretary";
+                        } elseif (strpos($status, 'qachead') !== false) {
+                            $reviewer = "Director QAC-UGC";
+                        } elseif (strpos($status, 'StandardCommittee') !== false) {
+                            $reviewer = "Standard Committee";
+                        }
+                        
+                        echo $reviewer;
                     ?>
                 </td>
                 <td><?php echo ucfirst(str_replace("approvedby", "Approved by ", $comment['proposal_status'])); ?></td>

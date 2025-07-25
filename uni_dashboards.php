@@ -77,7 +77,7 @@ $_SESSION['university_id'] = $university_id;
 // Fetch pending proposals that match the required status
 $pendingProposals = [];
 $base_query="
-    SELECT p.proposal_id, p.proposal_code, p.status, p.university_visible_status, p.proposal_type, p.submitted_at, u.first_name, u.last_name, u.faculty_of, u.email, gi.degree_name_english
+    SELECT p.proposal_id, p.proposal_code,p.proposal_type, p.status, p.university_visible_status, p.proposal_type, p.submitted_at, u.first_name, u.last_name, u.faculty_of, u.email, gi.degree_name_english
     FROM proposals p
     JOIN users u ON p.created_by = u.id
     LEFT JOIN proposal_general_info gi 
@@ -201,7 +201,7 @@ $submittedProposals = [];
 if (strpos(strtolower($role), 'dean') !== false && !empty($user_faculty)) {
     // Dean-specific query filtered by faculty
     $stmt = $connection->prepare("
-        SELECT p.proposal_id, p.proposal_code, p.university_visible_status, p.status, gi.degree_name_english
+        SELECT p.proposal_id, p.proposal_code,p.proposal_type, p.university_visible_status, p.status, gi.degree_name_english
         FROM proposals p
         JOIN proposal_general_info gi ON p.proposal_id = gi.proposal_id
         JOIN users u ON p.created_by = u.id
@@ -483,6 +483,7 @@ if (!empty($all_proposal_ids)) {
                 <tr>
                     
                     <th>Proposal Code</th>
+		    <th>Proposal Type</th>
                     <th>Degree Name</th>
                     <th>Submitted Date</th>
                     <th>Submitted By</th>
@@ -492,6 +493,7 @@ if (!empty($all_proposal_ids)) {
                     <tr>
                         
                         <td><?php echo $proposal['proposal_code']; ?></td>
+			<td><?php echo $pproposal['proposal_type']; ?></td>
                         <td><?php echo $proposal['degree_name_english']; ?></td>
                         <td><?php echo $proposal['submitted_at']; ?></td>
                         <td><?php echo $proposal['first_name'] . " " . $proposal['last_name']; ?></td>
@@ -536,6 +538,7 @@ if (!empty($all_proposal_ids)) {
                     <thead>
                         <tr>
                             <th>Proposal Code</th>
+                            <th>Proposal Type</th>
                             <th>Degree Name</th>
                             <th>Current Status</th>
                             <th>Status Workflow</th>
@@ -555,6 +558,7 @@ if (!empty($all_proposal_ids)) {
                             ?>
                             <tr>
                                 <td><?php echo htmlspecialchars($proposal['proposal_code']); ?></td>
+                                <td><?php echo htmlspecialchars($proposal['proposal_type']); ?></td>
                                 <td><?php echo htmlspecialchars($proposal['degree_name_english']); ?></td>
                                 <td>
                                     <span class="badge <?php echo $badge_class; ?>">
