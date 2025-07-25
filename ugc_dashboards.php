@@ -599,23 +599,41 @@ if (!empty($all_proposal_ids)) {
         showAllRows();
     }
 
+   
+
     function runFilter() {
         const code = document.getElementById('filterCode').value.toLowerCase();
         const degree = document.getElementById('filterDegree').value.toLowerCase();
         const university = document.getElementById('filterUniversity').value.toLowerCase();
 
-        ['pendingTable', 'submittedTable'].forEach(tableId => {
-            const rows = document.querySelectorAll(`#${tableId} tbody tr`);
-            rows.forEach(row => {
-                const matchCode = !code || (row.cells[0] && row.cells[0].innerText.toLowerCase().includes(code));
-                const matchDegree = !degree || (row.cells[1] && row.cells[1].innerText.toLowerCase().includes(degree));
-                
-                // MODIFIED: Adjust university index based on table's new column layout
-                const uniIndex = tableId === 'pendingTable' ? 4 : 4; // It is now column 5 (index 4) in BOTH tables
-                const matchUniversity = !university || (row.cells[uniIndex] && row.cells[uniIndex].innerText.trim().toLowerCase() === university.trim().toLowerCase());
+        // Filter the Pending Proposals table
+        const pendingRows = document.querySelectorAll('#pendingTable tbody tr');
+        pendingRows.forEach(row => {
+            // Correct column indexes for the 'pendingTable'
+            const codeText = row.cells[0] ? row.cells[0].innerText.toLowerCase() : '';
+            const degreeText = row.cells[3] ? row.cells[3].innerText.toLowerCase() : ''; // Corrected: was 2
+            const universityText = row.cells[7] ? row.cells[7].innerText.toLowerCase() : ''; // Corrected: was 6
 
-                row.style.display = (matchCode && matchDegree && matchUniversity) ? '' : 'none';
-            });
+            const matchCode = code === '' || codeText.includes(code);
+            const matchDegree = degree === '' || degreeText.includes(degree);
+            const matchUniversity = university === '' || universityText.includes(university);
+
+            row.style.display = (matchCode && matchDegree && matchUniversity) ? '' : 'none';
+        });
+
+        // Filter the Submitted Proposals status table
+        const submittedRows = document.querySelectorAll('#submittedTable tbody tr');
+        submittedRows.forEach(row => {
+            // Column indexes for the 'submittedTable'
+            const codeText = row.cells[0] ? row.cells[0].innerText.toLowerCase() : '';
+            const degreeText = row.cells[2] ? row.cells[2].innerText.toLowerCase() : '';
+            const universityText = row.cells[5] ? row.cells[5].innerText.toLowerCase() : '';
+
+            const matchCode = code === '' || codeText.includes(code);
+            const matchDegree = degree === '' || degreeText.includes(degree);
+            const matchUniversity = university === '' || universityText.includes(university);
+
+            row.style.display = (matchCode && matchDegree && matchUniversity) ? '' : 'none';
         });
     }
 
