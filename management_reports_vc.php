@@ -61,8 +61,8 @@ for ($m = 1; $m <= $currentMonth; $m++) {
 // Updated query with integer year
 $query = "SELECT DATE_FORMAT(submitted_at, '%Y-%m') AS month,
                  COUNT(*) AS total_submissions,
-                 SUM(CASE WHEN status LIKE 'approvedbyugc%' OR status = 'approvedbyqachead' THEN 1 ELSE 0 END) AS approved_proposals,
-                 SUM(CASE WHEN status LIKE 'rejectedbyugc%' OR status = 'rejectedbyqachead' THEN 1 ELSE 0 END) AS rejected_proposals,
+                 SUM(CASE WHEN university_visible_status = 'approvedbyqachead'  OR university_visible_status = 'approvedbyqachead_revised'  OR university_visible_status = 're-signed_vc' THEN 1 ELSE 0 END) AS approved_proposals,
+                 SUM(CASE WHEN university_visible_status = 'rejectedbyqachead' OR university_visible_status = 'rejectedbyStandardCommittee' OR university_visible_status = 'rejectedbyTA' OR status = 'rejectedbysecretary' THEN 1 ELSE 0 END) AS rejected_proposals,
                  SUM(CASE WHEN status IN ('submitted', 'under_review', 'approvedbydean', 'approvedbyvc', 'approvedbycqa') THEN 1 ELSE 0 END) AS pending_proposals
           FROM proposals
           WHERE university_id = ? 
