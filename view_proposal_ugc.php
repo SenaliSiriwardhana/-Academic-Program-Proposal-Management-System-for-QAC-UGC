@@ -310,6 +310,37 @@ $stmt->bind_param("i", $proposal_id);
 $stmt->execute();
 $proposal = $stmt->get_result()->fetch_assoc();
 
+// 1. Initialize the data array.
+$summary_data = [];
+
+// 2. Check the HISTORY table if this proposal has EVER been approved or rejected by the QAC Head.
+$qac_head_statuses = ['approvedbyqachead', 'rejectedbyqachead', 'approvedbyqachead_revised', 'resignature_request_from_university'];
+$placeholders = implode(',', array_fill(0, count($qac_head_statuses), '?'));
+
+$history_check_query = "SELECT 1 FROM proposal_status_history WHERE proposal_id = ? AND new_status IN ($placeholders) LIMIT 1";
+$stmt_history = $connection->prepare($history_check_query);
+$params = array_merge([$proposal_id], $qac_head_statuses);
+$types = 'i' . str_repeat('s', count($qac_head_statuses));
+$stmt_history->bind_param($types, ...$params);
+$stmt_history->execute();
+$result_history = $stmt_history->get_result();
+
+// 3. If a history record was found, it means the QAC Head has reviewed it. Now, fetch the summary data.
+if ($result_history->num_rows > 0) {
+    $summaryQuery = "SELECT section_identifier, compliance_status, comment FROM proposal_summary_sheet WHERE proposal_id = ?";
+    $stmt_summary = $connection->prepare($summaryQuery);
+    $stmt_summary->bind_param("i", $proposal_id);
+    $stmt_summary->execute();
+    $result_summary = $stmt_summary->get_result();
+    while ($row = $result_summary->fetch_assoc()) {
+        $summary_data[] = $row;
+    }
+    $stmt_summary->close();
+}
+$stmt_history->close();
+
+// --- END OF FINAL BLOCK ---
+
 // Fetch all other sections
 function fetchData($connection, $query, $proposal_id) {
     $stmt = $connection->prepare($query);
@@ -414,6 +445,12 @@ function displayTableSection($sectionTitle, $sectionData) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proposal Details</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+    <style>
+        .status-compliance { color: #155724; background-color: #d4edda; font-weight: bold; }
+        .status-non-compliance { color: #721c24; background-color: #f8d7da; font-weight: bold; }
+    </style>
+    
 </head>
 <body class="container mt-4 bg-light">
 
@@ -431,6 +468,32 @@ function displayTableSection($sectionTitle, $sectionData) {
             <tr><th><?php echo ucfirst(str_replace('_', ' ', $key)); ?></th><td><?php echo htmlspecialchars($value); ?></td></tr>
         <?php } ?>
     </table>
+
+    <!-- MODIFIED ACCORDION BLOCK TO DISPLAY THE SUMMARY SHEET -->
+    <?php if (!empty($summary_data)): ?>
+    <div class="accordion mt-4 no-print" id="summarySheetAccordion"> <!-- Added no-print class -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                    <strong>View QAC-UGC Review Summary Sheet</strong>
+                </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#summarySheetAccordion">
+                <div class="accordion-body">
+                    <?php 
+                        // Include the reusable table file.
+                        // The $summary_data variable is already defined on this page.
+                        include '_summary_sheet_table.php'; 
+                    ?>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+    <!-- END OF MODIFIED BLOCK -->
+
+
+ 
 
     <?php 
      displayFormSection("General Information", $generalInfo);
@@ -504,7 +567,10 @@ function displayTableSection($sectionTitle, $sectionData) {
 
   
 
-    
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
 
 
 </body>
