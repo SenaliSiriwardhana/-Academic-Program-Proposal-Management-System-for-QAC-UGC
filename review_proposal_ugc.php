@@ -711,22 +711,53 @@ if ($is_in_parallel_review) {
 
             <?php else: ?>
 
-            <!-- <button type="submit" name="approve" class="btn btn-success">Approve</button>
-            <button type="submit" name="reject" class="btn btn-danger">Reject</button> -->
+            <?php
+                // --- Determine the text for the "Approve" button ---
+                $approve_button_text = 'Approve'; // Default text
 
-            <!-- All other users -->
+                if ($is_department_reviewer) {
+                    $approve_button_text = 'Mark as Reviewed';
+                } elseif ($role === 'standard committee') {
+                    $approve_button_text = 'Submit to Subject Standing Committee';
+                }
+            ?>
 
+                <!-- 1. The "Approve" button -->
             <button type="submit" name="approve" class="btn btn-success btn-approve">
-                <?php echo $is_department_reviewer ? 'Mark as Reviewed' : 'Approve'; ?>
+                <?php echo $approve_button_text; ?>
             </button>
 
-            <?php if (!$is_department_reviewer): ?>
-                <button type="submit" name="reject" class="btn btn-danger">Reject</button>
-            <?php endif; ?>
-        
-
-             <?php endif; ?>
+            <br><br>
+            <!-- Button 1 -->
+            <button type="submit" name="approve_commission" class="btn btn-primary btn-approve">
+                Submit to Commission through Management Committee
+            </button>
             
+
+            <br><br>
+
+            <!-- Button 2 -->
+            <button type="submit" name="approve_decision_received" class="btn btn-info btn-approve">
+                Commission Decision Received
+            </button>
+
+            <br><br>
+
+            <!-- Button 3 -->
+            <button type="submit" name="approve_conveyed" class="btn btn-dark btn-approve">
+                Decision Conveyed
+            </button>
+            
+
+            <br><br>
+            <?php if (!$is_department_reviewer): ?>
+                <button type="submit" name="reject" class="btn btn-danger">Reject for revisions</button>
+            <?php endif; ?>
+    
+         <?php endif; ?>
+
+           
+        
         </div>
 
     <script>
