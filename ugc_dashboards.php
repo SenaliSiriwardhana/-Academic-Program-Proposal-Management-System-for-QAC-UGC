@@ -65,7 +65,7 @@ if ($role === 'ugc - technical assistant') {
         "ugc - academic department" => ["title" => "Academic Affairs Dashboard", "status" =>  $dept_queue_statuses],
         "ugc - admission department" => ["title" => "UGC - Admission Dashboard", "status" =>  $dept_queue_statuses],
         // *** KEY CHANGE HERE: Standing Committee now looks for the new status ***
-        "standard committee" => ["title" => "Standard Committee Dashboard", "status" => "approvedbyalldepartments"],
+        "standing committee" => ["title" => "Standing Committee Dashboard", "status" => "approvedbyalldepartments"],
     ];
 
     if (!array_key_exists($role, $ugc_settings)) {

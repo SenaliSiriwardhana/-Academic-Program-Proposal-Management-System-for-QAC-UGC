@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 case 'UGC - Secretary':
                     header("Location:  ugc_dashboards.php");
                     break;
-                case 'Standard Committee':
+                case 'Standing Committee':
                     header("Location:  ugc_dashboards.php");
                     break;
                 default:

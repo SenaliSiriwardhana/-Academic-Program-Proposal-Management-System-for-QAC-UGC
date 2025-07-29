@@ -551,8 +551,8 @@ function displayTableSection($sectionTitle, $sectionData) {
                             $reviewer = "UGC - Secretary";
                         } elseif (strpos($status, 'qachead') !== false) {
                             $reviewer = "Director QAC-UGC";
-                        } elseif (strpos($status, 'StandardCommittee') !== false) {
-                            $reviewer = "Standard Committee";
+                        } elseif (strpos($status, 'Standing Committee') !== false) {
+                            $reviewer = "Standing Committee";
                         }
                         
                         echo $reviewer;

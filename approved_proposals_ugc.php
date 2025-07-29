@@ -43,7 +43,7 @@ $ugc_settings = [
     "ugc - idd department" => ["title" => "IDD - Approved Proposals", "comment_status" => "approvedbyugcidd"],
     "ugc - academic department" => ["title" => "Academic - Approved Proposals", "comment_status" => "approvedbyugcacademic"],
     "ugc - admission department" => ["title" => "Admission - Approved Proposals", "comment_status" => "approvedbyugcadmission"],
-    "standard committee" => ["title" => "Standard Committee - Approved Proposals", "status_list" => ["approvedbyStandardCommittee"]]
+    "standing committee" => ["title" => "Standing Committee - Approved Proposals", "status_list" => ["approvedbyStandardCommittee"]]
 ];
 
 // Validate user role and get settings

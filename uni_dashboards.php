@@ -194,7 +194,7 @@ while ($row = $result->fetch_assoc()) {
     //$pendingProposals[] = $row; // Store in array for later use
 //}
 //echo "</pre>";
-$stmt->close();
+// $stmt->close();
 
 // Retrieve submitted proposals
 $submittedProposals = [];
@@ -212,7 +212,7 @@ if (strpos(strtolower($role), 'dean') !== false && !empty($user_faculty)) {
     ");
     $stmt->bind_param("is", $university_id, $user_faculty);
 }else{
-$stmt = $connection->prepare("SELECT p.proposal_id, p.proposal_code, p.university_visible_status, p.status, gi.degree_name_english FROM proposals p JOIN proposal_general_info gi ON p.proposal_id = gi.proposal_id WHERE p.university_id = ? AND p.status NOT IN ('draft', 'fresh') ORDER BY p.proposal_id ASC");
+$stmt = $connection->prepare("SELECT p.proposal_id, p.proposal_type, p.proposal_code, p.university_visible_status, p.status, gi.degree_name_english FROM proposals p JOIN proposal_general_info gi ON p.proposal_id = gi.proposal_id WHERE p.university_id = ? AND p.status NOT IN ('draft', 'fresh') ORDER BY p.proposal_id ASC");
 $stmt->bind_param("i", $university_id);
 }
 $stmt->execute();
@@ -483,7 +483,7 @@ if (!empty($all_proposal_ids)) {
                 <tr>
                     
                     <th>Proposal Code</th>
-		    <th>Proposal Type</th>
+		            <th>Proposal Type</th>
                     <th>Degree Name</th>
                     <th>Submitted Date</th>
                     <th>Submitted By</th>
@@ -493,7 +493,7 @@ if (!empty($all_proposal_ids)) {
                     <tr>
                         
                         <td><?php echo $proposal['proposal_code']; ?></td>
-			<td><?php echo $pproposal['proposal_type']; ?></td>
+			            <td><?php echo $proposal['proposal_type']; ?></td>
                         <td><?php echo $proposal['degree_name_english']; ?></td>
                         <td><?php echo $proposal['submitted_at']; ?></td>
                         <td><?php echo $proposal['first_name'] . " " . $proposal['last_name']; ?></td>

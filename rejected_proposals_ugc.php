@@ -35,7 +35,7 @@ $ugc_settings = [
     "ugc - legal department" => ["title" => "UGC - Legal Affairs Dashboard", "status" => "rejectedbyugclegal"],
     "ugc - academic department" => ["title" => "UGC - Academic Affairs Dashboard", "status" => "rejectedbyugcacademic"],
     "ugc - admission department" => ["title" => "UGC - Admission Department", "status" => "rejectedbyugcadmission"],
-    "standard committee" => ["title" => "Standard Committee Dashboard", "status" => "rejectedbyStandardCommittee"]
+    "standing committee" => ["title" => "Standing Committee Dashboard", "status" => "rejectedbyStandardCommittee"]
 ];
 
 // Validate user role and set dashboard properties

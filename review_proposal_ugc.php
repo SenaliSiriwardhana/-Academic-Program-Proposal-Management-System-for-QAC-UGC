@@ -67,7 +67,7 @@ $ugc_roles = [
     //"ugc - legal department" => "approvedbyugclegal",
     "ugc - academic department" => "approvedbyugcacademic",
     "ugc - admission department" => "approvedbyugcadmission",
-    "standard committee" => "approvedbystandardcommittee"
+    "standing committee" => "approvedbystandardcommittee"
 ];
 
 // Validate user role and set approval status
@@ -406,7 +406,7 @@ function calculateTotalCredits($sectionData) {
 $proposal_status = $proposal['status'];
 
 // Define who can SEE the summary sheet
-$ugc_roles_list = ["ugc - technical assistant", "ugc - secretary", "head of the qac-ugc department", "ugc - finance department", "ugc - hr department", "ugc - idd department", "ugc - academic department", "ugc - admission department", "standard committee"];
+$ugc_roles_list = ["ugc - technical assistant", "ugc - secretary", "head of the qac-ugc department", "ugc - finance department", "ugc - hr department", "ugc - idd department", "ugc - academic department", "ugc - admission department", "standing committee"];
 $is_ugc_user = in_array($role, $ugc_roles_list);
 
 // University can see it only after a UGC decision has been made
@@ -417,7 +417,7 @@ $is_uni_user_with_view_rights = !$is_ugc_user && in_array($proposal_status, $pos
 $show_summary_sheet = $is_ugc_user; // For now, let's assume only UGC users see it. You can add '|| $is_uni_user_with_view_rights' if they also use this page.
 
 // Define who can EDIT the summary sheet
-$can_edit_summary = in_array($role, ["ugc - technical assistant", "head of the qac-ugc department", "ugc - secretary", "standard committee"]);
+$can_edit_summary = in_array($role, ["ugc - technical assistant", "head of the qac-ugc department", "ugc - secretary", "standing committee"]);
 
 // Fetch summary data ONLY if the sheet is being shown
 $summary_data = [];
@@ -613,7 +613,7 @@ if ($is_in_parallel_review) {
                         elseif ($comment['proposal_status'] === 're-signed_dean') echo "Re-signature for final version - Dean";
                         elseif ($comment['proposal_status'] === 're-signed_cqa') echo "Re-signature for final version - CQA Director";
                         elseif ($comment['proposal_status'] === 're-signed_vc') echo "Re-signature for final version - VC";
-                        elseif ($comment['proposal_status'] === 'approvedbyugcStandardCommittee') echo "Standard Committee";
+                        elseif ($comment['proposal_status'] === 'approvedbyugcStandardCommittee') echo "Standing Committee";
                         
                     ?>
                 </td>
@@ -717,36 +717,54 @@ if ($is_in_parallel_review) {
 
                 if ($is_department_reviewer) {
                     $approve_button_text = 'Mark as Reviewed';
-                } elseif ($role === 'standard committee') {
-                    $approve_button_text = 'Submit to Subject Standing Committee';
-                }
+                } 
+                
+                
             ?>
 
-                <!-- 1. The "Approve" button -->
-            <button type="submit" name="approve" class="btn btn-success btn-approve">
-                <?php echo $approve_button_text; ?>
-            </button>
-
-            <br><br>
-            <!-- Button 1 -->
-            <button type="submit" name="approve_commission" class="btn btn-primary btn-approve">
-                Submit to Commission through Management Committee
-            </button>
             
 
-            <br><br>
+             <?php if ($role !== 'standing committee'): ?>
+                    <button type="submit" name="approve" class="btn btn-success btn-approve">
+                        <?php echo $approve_button_text; ?>
+                    </button>
+                <?php endif; ?>
 
-            <!-- Button 2 -->
-            <button type="submit" name="approve_decision_received" class="btn btn-info btn-approve">
-                Commission Decision Received
-            </button>
 
-            <br><br>
+                <!-- ============================================================= -->
+                <!--  NEW: STANDARD COMMITTEE SPECIFIC BUTTONS - ONLY SHOWN FOR THEM -->
+                <!-- ============================================================= -->
+                <?php if ($role === 'standing committee'): ?>
+                    
+                    <!-- Standard Committee's main approval button -->
+                     <button type="submit" name="approve" class="btn btn-success btn-approve">
+                        Submit to Subject Standing Committee
+                    </button>
 
-            <!-- Button 3 -->
-            <button type="submit" name="approve_conveyed" class="btn btn-dark btn-approve">
-                Decision Conveyed
-            </button>
+                    <br><br>
+                    <!-- Button 1: Submit to Commission -->
+                    <button type="submit" name="approve_commission" class="btn btn-primary btn-approve">
+                        Submit to Commission through Management Committee
+                    </button>
+                    
+                    <br><br>
+
+                    <!-- Button 2: Commission Decision Received -->
+                    <button type="submit" name="approve_decision_received" class="btn btn-info btn-approve">
+                        Commission Decision Received
+                    </button>
+
+                    <br><br>
+
+                    <!-- Button 3: Decision Conveyed -->
+                    <button type="submit" name="approve_conveyed" class="btn btn-dark btn-approve">
+                        Decision Conveyed
+                    </button>
+                <?php endif; // End of Standard Committee specific buttons ?>
+                <!-- ============================================================= -->
+                
+
+             
             
 
             <br><br>

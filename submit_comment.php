@@ -27,7 +27,7 @@ $comment_status = ''; // This is the status we will log in the comments table fo
 
 
 // START: NEW LOGIC - DEFINE WHO CAN EDIT THE SUMMARY
-$can_edit_summary = in_array($role, ["ugc - technical assistant", "ugc - secretary", "head of the qac-ugc department","sStandard committee"]);
+$can_edit_summary = in_array($role, ["ugc - technical assistant", "ugc - secretary", "head of the qac-ugc department","Standing committee"]);
 // END: NEW LOGIC
 
 // Check if user is from UGC (including Standard Committee)
@@ -40,7 +40,7 @@ $ugc_roles = [
     "ugc - idd department",
     "ugc - academic department",
     "ugc - admission department",
-    "standard committee"
+    "standing committee"
 ];
 
 // Define the 5 parallel review departments and their specific approval statuses
@@ -87,7 +87,7 @@ elseif (isset($_POST['reject'])) {
         "ugc - idd department" => 'rejectedbyugcidd',
         "ugc - academic department" => 'rejectedbyugcacademic',
         "ugc - admission department" => 'rejectedbyugcadmission',
-        "standard committee" => 'rejectedbyStandardCommittee'
+        "standing committee" => 'rejectedbyStandardCommittee'
     ];
     $new_proposal_status = $comment_status = $rejection_map[$role] ?? null;
     if (!$new_proposal_status) {
@@ -99,7 +99,7 @@ elseif (isset($_POST['approve'])) {
 
     // --- NEW CODE START: VALIDATION FOR SUMMARY SHEET COMPLETENESS ---
     // This check only applies to users who can edit the summary (TA, Secretary, QAC Head).
-    $can_edit_summary = in_array($role, ["ugc - technical assistant", "ugc - secretary", "head of the qac-ugc department","standard committee"]);
+    $can_edit_summary = in_array($role, ["ugc - technical assistant", "ugc - secretary", "head of the qac-ugc department","standing committee"]);
 
     if ($can_edit_summary) {
         // Get the total number of items that should have been reviewed from the hidden input.
@@ -164,7 +164,7 @@ elseif (isset($_POST['approve'])) {
             
             // This is the new status for the Standing Committee to see the proposal
             case 'approvedbyalldepartments': 
-                if (strcasecmp($role, "standard committee") === 0) $new_proposal_status = 'approvedbyStandardCommittee';
+                if (strcasecmp($role, "standing committee") === 0) $new_proposal_status = 'approvedbyStandardCommittee';
                 break;
 
             default:
@@ -220,7 +220,7 @@ $updated_by = $_SESSION['id']; // Assign logged-in user ID
 $connection->begin_transaction();
 try {
       // --- NEW CODE BLOCK START: Save Summary Sheet Data ---
-    $can_edit_summary = in_array($role, ["ugc - technical assistant", "ugc - secretary", "head of the qac-ugc department","standard committee"]);
+    $can_edit_summary = in_array($role, ["ugc - technical assistant", "ugc - secretary", "head of the qac-ugc department","standing committee"]);
 
 
        

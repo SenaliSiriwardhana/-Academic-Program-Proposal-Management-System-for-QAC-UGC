@@ -120,7 +120,7 @@ $display_university = htmlspecialchars($user['university']);
             $user_role_lower = strtolower($user['role']);
             if (strpos($user_role_lower, 'dean') !== false || strpos($user_role_lower, 'vice chancellor') !== false || strpos($user_role_lower, 'cqa director') !== false) {
                 $dashboard_link = 'uni_dashboards.php';
-            } elseif (strpos($user_role_lower, 'ugc') !== false || strpos($user_role_lower, 'standard committee') !== false) {
+            } elseif (strpos($user_role_lower, 'ugc') !== false || strpos($user_role_lower, 'standing committee') !== false) {
                 $dashboard_link = 'ugc_dashboards.php';
             }
         ?>
