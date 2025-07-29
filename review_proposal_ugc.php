@@ -718,8 +718,7 @@ if ($is_in_parallel_review) {
                 if ($is_department_reviewer) {
                     $approve_button_text = 'Mark as Reviewed';
                 } 
-                
-                
+                  
             ?>
 
             

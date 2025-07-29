@@ -196,7 +196,7 @@ $connection->close();
                             <option value="UGC - Admission Department">UGC - Admission Department</option>
                             <option value="UGC - Secretary">UGC - Secretary</option>
                             <option value="UGC - Technical Assistant"> UGC - Technical Assistant</option>
-                            <option value="Standard Committee">Standard Committee</option>
+                            <option value="Standing Committee">Standing Committee</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -265,7 +265,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "UGC - Admission Department",
         "UGC - Secretary",
         "UGC - Technical Assistant",
-        "Standard Committee"
+        "Standing Committee"
     ];
 
     function handleRoleChange() {

@@ -11,7 +11,7 @@ function renderReviewControls($identifier, $summary_data, $can_edit,$proposal) {
 
     // Get the user role and normalize it
     $user_role = strtolower(trim($_SESSION['role'] ?? ''));
-    $is_standing_committee = ($user_role === 'standard committee');
+    $is_standing_committee = ($user_role === 'standing committee');
 
     //    // --- NEW, FORCEFUL DEBUG BLOCK ---
     // // This will print the debug info for the FIRST item and stop everything.

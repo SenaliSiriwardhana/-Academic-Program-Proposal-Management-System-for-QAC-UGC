@@ -91,7 +91,7 @@ if (isset($role_settings['comment_status'])) {
 // Check if this role uses the 'status_list' method (for everyone else)
 elseif (isset($role_settings['status_list'])) {
     
-    // This is a standard role (like QAC Head, Secretary, Standard Committee, etc.).
+    // This is a standard role (like QAC Head, Secretary, Standing Committee, etc.).
     $status_list = $role_settings['status_list'];
     
     $placeholders = implode(',', array_fill(0, count($status_list), '?'));

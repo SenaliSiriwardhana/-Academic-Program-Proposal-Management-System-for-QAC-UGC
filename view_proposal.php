@@ -30,7 +30,7 @@ $ugc_roles = [
     "ugc - admission department" => "approvedbyugcadmission",
     "ugc - technical assistant" => "approvedbyTA",
     "ugc - secretary" => "approvedbysecretary",
-    "standard committee" => "approvedbystandardcommittee"
+    "standing committee" => "approvedbystandardcommittee"
 ];
 // Normalize the Dean's role
 if (strpos($role, 'dean') !== false) {
@@ -534,7 +534,7 @@ function displayTableSection($sectionTitle, $sectionData) {
                         elseif ($comment['proposal_status'] === 're-signed_dean') echo "Re-signature for final version - Dean";
                         elseif ($comment['proposal_status'] === 're-signed_cqa') echo "Re-signature for final version - CQA Director";
                         elseif ($comment['proposal_status'] === 're-signed_vc') echo "Re-signature for final version - VC";
-                        elseif ($comment['proposal_status'] === 'approvedbyugcStandardCommittee') echo "Standard Committee";
+                        elseif ($comment['proposal_status'] === 'approvedbyugcStandardCommittee') echo "Standing Committee";
                     ?>
                 </td>
                 <td><?php echo ucfirst(str_replace("approvedby", "Approved by ", $comment['proposal_status'])); ?></td>
