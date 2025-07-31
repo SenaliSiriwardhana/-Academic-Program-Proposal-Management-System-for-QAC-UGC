@@ -149,7 +149,7 @@ if ($proposal) {
         $has_st_rejection = false;
         $has_qac_rejection = false;
 
-        $qac_rejection_statuses = ['rejectedbyqachead', 'rejectedbystandardcommittee']; // Initializing the array correctly
+        $qac_rejection_statuses = ['rejectedbyqachead', 'rejectedbystandardcommittee','rejectedbyTA','rejectedbysecretary']; // Initializing the array correctly
 
             // echo "<b>Checking for these QAC rejection statuses:</b><pre>";
             // print_r($qac_rejection_statuses);
