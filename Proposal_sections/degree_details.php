@@ -104,11 +104,20 @@ $degreeDetails = $_SESSION['degree_details'] ?? [
             <form action="save_data.php" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="form_type" value="degree_details">
 
-                <!-- Background to the Program -->
-                <div class="mb-3">
-                    <label for="background_to_program" class="form-label">3.1.a. Background to the Program</label>
-                    <textarea class="form-control" id="background_to_program" name="background_to_program" rows="5" placeholder="Provide a detailed background" required><?php echo htmlspecialchars($degreeDetails['background_to_program'] ?? ''); ?></textarea><?php echo get_lock_status_attr('degree_details.background_to_program'); ?><?php render_field_feedback('degree_details.background_to_program'); ?>
-                </div>
+               <!-- Background to the Program -->
+            <div class="mb-3">
+            <label for="background_to_program" class="form-label">3.1.a. Background to the Program</label>
+            <textarea 
+                class="form-control" 
+                id="background_to_program" 
+                name="background_to_program" 
+                rows="5" 
+                placeholder="Provide a detailed background" 
+                required
+                        <?php echo get_lock_status_attr('degree_details.background_to_program'); ?>
+                        ><?php echo htmlspecialchars($degreeDetails['background_to_program'] ?? ''); ?></textarea>
+                        <?php render_field_feedback('degree_details.background_to_program'); ?>
+            </div>
 
                 <!-- Subsections under Background -->
                 <div class="mb-3">
