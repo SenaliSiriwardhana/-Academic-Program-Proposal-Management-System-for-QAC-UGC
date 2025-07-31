@@ -26,16 +26,15 @@ if ($result->num_rows > 0) {
 
 // Define UGC roles with corresponding dashboard titles & status filters
 $ugc_settings = [
-    "ugc - technical assistant" => ["title" => "UGC - Technical Assistant Dashboard","status" => "rejectedbyTA"],
-    "ugc - secretary" => ["title" => "UGC - Secretary Dashboard","status" => "rejectedbysecretary"],
-    "head of the qac-ugc department" => ["title" => "Head of QAC-UGC Dashboard", "status" => "rejectedbyqachead"],
-    "ugc - finance department" => ["title" => "UGC - Finance Department Dashboard", "status" => "rejectedbyugcfinance"],
-    "ugc - hr department" => ["title" => "UGC - Human Resources Dashboard", "status" => "rejectedbyugchr"],
-    "ugc - idd department" => ["title" => "UGC - Institutional Development Dashboard", "status" => "rejectedbyugcidd"],
-    "ugc - legal department" => ["title" => "UGC - Legal Affairs Dashboard", "status" => "rejectedbyugclegal"],
-    "ugc - academic department" => ["title" => "UGC - Academic Affairs Dashboard", "status" => "rejectedbyugcacademic"],
-    "ugc - admission department" => ["title" => "UGC - Admission Department", "status" => "rejectedbyugcadmission"],
-    "standing committee" => ["title" => "Standing Committee Dashboard", "status" => "rejectedbyStandardCommittee"]
+    "ugc - technical assistant" => ["title" => "Technical Assistant - Rejected Proposals","status" => "rejectedbyTA"],
+    "ugc - secretary" => ["title" => "Secretary - Rejected Proposals","status" => "rejectedbysecretary"],
+    "head of the qac-ugc department" => ["title" => "QAC Director - Rejected Proposals", "status" => "rejectedbyqachead"],
+    "ugc - finance department" => ["title" => "Finance - Rejected Proposals", "status" => "rejectedbyugcfinance"],
+    "ugc - hr department" => ["title" => "HR - Rejected Proposals", "status" => "rejectedbyugchr"],
+    "ugc - idd department" => ["title" => "IDD - Rejected Proposals", "status" => "rejectedbyugcidd"],
+    "ugc - academic department" => ["title" => "Academic - Rejected Proposals", "status" => "rejectedbyugcacademic"],
+    "ugc - admission department" => ["title" => "Admission - Rejected Proposals", "status" => "rejectedbyugcadmission"],
+    "standing committee" => ["title" => "Standing Committee - Rejected Proposals", "status" => "rejectedbyStandardCommittee"]
 ];
 
 // Validate user role and set dashboard properties

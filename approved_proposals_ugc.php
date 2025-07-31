@@ -35,9 +35,9 @@ $department_pool_statuses = ['approvedbyqachead', 'approvedbyqachead_revised', '
 
 // Define UGC roles with corresponding dashboard titles & status filters
 $ugc_settings = [
-    "ugc - technical assistant" => ["title" => "Approved by Technical Assistant", "status_list" => ["approvedbyTA"]],
-    "ugc - secretary" => ["title" => "Approved by Secretary", "status_list" => ["approvedbysecretary"]],
-    "head of the qac-ugc department" => ["title" => "Approved by Head of QAC", "status_list" => $department_pool_statuses],
+    "ugc - technical assistant" => ["title" => "Technical Assistant - Approved Proposals", "status_list" => ["approvedbyTA"]],
+    "ugc - secretary" => ["title" => "Secretary - Approved Proposals", "status_list" => ["approvedbysecretary"]],
+    "head of the qac-ugc department" => ["title" => "QAC Director - Approved Proposals", "status_list" => $department_pool_statuses],
     "ugc - finance department" => ["title" => "Finance - Approved Proposals", "comment_status" => "approvedbyugcfinance"],
     "ugc - hr department" => ["title" => "HR - Approved Proposals", "comment_status" => "approvedbyugchr"],
     "ugc - idd department" => ["title" => "IDD - Approved Proposals", "comment_status" => "approvedbyugcidd"],
