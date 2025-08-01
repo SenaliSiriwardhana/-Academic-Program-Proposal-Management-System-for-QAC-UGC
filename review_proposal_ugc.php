@@ -646,7 +646,7 @@ if ($is_in_parallel_review) {
         <!-- Checkbox for confirmation -->
         <div class="form-check">
             <input type="checkbox" class="form-check-input" id="recommend" name="recommend">
-            <label class="form-check-label" for="recommend">I hereby endorse the proposal, confirming that all the above information provided is accurate and complete.</label>
+            <label class="form-check-label" for="recommend">I (<strong><?php echo htmlspecialchars($_SESSION['full_name']); ?></strong>), hereby endorse the proposal, confirming that all the above information provided is accurate and complete.</label>
         </div>
 
         <!-- Signature Pad -->
