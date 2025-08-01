@@ -585,8 +585,8 @@ unset($row);
                                     <tr>
                                         <td><?php echo htmlspecialchars($proposal['proposal_code']); ?></td>
                                         <td><?php echo htmlspecialchars($proposal['degree_name_english']); ?></td>
-                                        <!-- <td><span class="badge bg-info"><?php echo str_replace("_", " ", htmlspecialchars($proposal['status'])); ?></span></td> -->
-                                        <td><span class="badge bg-info"><?php echo str_replace("_", " ", htmlspecialchars($proposal['university_visible_status'])); ?></span></td>
+                                        <td><span class="badge bg-info"><?php echo str_replace("_", " ", htmlspecialchars($proposal['status'])); ?></span></td>
+                                        <!-- <td><span class="badge bg-info"><?php echo str_replace("_", " ", htmlspecialchars($proposal['university_visible_status'])); ?></span></td> -->
                                         <td>
                                             <button type="button" class="btn btn-info btn-sm" 
                                                     data-bs-toggle="modal" 

@@ -504,7 +504,7 @@ if (!empty($all_proposal_ids)) {
                             $resign_statuses = ['resignature_request_from_university', 're-signed_dean', 're-signed_cqa'];
                             
                             // Get the current status for this specific proposal
-                            $current_proposal_status = $proposal['university_visible_status'] ?? '';
+                            $current_proposal_status = $proposal['status'] ?? '';
 
                             // Set default button text and color
                             $button_text = 'Review';
@@ -562,7 +562,7 @@ if (!empty($all_proposal_ids)) {
                                 <td><?php echo htmlspecialchars($proposal['degree_name_english']); ?></td>
                                 <td>
                                     <span class="badge <?php echo $badge_class; ?>">
-                                        <?php echo str_replace("_", " ", htmlspecialchars($proposal['university_visible_status'])); ?>
+                                        <?php echo str_replace("_", " ", htmlspecialchars($proposal['status'])); ?>
                                     </span>
                                 </td>
                                 <td>

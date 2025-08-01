@@ -52,7 +52,7 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 $proposal_id = $_GET['id'];
 
 // Fetch proposal details
-$proposalQuery = "SELECT proposal_code, proposal_type, university_visible_status, created_at, updated_at, submitted_at FROM proposals WHERE proposal_id = ?";
+$proposalQuery = "SELECT proposal_code, proposal_type, status, created_at, updated_at, submitted_at FROM proposals WHERE proposal_id = ?";
 $stmt = $connection->prepare($proposalQuery);
 $stmt->bind_param("i", $proposal_id);
 $stmt->execute();
