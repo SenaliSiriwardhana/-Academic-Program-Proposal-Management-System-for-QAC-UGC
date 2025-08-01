@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $message_type = 'error';
     } else {
         // Hash the password
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+       // $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
         // Retrieve university_id
         $stmt = $connection->prepare("SELECT university_id FROM universities WHERE university_name = ?");
@@ -125,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $university_id,
                     $role,
                     $username,
-                    $hashed_password
+                    $password
                 );
 
 

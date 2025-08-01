@@ -15,7 +15,7 @@ $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = htmlspecialchars(trim($_POST['uname']));
-    $password = htmlspecialchars(trim($_POST['password']));
+    $input_password = htmlspecialchars(trim($_POST['password']));
     
 
     // Check if the username exists
@@ -29,11 +29,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $stmt->store_result();
 
     if ($stmt->num_rows > 0) {
-        $stmt->bind_result($user_id, $hashed_password, $first_name, $last_name, $university, $email, $role);
+        $stmt->bind_result($user_id, $password, $first_name, $last_name, $university, $email, $role);
         $stmt->fetch();
 
         // Verify the password
-        if (password_verify($password, $hashed_password)) {
+        if ($input_password === $password) {
             
             // Successful login
             $_SESSION['id'] = $user_id;

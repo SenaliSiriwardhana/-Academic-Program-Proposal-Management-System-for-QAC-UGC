@@ -33,11 +33,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['error'] = "Passwords do not match.";
             $step = 2; // Keep user on password reset step
         } else {
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+           //$hashed_password = password_hash($password, PASSWORD_DEFAULT);
             $user_id = $_SESSION['reset_user_id'];
 
             $stmt = $connection->prepare("UPDATE users SET password = ? WHERE id = ?");
-            $stmt->bind_param("si", $hashed_password, $user_id);
+            $stmt->bind_param("si", $password, $user_id);
 
             if ($stmt->execute()) {
                 session_destroy(); // Clear session to prevent repeated resets

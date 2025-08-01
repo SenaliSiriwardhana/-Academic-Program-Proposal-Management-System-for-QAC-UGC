@@ -91,17 +91,17 @@
                 $stmt->store_result();
 
                 if ($stmt->num_rows > 0) {
-                    $stmt->bind_result($hashedPassword);
+                    $stmt->bind_result($password);
                     $stmt->fetch();
 
                     // Verify the current password
-                    if (password_verify($currentPassword, $hashedPassword)) {
+                    if (password_verify($currentPassword, $password)) {
                         // Hash the new password
-                        $newHashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+                        //$newHashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
 
                         // Update the password in the database
                         $updateStmt = $connection->prepare("UPDATE users SET password = ? WHERE username = ?");
-                        $updateStmt->bind_param("ss", $newHashedPassword, $username);
+                        $updateStmt->bind_param("ss", $newPassword, $username);
 
                         if ($updateStmt->execute()) {
                             echo "<script>

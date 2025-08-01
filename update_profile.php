@@ -84,9 +84,9 @@ if (!empty($new_password)) {
         header('Location: edit_profile.php');
         exit();
     }
-    $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+    //$hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
     $sql_parts[] = "password = ?";
-    $params[] = $hashed_password;
+    $params[] = $new_password;
     $types .= "s";
 }
 
