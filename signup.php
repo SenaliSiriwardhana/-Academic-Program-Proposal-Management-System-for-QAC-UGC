@@ -224,7 +224,7 @@ $connection->close();
                     </div>
 
                     <div class="mb-3" id="faculty-field" style="display: none;">
-                        <label for="faculty_of" class="form-label">Faculty (for Dean)</label>
+                        <label for="faculty_of" class="form-label">Faculty (for Dean & Program Coordinator)</label>
                         <input type="text" class="form-control" id="faculty_of" name="faculty_of" placeholder="Enter Faculty Name">
                     </div>
                     <div class="mb-3">
