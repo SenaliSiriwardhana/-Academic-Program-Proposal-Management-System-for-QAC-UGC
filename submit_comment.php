@@ -278,7 +278,7 @@ try {
     }
 
     // --- Log the Action in `proposal_comments` ---
-    $stmt = $connection->prepare("INSERT INTO proposal_comments (proposal_id, comment, seal_and_sign, proposal_status, id) VALUES (?, ?, ?, ?, ?)");
+    $stmt = $connection->prepare("INSERT INTO proposal_comments (proposal_id, comment, seal_and_sign, proposal_status, id, Time) VALUES (?, ?, ?, ?, ?,NOW())");
     $stmt->bind_param("isssi", $proposal_id, $comment_text, $signature_image, $comment_status, $user_id);
     $stmt->execute();
     $stmt->close();
@@ -375,32 +375,79 @@ try {
     // }
 
     // --- HANDLE PARALLEL REVIEW COMPLETION ---
-    if ($new_proposal_status === null) { 
-        $dept_statuses = array_values($parallel_review_roles);
-        $placeholders = implode(',', array_fill(0, count($dept_statuses), '?'));
+    // if ($new_proposal_status === null) { 
+    //     $dept_statuses = array_values($parallel_review_roles);
+    //     $placeholders = implode(',', array_fill(0, count($dept_statuses), '?'));
         
-        $check_stmt = $connection->prepare(
-            "SELECT COUNT(DISTINCT proposal_status) FROM proposal_comments 
-             WHERE proposal_id = ? AND proposal_status IN ($placeholders)"
-        );
-        $types = "i" . str_repeat('s', count($dept_statuses));
-        $check_stmt->bind_param($types, $proposal_id, ...$dept_statuses);
-        $check_stmt->execute();
-        $count = $check_stmt->get_result()->fetch_row()[0];
-        $check_stmt->close();
+    //     $check_stmt = $connection->prepare(
+    //         "SELECT COUNT(DISTINCT proposal_status) FROM proposal_comments 
+    //          WHERE proposal_id = ? AND proposal_status IN ($placeholders)"
+    //     );
+        // --- NEW, CORRECTED LOGIC FOR PARALLEL REVIEW COMPLETION ---
+        $final_real_status = $new_proposal_status; 
+        if ($new_proposal_status === null && $comment_status) { // A department just acted
 
-        //$final_real_status = $internal_department_statuses;
+            // 1. First, find the timestamp of the most recent "send to departments" trigger event.
+            $trigger_statuses = ['approvedbyqachead', 'approvedbyqachead_revised', 're-signed_vc'];
+            $trigger_placeholders = implode(',', array_fill(0, count($trigger_statuses), '?'));
 
-        if ($count >= 5) {
-            // The 5th department has approved. Update the REAL status to 'approvedbyalldepartments'.
-            // The university_visible_status remains what it was before ($current_uni_status).
-            $final_real_status = 'approvedbyalldepartments';
-            //$stmt_final_update = $connection->prepare("UPDATE proposals SET status = ?, university_visible_status = ? WHERE proposal_id = ?");
-            //$stmt_final_update->bind_param("ssi", $final_real_status, $current_uni_status, $proposal_id);
-            //$stmt_final_update->execute();
-            //$stmt_final_update->close();
+            $stmt_trigger_time = $connection->prepare(
+                "SELECT MAX(Time) as last_trigger_time 
+                FROM proposal_comments 
+                WHERE proposal_id = ? AND proposal_status IN ($trigger_placeholders)"
+            );
+            $params_trigger = array_merge([$proposal_id], $trigger_statuses);
+            $types_trigger = 'i' . str_repeat('s', count($trigger_statuses));
+            $stmt_trigger_time->bind_param($types_trigger, ...$params_trigger);
+            $stmt_trigger_time->execute();
+            $trigger_result = $stmt_trigger_time->get_result()->fetch_assoc();
+            $last_trigger_time = $trigger_result['last_trigger_time'] ?? '1970-01-01 00:00:00'; // Use a very old date if not found
+            $stmt_trigger_time->close();
+
+            // 2. Now, count only the department approvals that happened *after* that timestamp.
+            $dept_statuses = array_values($parallel_review_roles);
+            $dept_placeholders = implode(',', array_fill(0, count($dept_statuses), '?'));
+            
+            $check_stmt = $connection->prepare(
+                "SELECT COUNT(DISTINCT proposal_status) 
+                FROM proposal_comments 
+                WHERE proposal_id = ? 
+                AND proposal_status IN ($dept_placeholders)
+                AND Time >= ?" // The crucial new condition
+            );
+            
+            $params_count = array_merge([$proposal_id], $dept_statuses, [$last_trigger_time]);
+            $types_count = 'i' . str_repeat('s', count($dept_statuses)) . 's';
+            $check_stmt->bind_param($types_count, ...$params_count);
+            $check_stmt->execute();
+            $count = $check_stmt->get_result()->fetch_row()[0];
+            $check_stmt->close();
+
+            // 3. Set the final status if the count is 5 or more (no change to this part)
+            if ($count >= 5) {
+                $final_real_status = 'approvedbyalldepartments';
+            }
         }
-    }
+        // --- END OF CORRECTED LOGIC ---
+
+    //     $types = "i" . str_repeat('s', count($dept_statuses));
+    //     $check_stmt->bind_param($types, $proposal_id, ...$dept_statuses);
+    //     $check_stmt->execute();
+    //     $count = $check_stmt->get_result()->fetch_row()[0];
+    //     $check_stmt->close();
+
+    //     //$final_real_status = $internal_department_statuses;
+
+    //     if ($count >= 5) {
+    //         // The 5th department has approved. Update the REAL status to 'approvedbyalldepartments'.
+    //         // The university_visible_status remains what it was before ($current_uni_status).
+    //         $final_real_status = 'approvedbyalldepartments';
+    //         //$stmt_final_update = $connection->prepare("UPDATE proposals SET status = ?, university_visible_status = ? WHERE proposal_id = ?");
+    //         //$stmt_final_update->bind_param("ssi", $final_real_status, $current_uni_status, $proposal_id);
+    //         //$stmt_final_update->execute();
+    //         //$stmt_final_update->close();
+    //     }
+    // }
          // --- Step 3: If there is a new real status, update the proposal ---
     if ($final_real_status) {
         

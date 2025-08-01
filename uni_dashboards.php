@@ -278,11 +278,11 @@ if (!empty($all_proposal_ids)) {
 
     // 4. Create the new query with the "NOT IN" clause.
     $history_query = "
-        SELECT proposal_id, proposal_status, `Date`, comment
+        SELECT proposal_id, proposal_status, `Time`, comment
         FROM proposal_comments
         WHERE proposal_id IN ($id_placeholders)
           AND proposal_status NOT IN ($status_placeholders)
-        ORDER BY proposal_id, `Date` ASC
+        ORDER BY proposal_id, `Time` ASC
     ";
 
     $stmt_history = $connection->prepare($history_query);
@@ -681,7 +681,7 @@ if (!empty($all_proposal_ids)) {
                 tempDiv.innerText = commentText; // Use .innerText to escape any potential HTML
                 const escapedComment = tempDiv.innerHTML;
 
-                const stepDate = new Date(step.Date).toLocaleString('en-GB', {
+                const stepDate = new Date(step.Time).toLocaleString('en-GB', {
                     year: 'numeric', month: 'short', day: 'numeric',
                     hour: '2-digit', minute: '2-digit', hour12: true
                 });

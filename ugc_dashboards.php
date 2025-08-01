@@ -89,38 +89,128 @@ if ($role === 'ugc - technical assistant') {
     // }
 
     // --- NEW QUERY LOGIC FOR PARALLEL DEPARTMENTS ---
+// if (is_array($statusFilter) && array_key_exists($role, $dept_approval_status_map)) {
+//     // This is one of the 5 parallel review departments.
+//     // We only show proposals they have NOT yet approved.
+//     $my_approval_status = $dept_approval_status_map[$role];
+//     $placeholders = implode(',', array_fill(0, count($statusFilter), '?'));
+//        $query = "$base_query 
+//               WHERE p.status IN ($placeholders) 
+//               AND NOT EXISTS (
+//                   SELECT 1 FROM proposal_comments pc 
+//                   WHERE pc.proposal_id = p.proposal_id AND pc.proposal_status = ?
+//               )
+//               ORDER BY p.submitted_at ASC";
+
+//     $stmt = $connection->prepare($query);
+//     // Bind the status filters and the department's own approval status
+//     $params = array_merge($statusFilter, [$my_approval_status]);
+//     $stmt->bind_param(str_repeat('s', count($params)), ...$params);
+
+// } elseif (is_array($statusFilter)) {
+//     // Standard array filter for roles that see multiple statuses but aren't in parallel review
+//     $placeholders = implode(',', array_fill(0, count($statusFilter), '?'));
+//     $query = "$base_query WHERE p.status IN ($placeholders) ORDER BY p.submitted_at ASC";
+//     $stmt = $connection->prepare($query);
+//     $stmt->bind_param(str_repeat('s', count($statusFilter)), ...$statusFilter);
+// } else {
+//     // Standard single status filter
+//     $query = "$base_query WHERE p.status = ? ORDER BY p.submitted_at ASC";
+//     $stmt = $connection->prepare($query);
+//     $stmt->bind_param("s", $statusFilter);
+// }
+    
+//}
+
+// --- START: NEW, CORRECTED QUERY LOGIC FOR ALL NON-TA ROLES ---
+
+// if (is_array($statusFilter) && array_key_exists($role, $dept_approval_status_map)) {
+    
+//     // --- THIS IS THE CORRECTED LOGIC FOR THE 5 PARALLEL DEPARTMENTS ---
+//     $my_approval_status = $dept_approval_status_map[$role];
+//     $pool_statuses = $statusFilter; // Use the statuses from the settings, e.g., ['approvedbyqachead', ...]
+//     $placeholders = implode(',', array_fill(0, count($pool_statuses), '?'));
+
+//     // This query shows a proposal UNLESS this department's approval is the latest department-level action.
+//     $query = "$base_query 
+//               WHERE p.status IN ($placeholders)
+//                 AND COALESCE(
+//                     (
+//                         -- Subquery to find the status of the single most recent department-level comment
+//                         SELECT pc_latest.proposal_status
+//                         FROM proposal_comments pc_latest
+//                         WHERE pc_latest.proposal_id = p.proposal_id
+//                           AND pc_latest.proposal_status LIKE 'approvedbyugc%'
+//                         ORDER BY pc_latest.Date DESC, pc_latest.comment_id DESC
+//                         LIMIT 1
+//                     ), 
+//                     'none' -- Use 'none' as a default if no department has ever commented
+//                 ) != ? -- The proposal is shown if the latest comment is NOT from this department
+//               ORDER BY p.submitted_at ASC";
+
+//     $stmt = $connection->prepare($query);
+    
+//     // Bind the pool statuses, and then the department's own approval status
+//     $params = array_merge($pool_statuses, [$my_approval_status]);
+//     $types = str_repeat('s', count($pool_statuses)) . 's';
+//     $stmt->bind_param($types, ...$params);
+//     // --- END OF CORRECTED LOGIC ---
+
 if (is_array($statusFilter) && array_key_exists($role, $dept_approval_status_map)) {
-    // This is one of the 5 parallel review departments.
-    // We only show proposals they have NOT yet approved.
+    
+    // --- THIS IS THE NEW, CORRECTED LOGIC FOR PARALLEL DEPARTMENTS ---
     $my_approval_status = $dept_approval_status_map[$role];
-    $placeholders = implode(',', array_fill(0, count($statusFilter), '?'));
-       $query = "$base_query 
-              WHERE p.status IN ($placeholders) 
-              AND NOT EXISTS (
-                  SELECT 1 FROM proposal_comments pc 
-                  WHERE pc.proposal_id = p.proposal_id AND pc.proposal_status = ?
-              )
+    $pool_statuses = $statusFilter;
+    $placeholders = implode(',', array_fill(0, count($pool_statuses), '?'));
+    
+    // The "start line" trigger statuses
+    $trigger_statuses = ['approvedbyqachead', 'approvedbyqachead_revised', 're-signed_vc'];
+    $trigger_placeholders = implode(',', array_fill(0, count($trigger_statuses), '?'));
+
+    // This query uses NOT EXISTS with a subquery that checks the timestamp.
+    $query = "$base_query 
+              WHERE p.status IN ($placeholders)
+                AND NOT EXISTS (
+                   
+                    SELECT 1 
+                    FROM proposal_comments pc
+                    WHERE pc.proposal_id = p.proposal_id
+                      AND pc.proposal_status = ?
+                      AND pc.Time >= (
+                          -- This finds the timestamp of the latest trigger
+                          SELECT MAX(pc_trigger.Time)
+                          FROM proposal_comments pc_trigger
+                          WHERE pc_trigger.proposal_id = p.proposal_id
+                            AND pc_trigger.proposal_status IN ($trigger_placeholders)
+                      )
+                )
               ORDER BY p.submitted_at ASC";
 
     $stmt = $connection->prepare($query);
-    // Bind the status filters and the department's own approval status
-    $params = array_merge($statusFilter, [$my_approval_status]);
-    $stmt->bind_param(str_repeat('s', count($params)), ...$params);
+    
+    // We need to bind the pool statuses, my approval status, and the trigger statuses.
+    $params = array_merge($pool_statuses, [$my_approval_status], $trigger_statuses);
+    $types = str_repeat('s', count($pool_statuses)) . 's' . str_repeat('s', count($trigger_statuses));
+    $stmt->bind_param($types, ...$params);
+    // --- END OF CORRECTED LOGIC ---
 
 } elseif (is_array($statusFilter)) {
-    // Standard array filter for roles that see multiple statuses but aren't in parallel review
+    // This part for other roles (like QAC Head) is correct
     $placeholders = implode(',', array_fill(0, count($statusFilter), '?'));
     $query = "$base_query WHERE p.status IN ($placeholders) ORDER BY p.submitted_at ASC";
     $stmt = $connection->prepare($query);
     $stmt->bind_param(str_repeat('s', count($statusFilter)), ...$statusFilter);
+
 } else {
-    // Standard single status filter
+    // This part for other roles (like Secretary) is correct
     $query = "$base_query WHERE p.status = ? ORDER BY p.submitted_at ASC";
     $stmt = $connection->prepare($query);
     $stmt->bind_param("s", $statusFilter);
 }
-    
 }
+// --- END: NEW, CORRECTED QUERY LOGIC ---
+
+
 
 // Execute and fetch results
 $stmt->execute();
@@ -194,11 +284,11 @@ if (!empty($all_proposal_ids)) {
 
     // 4. The new query with the "NOT IN" clause to filter out the unwanted statuses.
     $history_query = "
-        SELECT proposal_id, proposal_status, `Date`, comment
+        SELECT proposal_id, proposal_status, `Time`, comment
         FROM proposal_comments
         WHERE proposal_id IN ($id_placeholders)
           AND proposal_status NOT IN ($status_placeholders)
-        ORDER BY proposal_id, `Date` ASC
+        ORDER BY proposal_id, `Time` ASC
     ";
 
     $stmt_history = $connection->prepare($history_query);
@@ -706,7 +796,7 @@ if (!empty($all_proposal_ids)) {
                 tempDiv.innerText = commentText; // Use .innerText to escape any potential HTML
                 const escapedComment = tempDiv.innerHTML;
 
-                const stepDate = new Date(step.Date).toLocaleString('en-GB', {
+                const stepDate = new Date(step.Time).toLocaleString('en-GB', {
                     year: 'numeric', month: 'short', day: 'numeric',
                     hour: '2-digit', minute: '2-digit', hour12: true
                 });
