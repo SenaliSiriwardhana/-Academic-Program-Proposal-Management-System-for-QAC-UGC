@@ -95,7 +95,7 @@
                     $stmt->fetch();
 
                     // Verify the current password
-                    if (password_verify($currentPassword, $password)) {
+                    if ($currentPassword === $password) {
                         // Hash the new password
                         //$newHashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
 
