@@ -689,7 +689,7 @@ try {
         }
         echo "\n--- ENDING EMAIL LOGIC ---\n";
         echo "</pre>";
-        exit(); // IMPORTANT: This stops the script so you can read the debug output. Remember to comment this out later.
+        //exit(); // IMPORTANT: This stops the script so you can read the debug output. Remember to comment this out later.
 
         
 
