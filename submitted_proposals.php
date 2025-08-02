@@ -199,7 +199,7 @@ $approved_query = "
     LEFT JOIN proposal_general_info gi 
     ON p.proposal_id = gi.proposal_id
     WHERE p.university_id = ? 
-    AND p.university_visible_status IN ('approvedbyqachead','approvedbyqachead_revised','re-signed_vc')
+    AND p.university_visible_status IN ('approvedbyStadardCommittee')
     {$proposal_filter_sql}
     ORDER BY p.proposal_id ASC
 ";
