@@ -451,7 +451,7 @@ try {
         // Commit transaction
         $connection->commit();
 
-        // --- FINAL EMAIL NOTIFICATION & REDIRECTION LOGIC (WITH DEBUGGING) ---
+        // --- EMAIL NOTIFICATION & REDIRECTION LOGIC (WITH DEBUGGING) ---
         // =================================================================
 
         // --- TEMPORARY DEBUGGING ---
