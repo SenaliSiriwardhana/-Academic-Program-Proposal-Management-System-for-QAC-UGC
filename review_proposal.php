@@ -26,7 +26,7 @@ $proposal_id = $_GET['id'];
 
 // Fetch all proposal details from different sections
 $proposalQuery = "SELECT proposal_code,
-  university_visible_status,
+  status,
   created_at,
   updated_at ,
   proposal_type,
