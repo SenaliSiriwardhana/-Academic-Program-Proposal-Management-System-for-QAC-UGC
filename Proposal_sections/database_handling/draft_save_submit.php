@@ -230,8 +230,8 @@ if ($proposal) {
             if ($stmt->execute()) {
 
                      // --- START: ADD EMAIL NOTIFICATION LOGIC WITH DEBUGGING ---
-                echo "<pre>";
-                echo "--- PROPOSAL SUBMITTED SUCCESSFULLY. STARTING EMAIL LOGIC ---\n";
+                //echo "<pre>";
+                //echo "--- PROPOSAL SUBMITTED SUCCESSFULLY. STARTING EMAIL LOGIC ---\n";
                 
                 // Get details needed for the email (creator's university and faculty)
                 $stmt_info = $connection->prepare("
@@ -246,15 +246,15 @@ if ($proposal) {
                 $info = $stmt_info->get_result()->fetch_assoc();
                 $stmt_info->close();
 
-                echo "Proposal Info for Email:\n";
-                print_r($info);
+                //echo "Proposal Info for Email:\n";
+                //print_r($info);
 
                 // Find the Dean of the creator's faculty
                 if (!empty($info['faculty_of']) && !empty($info['university'])) {
                     $creator_faculty = $info['faculty_of'];
                     $university = $info['university'];
                     
-                    echo "\nAttempting to find Dean for Faculty: <b>" . htmlspecialchars($creator_faculty) . "</b> at University: <b>" . htmlspecialchars($university) . "</b>\n";
+                    //echo "\nAttempting to find Dean for Faculty: <b>" . htmlspecialchars($creator_faculty) . "</b> at University: <b>" . htmlspecialchars($university) . "</b>\n";
                     
                     $dean_role_variations = ['dean/rector/director of the university'];
                     $placeholders = implode(',', array_fill(0, count($dean_role_variations), '?'));
@@ -264,9 +264,9 @@ if ($proposal) {
                     $params = array_merge($dean_role_variations, [$university, $creator_faculty]);
                     $types = str_repeat('s', count($dean_role_variations)) . 'ss';
                     
-                    echo "Executing SQL to find recipients: \n" . htmlspecialchars($sql_get_email) . "\n";
-                    echo "With parameters: \n";
-                    print_r($params);
+                    //echo "Executing SQL to find recipients: \n" . htmlspecialchars($sql_get_email) . "\n";
+                    //echo "With parameters: \n";
+                    //print_r($params);
 
                     $stmt_email = $connection->prepare($sql_get_email);
                     $stmt_email->bind_param($types, ...$params);
@@ -274,9 +274,9 @@ if ($proposal) {
                     $recipients = $stmt_email->get_result()->fetch_all(MYSQLI_ASSOC);
                     $stmt_email->close();
                     
-                    echo "\nFound " . count($recipients) . " recipient(s).\n";
+                    //echo "\nFound " . count($recipients) . " recipient(s).\n";
                     if (!empty($recipients)) {
-                        print_r($recipients);
+                        //print_r($recipients);
                     }
 
                     // Send the email to the Dean(s) found
@@ -285,19 +285,19 @@ if ($proposal) {
                         $review_link = "http://localhost/qac_ugc/login.php";
                         $body = "<p>Dear " . htmlspecialchars($recipient['first_name']) . " " . htmlspecialchars($recipient['last_name']) . ",</p><p>A proposal is awaiting your review in the UGC Portal.</p><ul><li><strong>Proposal Code:</strong> " . htmlspecialchars($info['proposal_code']) . "</li><li><strong>Degree Name:</strong> " . htmlspecialchars($info['degree_name_english']) . "</li><li><strong>University:</strong> " . htmlspecialchars($info['university']) . "</li></ul><p>Please click the link below to access the portal:</p><p><a href='" . $review_link . "'>" . $review_link . "</a></p><p>Thank you,</p><p> QAC-UGC Department.</p></p>";
                     
-                        echo "\nAttempting to send email to: " . htmlspecialchars($recipient['email']) . "\n";
+                        //echo "\nAttempting to send email to: " . htmlspecialchars($recipient['email']) . "\n";
                         if (send_email($recipient['email'], $recipient['first_name'], $subject, $body)) {
-                            echo "   -> Email sent SUCCESSFULLY.\n";
+                            //echo "   -> Email sent SUCCESSFULLY.\n";
                         } else {
-                            echo "   -> Email sending FAILED. Check PHPMailer configuration.\n";
+                            //echo "   -> Email sending FAILED. Check PHPMailer configuration.\n";
                         }
                     }
                 } else {
-                    echo "\nSKIPPING EMAIL: Creator's faculty or university information is missing.\n";
+                    //echo "\nSKIPPING EMAIL: Creator's faculty or university information is missing.\n";
                 }
                 
-                echo "\n--- ENDING EMAIL LOGIC ---\n";
-                echo "</pre>";
+                //echo "\n--- ENDING EMAIL LOGIC ---\n";
+                //echo "</pre>";
                 //exit(); // IMPORTANT: This stops the script so you can see the debug output. Remember to comment this out later.
 
                 // --- END: EMAIL NOTIFICATION LOGIC WITH DEBUGGING ---
