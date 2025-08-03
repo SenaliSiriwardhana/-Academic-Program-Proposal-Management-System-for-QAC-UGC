@@ -21,7 +21,7 @@ function send_email($to_email, $to_name, $subject, $body) {
         $mail->Host       = 'smtp.gmail.com'; // Your SMTP server
         $mail->SMTPAuth   = true;
         $mail->Username   = 'REMOVED'; // Your SMTP username
-        $mail->Password   = 'REMOVED';    // Your SMTP password (for Gmail, this is an "App Password")
+        $mail->Password   = getenv('SMTP_PASSWORD');   // Your SMTP password (for Gmail, this is an "App Password")
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         $mail->Port       = 465;
 
