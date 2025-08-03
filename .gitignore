@@ -1,0 +1,8 @@
+.env
+passwords.txt
+bfg.jar
+
+Proposal_sections/uploads/*.pdf
+Proposal_sections/uploads/signature_*.png
+-Academic-Program-Proposal-Management-System-for-QAC-UGC.git.bfg-report/
+-Academic-Program-Proposal-Management-System-for-QAC-UGC.git/

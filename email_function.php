@@ -4,12 +4,12 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\SMTP;
 
-// --- Load Composer's autoloader ---
-require 'vendor/autoload.php'; 
-// --- OR If you downloaded manually, use these lines instead ---
-// require 'PHPMailer/Exception.php';
-// require 'PHPMailer/PHPMailer.php';
-// require 'PHPMailer/SMTP.php';
+// This check prevents errors if the file is included multiple times.
+if (!class_exists('Dotenv\Dotenv')) {
+    require __DIR__ . '/vendor/autoload.php';
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+    $dotenv->load();
+}
 
 function send_email($to_email, $to_name, $subject, $body) {
     $mail = new PHPMailer(true);
@@ -18,15 +18,15 @@ function send_email($to_email, $to_name, $subject, $body) {
         // --- Server settings ---
         // IMPORTANT: These settings are for Gmail. You MUST change them for your mail server.
         $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com'; // Your SMTP server
+        $mail->Host       = $_ENV['SMTP_HOST'];; // Your SMTP server
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'REMOVED'; // Your SMTP username
-        $mail->Password   = getenv('SMTP_PASSWORD');   // Your SMTP password (for Gmail, this is an "App Password")
+        $mail->Username   = $_ENV['SMTP_USERNAME']; // Your SMTP username
+        $mail->Password   = $_ENV['SMTP_APP_PASSWORD'];   // Your SMTP password (for Gmail, this is an "App Password")
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-        $mail->Port       = 465;
+        $mail->Port       = $_ENV['SMTP_PORT'];
 
         // --- Recipients ---
-        $mail->setFrom('REMOVED', 'Academic Program Proposal Management System QAC-UGC');
+        $mail->setFrom($_ENV['MAIL_FROM_ADDRESS'], $_ENV['MAIL_TITLE']);
         $mail->addAddress($to_email, $to_name);
 
         // --- Content ---

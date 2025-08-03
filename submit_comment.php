@@ -455,8 +455,8 @@ try {
         // =================================================================
 
         // --- TEMPORARY DEBUGGING ---
-        echo "<pre>";
-        echo "--- STARTING EMAIL LOGIC ---\n";
+        //echo "<pre>";
+        //echo "--- STARTING EMAIL LOGIC ---\n";
 
 
 
@@ -473,24 +473,24 @@ try {
         $info = $stmt_info->get_result()->fetch_assoc();
         $stmt_info->close();
 
-        echo "Proposal Info for Email: \n";
-        print_r($info);
+        //echo "Proposal Info for Email: \n";
+        //print_r($info);
 
         // This is the status of the action that was just performed.
         //$final_action_status = $comment_status;
         $final_action_status = $final_real_status ?? $comment_status;
-        echo "\nFinal Action Status Check: <b>" . htmlspecialchars($final_action_status) . "</b>\n";
+        //echo "\nFinal Action Status Check: <b>" . htmlspecialchars($final_action_status) . "</b>\n";
 
         // Check if the action was a rejection or requires revision
         $is_rejection = (strpos($final_action_status, 'reject') !== false || strpos($final_action_status, 'revision') !== false);
-        echo "Is this a rejection/revision action? " . ($is_rejection ? '<b>YES</b>' : 'NO') . "\n";
+        //echo "Is this a rejection/revision action? " . ($is_rejection ? '<b>YES</b>' : 'NO') . "\n";
 
         if ($is_rejection) {
             // --- REJECTION/REVISION PATH ---
-            echo "\n--- Entering REJECTION notification path ---\n";
+            //echo "\n--- Entering REJECTION notification path ---\n";
             
             $creator_id = $info['created_by'];
-            echo "Finding original creator with ID: " . htmlspecialchars($creator_id) . "\n";
+            //echo "Finding original creator with ID: " . htmlspecialchars($creator_id) . "\n";
             
             $stmt_pc = $connection->prepare("SELECT first_name, last_name, email FROM users WHERE id = ?");
             $stmt_pc->bind_param("i", $creator_id);
@@ -499,14 +499,14 @@ try {
             $stmt_pc->close();
 
             if ($pc_details) {
-                echo "Found Program Coordinator details:\n";
+                //echo "Found Program Coordinator details:\n";
                 print_r($pc_details);
 
                 $subject = "Action Required: Proposal " . $info['proposal_code'] . " has been returned for revision";
                 $login_link = "http://localhost/qac_ugc/login.php";
                 $body = "";
                 $is_ugc_rejection = in_array($role, $ugc_roles);
-                echo "Is this a UGC-level rejection? " . ($is_ugc_rejection ? '<b>YES</b>' : 'NO') . "\n";
+                //echo "Is this a UGC-level rejection? " . ($is_ugc_rejection ? '<b>YES</b>' : 'NO') . "\n";
 
                 if ($is_ugc_rejection) {
                     $body = "<p>Dear " . htmlspecialchars($pc_details['first_name']) . ",</p><p>Following a review, your proposal (<b>" . htmlspecialchars($info['proposal_code']) . "</b>) has been returned for revision by the QAC-UGC.</p><p>Please log in to the QAC-UGC Portal to carefully review the comments in the <strong>Summary Sheet</strong> and resubmit the proposal with the necessary amendments.</p><p>Kindly note that proposals rejected more than three times may be subject to additional processing charges.</p><p>You can access the portal here: <a href='" . $login_link . "'>" . $login_link . "</a></p><p>Thank you,</p><p>QAC-UGC Department.</p></p>";
@@ -514,19 +514,19 @@ try {
                     $body = "<p>Dear " . htmlspecialchars($pc_details['first_name']) . ",</p><p>Your proposal (<b>" . htmlspecialchars($info['proposal_code']) . "</b>) has been returned for revision.</p><p>Please log in to the QAC-UGC Portal to review the provided comments and resubmit the proposal accordingly.</p><p>You can access the portal here: <a href='" . $login_link . "'>" . $login_link . "</a></p><p>Thank you,</p><p>QAC-UGC Department.</p></p>";
                 }
                 
-                echo "\nAttempting to send REJECTION email to: " . htmlspecialchars($pc_details['email']) . "\n";
+                //echo "\nAttempting to send REJECTION email to: " . htmlspecialchars($pc_details['email']) . "\n";
                 if (send_email($pc_details['email'], $pc_details['first_name'], $subject, $body)) {
-                    echo "   -> Email sent SUCCESSFULLY.\n";
+                    //echo "   -> Email sent SUCCESSFULLY.\n";
                 } else {
-                    echo "   -> Email sending FAILED. Check PHPMailer configuration.\n";
+                    //echo "   -> Email sending FAILED. Check PHPMailer configuration.\n";
                 }
             } else {
-                echo "   -> CRITICAL ERROR: Could not find Program Coordinator details for ID " . htmlspecialchars($creator_id) . ". Cannot send email.\n";
+                //echo "   -> CRITICAL ERROR: Could not find Program Coordinator details for ID " . htmlspecialchars($creator_id) . ". Cannot send email.\n";
             }
 
         } else {
             // --- APPROVAL PATH ---
-            echo "\n--- Entering APPROVAL notification path ---\n";
+            //echo "\n--- Entering APPROVAL notification path ---\n";
             
             $notification_map = [
                 'submitted' => ['role' => 'dean', 'scope' => 'university'], 'approvedbydean' => ['role' => 'cqa director', 'scope' => 'university'],
@@ -546,30 +546,28 @@ try {
             ];
 
             // --- NEW DEBUG LINE ---
-                echo "Action performed by user with role: <b>" . htmlspecialchars($role) . "</b>\n";
+                //echo "Action performed by user with role: <b>" . htmlspecialchars($role) . "</b>\n";
             if ($final_action_status === 'approvedbycqa') {
-                echo "\n>>> Special check for 'approvedbycqa' triggered.\n";
+                //echo "\n>>> Special check for 'approvedbycqa' triggered.\n";
 
             
                 $proposal_type = $info['proposal_type'];
-                echo ">>> Proposal type is: <b>" . htmlspecialchars($proposal_type) . "</b>\n";
+                //echo ">>> Proposal type is: <b>" . htmlspecialchars($proposal_type) . "</b>\n";
                 if (strpos($proposal_type, 'revised') === 0) {
                     $notification_map['approvedbycqa'] = ['role' => 'ugc - technical assistant', 'scope' => 'ugc'];
-                    echo ">>> This is a REVISED proposal. Next role set to: <b>ugc - technical assistant</b>\n";
+                    //echo ">>> This is a REVISED proposal. Next role set to: <b>ugc - technical assistant</b>\n";
                 } else {
-                    echo ">>> This is an INITIAL proposal. Next role remains: <b>vice chancellor</b>\n";
+                    //echo ">>> This is an INITIAL proposal. Next role remains: <b>vice chancellor</b>\n";
                 }
             }
 
             if (array_key_exists($final_action_status, $notification_map)) {
-                echo "\nNotification rule found. Proceeding...\n";
+                //echo "\nNotification rule found. Proceeding...\n";
                 $notification_details = $notification_map[$final_action_status];
                 $next_roles = (array) $notification_details['role'];
 
-                
-
                 // --- NEW DEBUG LINE ---
-                echo "Next notification will be sent to role(s): <b>" . htmlspecialchars(implode(', ', $next_roles)) . "</b>\n";
+                //echo "Next notification will be sent to role(s): <b>" . htmlspecialchars(implode(', ', $next_roles)) . "</b>\n";
 
                 $scope = $notification_details['scope'];
 
@@ -577,13 +575,13 @@ try {
                 // Create a new array to hold the role names formatted for the database query.
                 $roles_to_query = [];
                 if ($scope === 'university') {
-                    echo "Scope is 'university'. Appending ' of the university' to role names for query.\n";
+                    //echo "Scope is 'university'. Appending ' of the university' to role names for query.\n";
                     foreach ($next_roles as $short_role) {
                         $roles_to_query[] = $short_role . ' of the university';
                     }
                 } else {
                     // If it's a UGC role or creator, use the short names as they are
-                    echo "Scope is '" . htmlspecialchars($scope) . "'. Using short role names directly.\n";
+                    //echo "Scope is '" . htmlspecialchars($scope) . "'. Using short role names directly.\n";
                     $roles_to_query = $next_roles;
                 }
                 // --- END OF THE FIX ---
@@ -594,7 +592,7 @@ try {
                 // 1. Get the faculty of the person who created the proposal.
                     $creator_faculty = $info['faculty_of'];
                     $university = $info['university'];
-                    echo "Scope is 'university'. Finding recipient(s) in faculty: <b>" . htmlspecialchars($creator_faculty) . "</b>\n";
+                    //echo "Scope is 'university'. Finding recipient(s) in faculty: <b>" . htmlspecialchars($creator_faculty) . "</b>\n";
 
                 // 2. Build the query to find the right person.
                     $roles_to_query_db = [];
@@ -623,14 +621,14 @@ try {
                         $sql_get_email .= " AND faculty_of = ?";
                         $params[] = $creator_faculty;
                         $types .= 's';
-                        echo "Scope is 'university' (DEAN). Finding recipient(s) in faculty: <b>" . htmlspecialchars($creator_faculty) . "</b>\n";
+                        //echo "Scope is 'university' (DEAN). Finding recipient(s) in faculty: <b>" . htmlspecialchars($creator_faculty) . "</b>\n";
                     } else {
-                         echo "Scope is 'university' (CQA/VC). Finding recipient(s) across entire university.\n";
+                         //echo "Scope is 'university' (CQA/VC). Finding recipient(s) across entire university.\n";
                     }
 
-                    echo "Executing SQL to find recipients: \n" . htmlspecialchars($sql_get_email) . "\n";
-                    echo "With parameters: \n";
-                    print_r($params);
+                    //echo "Executing SQL to find recipients: \n" . htmlspecialchars($sql_get_email) . "\n";
+                    //echo "With parameters: \n";
+                    //print_r($params);
 
                     $stmt_email = $connection->prepare($sql_get_email);
                     $stmt_email->bind_param($types, ...$params);
@@ -640,7 +638,7 @@ try {
                 }
                 
                 elseif ($scope === 'creator') {
-                    echo "\nScope is 'creator'. Finding original proposal creator...\n";
+                    //echo "\nScope is 'creator'. Finding original proposal creator...\n";
                     $creator_id = $info['created_by'];
                     $stmt_pc = $connection->prepare("SELECT first_name, last_name, email FROM users WHERE id = ?");
                     $stmt_pc->bind_param("i", $creator_id);
@@ -648,7 +646,7 @@ try {
                     $recipients = $stmt_pc->get_result()->fetch_all(MYSQLI_ASSOC);
                     $stmt_pc->close();
                 } else {
-                    echo "\nScope is '" . htmlspecialchars($scope) . "'. Finding users by role...\n";
+                    //echo "\nScope is '" . htmlspecialchars($scope) . "'. Finding users by role...\n";
                     $placeholders = implode(',', array_fill(0, count($next_roles), '?'));
                     $sql_get_email = "SELECT first_name, last_name, email FROM users WHERE role IN ($placeholders)";
                     $params = $roles_to_query;
@@ -659,9 +657,9 @@ try {
                         $types .= 's';
                     }
                     
-                    echo "Executing SQL to find recipients: \n" . htmlspecialchars($sql_get_email) . "\n";
-                    echo "With parameters: \n";
-                    print_r($params);
+                    //echo "Executing SQL to find recipients: \n" . htmlspecialchars($sql_get_email) . "\n";
+                    //echo "With parameters: \n";
+                    //print_r($params);
 
                     $stmt_email = $connection->prepare($sql_get_email);
                     $stmt_email->bind_param($types, ...$params);
@@ -670,9 +668,9 @@ try {
                     $stmt_email->close();
                 }
                 
-                echo "\nFound " . count($recipients) . " recipient(s).\n";
+                //echo "\nFound " . count($recipients) . " recipient(s).\n";
                 if (!empty($recipients)) {
-                    print_r($recipients);
+                    //print_r($recipients);
                 }
                 
                 foreach ($recipients as $recipient) {
@@ -680,19 +678,69 @@ try {
                     $review_link = "http://localhost/qac_ugc/login.php";
                     $body = "<p>Dear " . htmlspecialchars($recipient['first_name']) . " " . htmlspecialchars($recipient['last_name']) . ",</p><p>A proposal is awaiting your review in the UGC Portal.</p><ul><li><strong>Proposal Code:</strong> " . htmlspecialchars($info['proposal_code']) . "</li><li><strong>Degree Name:</strong> " . htmlspecialchars($info['degree_name_english']) . "</li><li><strong>University:</strong> " . htmlspecialchars($info['university']) . "</li></ul><p>Please click the link below to access the portal:</p><p><a href='" . $review_link . "'>" . $review_link . "</a></p><p>Thank you,</p><p>QAC-UGC Department.</p></p>";
                     
-                    echo "\nAttempting to send email to: " . htmlspecialchars($recipient['email']) . "\n";
+                    //echo "\nAttempting to send email to: " . htmlspecialchars($recipient['email']) . "\n";
                     if (send_email($recipient['email'], $recipient['first_name'], $subject, $body)) { echo "   -> Email sent SUCCESSFULLY.\n"; } else { echo "   -> Email sending FAILED. Check PHPMailer configuration.\n"; }
                 }
             } else {
-                echo "No approval notification rule found for status '" . htmlspecialchars($final_action_status) . "'. Skipping email.\n";
+                //echo "No approval notification rule found for status '" . htmlspecialchars($final_action_status) . "'. Skipping email.\n";
             }
         }
-        echo "\n--- ENDING EMAIL LOGIC ---\n";
-        echo "</pre>";
-        //exit(); // IMPORTANT: This stops the script so you can read the debug output. Remember to comment this out later.
-
+        //echo "\n--- ENDING Basic EMAIL LOGIC ---\n";
+        //echo "</pre>";
         
 
+        
+    // --- START: NEW, SEPARATE LOGIC FOR PC & CQA NOTIFICATION (ADD THIS BLOCK) ---
+        
+        // 1. Define the trigger statuses for this special notification.
+        $qac_approval_triggers = ['approvedbyqachead', 'approvedbyqachead_revised', 'resignature_request_from_university'];
+
+        // 2. Check if the action that just happened is one of our triggers.
+        if (in_array($final_action_status, $qac_approval_triggers)) {
+            
+            //echo "\n>>> QAC Head approval trigger detected. Preparing special notification for PC and CQA.\n";
+
+            // 3. Find the original Program Coordinator
+            $stmt_pc = $connection->prepare("SELECT * FROM users WHERE id = ?");
+            $stmt_pc->bind_param("i", $info['created_by']);
+            $stmt_pc->execute();
+            $pc_user = $stmt_pc->get_result()->fetch_assoc();
+            $stmt_pc->close();
+
+            // 4. Find the CQA Director for the same university
+            $stmt_cqa = $connection->prepare("SELECT * FROM users WHERE role LIKE '%cqa director%' AND university = ?");
+            $stmt_cqa->bind_param("s", $info['university']);
+            $stmt_cqa->execute();
+            $cqa_user = $stmt_cqa->get_result()->fetch_assoc();
+            $stmt_cqa->close();
+
+            $recipients_for_update = [];
+            if ($pc_user) $recipients_for_update[] = $pc_user;
+            if ($cqa_user) $recipients_for_update[] = $cqa_user;
+
+            //echo "Found " . count($recipients_for_update) . " recipients for the special update email.\n";
+            if (!empty($recipients_for_update)) {
+                print_r($recipients_for_update);
+            }
+
+            // 5. Send the custom email to the found recipients.
+            foreach ($recipients_for_update as $recipient) {
+                
+                $subject = "Update on Proposal " . $info['proposal_code'];
+                $body = "<p>Dear " . htmlspecialchars($recipient['first_name']) . ",</p>" .
+                        "<p>This is to inform you that proposal <b>" . htmlspecialchars($info['proposal_code']) . "</b> (" . htmlspecialchars($info['degree_name_english']) . ") has been approved by the QAC Director and is now proceeding to the standing committees for final review.</p>" .
+                        "<p>You will be notified again once a final decision has been made.</p><p>Thank you,</p><p>QAC-UGC Department</p>";
+
+                //echo "\nAttempting to send UPDATE email to: " . htmlspecialchars($recipient['email']) . "\n";
+                if (send_email($recipient['email'], $recipient['first_name'], $subject, $body)) {
+                    //echo "   -> Special update email sent SUCCESSFULLY.\n";
+                } else {
+                    //echo "   -> Special update email FAILED.\n";
+                }
+            }
+        }
+        // --- END: NEW, SEPARATE LOGIC ---
+        //exit(); // IMPORTANT: This stops the script so you can read the debug output. Remember to comment this out later.
             
 
    $final_status = $new_proposal_status; 
